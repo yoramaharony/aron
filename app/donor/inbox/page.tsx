@@ -57,7 +57,7 @@ export default function DonorInbox() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    {allMessages.map((msg) => (
+                    {allMessages.map((msg: any) => (
                         <div
                             key={msg.id}
                             className={`p-4 border-b border-[var(--border-subtle)] hover:bg-gray-50 cursor-pointer flex gap-4 transition-colors ${msg.type === 'leverage' ? 'bg-[var(--bg-ivory)]' : ''}`}
