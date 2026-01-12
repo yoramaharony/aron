@@ -7,15 +7,16 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "npm rebuild better-sqlite3 && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
+    "@libsql/client": "^0.17.0",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^12.5.0",
     "clsx": "^2.1.1",
+    "dotenv": "^17.2.3",
     "drizzle-orm": "^0.45.1",
     "framer-motion": "^12.24.10",
     "gsap": "^3.14.2",
@@ -29,7 +30,6 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@types/bcryptjs": "^2.4.6",
-    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
