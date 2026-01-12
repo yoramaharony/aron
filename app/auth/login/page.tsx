@@ -8,6 +8,14 @@ import Link from 'next/link';
 import { Lock } from 'lucide-react';
 
 export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-[var(--bg-app)]" />}>
+            <LoginContent />
+        </Suspense>
+    );
+}
+
+function LoginContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [formData, setFormData] = useState({ email: '', password: '' });
