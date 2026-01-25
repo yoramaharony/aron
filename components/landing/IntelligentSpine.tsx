@@ -96,7 +96,7 @@ export function IntelligentSpine() {
         { title: "2. Convert to strategy", desc: "Budget, allocations, and strict governance rules." },
         { title: "3. Intake & Diligence", desc: "We absorb the chaos. Standardized intake, deep financials, risk flags." },
         { title: "4. Curated Feed", desc: "Only aligned opportunities. Clear use of funds. No noise." },
-        { title: "5. Decide in seconds", desc: "Pass, Shortlist, or Leverage. Reversible decisions." },
+        { title: "5. Decide in seconds", desc: "Review simplified key facts. With one click, choose to Pass, Shortlist for later, or Leverage our network. Reversible decisions." },
         { title: "6. The Leverage Engine", desc: "Turn $1 into $3. Challenge grants, matching groups, conditional terms." },
         { title: "7. The \"Ugly Work\"", desc: "Agreements, disbursements, tax packs. We handle the machine." },
         { title: "8. Verification", desc: "Evidence required. No narrative fluff. Verified outcomes only." },
@@ -105,8 +105,8 @@ export function IntelligentSpine() {
     ];
 
     return (
-        <div ref={containerRef} className="relative h-[1000vh] bg-[var(--bg-paper)]">
-            {/* 1000vh height to accommodate 10 steps */}
+        <div ref={containerRef} className="relative h-[700vh] bg-[var(--bg-paper)]">
+            {/* Reduced height to accommodate faster pacing */}
 
             {/* STICKY VISUAL STAGE */}
             <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
@@ -173,10 +173,10 @@ export function IntelligentSpine() {
             {/* TEXT SECTIONS (Overlay) */}
             <div className="absolute top-0 left-0 w-full">
                 {stepData.map((step, i) => (
-                    <div key={i} className={`h-screen flex items-center ${i % 2 === 0 ? 'justify-start pl-8 md:pl-24' : 'justify-end pr-8 md:pr-24'} pointer-events-none`}>
+                    <div key={i} className={`h-[70vh] flex items-center ${i % 2 === 0 ? 'justify-start pl-8 md:pl-24' : 'justify-end pr-8 md:pr-24'} pointer-events-none`}>
                         <div
                             ref={textRefs[i]}
-                            className="bg-white/95 p-8 rounded-lg border border-[var(--border-subtle)] backdrop-blur shadow-sm max-w-md opacity-0"
+                            className="p-8 rounded-xl border border-[rgba(255,255,255,0.10)] backdrop-blur max-w-md opacity-0 shadow-[0_18px_60px_-35px_rgba(0,0,0,0.85)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.14),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
                         >
                             <h3 className="font-serif text-2xl mb-2 text-[var(--color-gold)]">{step.title}</h3>
                             <p className="text-[var(--text-secondary)] leading-relaxed">{step.desc}</p>

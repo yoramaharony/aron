@@ -94,7 +94,7 @@ export function SwipeStack({ items }: { items: DonationRequest[] }) {
             <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-4 items-center z-50">
                 <Button
                     variant="outline"
-                    className="h-12 px-6 rounded-full border border-gray-200 bg-white hover:bg-gray-50 hover:scale-105 transition-transform text-gray-500 shadow-sm flex items-center gap-2"
+                    className="h-12 px-6 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] hover:scale-105 transition-transform text-[var(--text-secondary)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)] flex items-center gap-2"
                     onClick={() => handleSwipe(activeItem.id, 'left')}
                     title="Pass"
                 >
@@ -104,7 +104,7 @@ export function SwipeStack({ items }: { items: DonationRequest[] }) {
 
                 <Button
                     variant="gold"
-                    className="h-14 px-8 rounded-full shadow-xl shadow-gold/20 -mt-2 border-2 border-[var(--bg-app)] flex items-center gap-2 hover:scale-105 transition-transform"
+                    className="h-14 px-8 rounded-full -mt-2 border border-[rgba(255,43,214,0.45)] flex items-center gap-2 hover:scale-105 transition-transform shadow-[0_0_0_1px_rgba(255,43,214,0.18),0_20px_70px_-35px_rgba(255,43,214,0.55)]"
                     onClick={() => openLeverageDrawer(activeItem)}
                 >
                     <Zap size={20} fill="currentColor" />
@@ -113,7 +113,7 @@ export function SwipeStack({ items }: { items: DonationRequest[] }) {
 
                 <Button
                     variant="outline"
-                    className="h-12 px-6 rounded-full border border-green-200 bg-white text-green-600 hover:bg-green-50 hover:border-green-300 hover:scale-105 transition-transform shadow-sm flex items-center gap-2"
+                    className="h-12 px-6 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.06)] hover:scale-105 transition-transform shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)] flex items-center gap-2"
                     onClick={() => handleSwipe(activeItem.id, 'right')}
                 >
                     <Heart size={18} />
@@ -127,11 +127,11 @@ export function SwipeStack({ items }: { items: DonationRequest[] }) {
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="bg-white rounded-xl p-6 w-full max-w-sm shadow-2xl"
+                        className="rounded-xl p-6 w-full max-w-sm border border-[rgba(255,255,255,0.10)] shadow-[0_30px_90px_-50px_rgba(0,0,0,0.9)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.16),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
                     >
                         <h3 className="text-lg font-serif mb-4">Why is this not a match?</h3>
                         <textarea
-                            className="w-full p-3 border border-gray-200 rounded-lg mb-4 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)]"
+                            className="w-full p-3 border border-[rgba(255,255,255,0.12)] rounded-lg mb-4 text-sm bg-[rgba(255,255,255,0.03)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)]"
                             rows={3}
                             placeholder="e.g. Too high risk, Wrong geography..."
                             value={declineReason}
@@ -184,7 +184,7 @@ function DraggableCard({ item, onSwipe, onLeverage, onTap }: { item: DonationReq
             className="absolute w-full h-full cursor-grab active:cursor-grabbing"
             whileTap={{ cursor: "grabbing" }}
         >
-            <Card noPadding className="h-full flex flex-col overflow-hidden border-[var(--border-subtle)] shadow-2xl bg-white select-none">
+            <Card noPadding className="h-full flex flex-col overflow-hidden border-[var(--border-subtle)] shadow-2xl select-none">
 
                 {/* STAMPS */}
                 <motion.div style={{ opacity: opacityAccept }} className="absolute top-8 left-8 border-4 border-green-500 text-green-500 font-bold text-4xl px-4 py-2 rounded -rotate-12 z-20 pointer-events-none">
@@ -201,7 +201,7 @@ function DraggableCard({ item, onSwipe, onLeverage, onTap }: { item: DonationReq
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     <div className="absolute bottom-0 left-0 p-5 text-white w-full">
                         <div className="flex items-center gap-2 mb-1">
-                            <div className="bg-[var(--color-gold)] text-black text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                            <div className="bg-[var(--color-gold)] text-[#120014] text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
                                 {item.matchPotential}% Match
                             </div>
                             <div className="bg-white/20 backdrop-blur text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
@@ -214,19 +214,19 @@ function DraggableCard({ item, onSwipe, onLeverage, onTap }: { item: DonationReq
                 </div>
 
                 {/* CONTENT */}
-                <div className="p-5 flex-1 bg-white relative flex flex-col">
+                <div className="p-5 flex-1 relative flex flex-col">
                     <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-3 line-clamp-3 flex-1">
                         {item.summary}
                     </p>
 
                     <div className="flex gap-3 mb-3">
-                        <div className="flex-1 p-2 bg-gray-50 rounded border border-gray-100">
+                        <div className="flex-1 p-2 bg-[rgba(255,255,255,0.03)] rounded border border-[rgba(255,255,255,0.08)]">
                             <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-bold mb-0.5">Gap</div>
                             <div className="text-lg font-medium text-[var(--color-gold)]">${(item.fundingGap / 1000).toFixed(0)}k</div>
                         </div>
-                        <div className="flex-1 p-2 bg-gray-50 rounded border border-gray-100">
+                        <div className="flex-1 p-2 bg-[rgba(255,255,255,0.03)] rounded border border-[rgba(255,255,255,0.08)]">
                             <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wider font-bold mb-0.5">Impact</div>
-                            <div className="text-xs font-medium leading-tight">High Community Alignment</div>
+                            <div className="text-xs font-medium leading-tight text-[var(--text-primary)]">High Community Alignment</div>
                         </div>
                     </div>
 
@@ -244,14 +244,14 @@ function DraggableCard({ item, onSwipe, onLeverage, onTap }: { item: DonationReq
 
 function StaticCard({ item }: { item: DonationRequest }) {
     return (
-        <Card noPadding className="h-full flex flex-col overflow-hidden border-[var(--border-subtle)] shadow-sm bg-white select-none">
-            <div className="relative h-[40%] bg-gray-200">
+        <Card noPadding className="h-full flex flex-col overflow-hidden border-[var(--border-subtle)] shadow-sm select-none opacity-90">
+            <div className="relative h-[40%] bg-[rgba(255,255,255,0.03)]">
                 <img src={item.imageUrl} className="w-full h-full object-cover opacity-50 grayscale" alt="" />
             </div>
             <div className="p-5 flex-1">
-                <div className="h-4 w-3/4 bg-gray-100 rounded mb-2" />
-                <div className="h-3 w-1/2 bg-gray-100 rounded mb-4" />
-                <div className="h-12 w-full bg-gray-50 rounded" />
+                <div className="h-4 w-3/4 bg-[rgba(255,255,255,0.06)] rounded mb-2" />
+                <div className="h-3 w-1/2 bg-[rgba(255,255,255,0.06)] rounded mb-4" />
+                <div className="h-12 w-full bg-[rgba(255,255,255,0.03)] rounded" />
             </div>
         </Card>
     );

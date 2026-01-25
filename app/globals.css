@@ -3,33 +3,42 @@
 @tailwind utilities;
 
 :root {
-  /* Quiet Luxury Palette (Ivory/Sage/Charcoal) */
-  --bg-app: #FDFBF7;
-  /* Ivory */
-  --bg-ivory: #FDFBF7;
-  --bg-paper: #F5F5F7;
-  /* Paper */
-  --bg-surface: #FFFFFF;
-  /* White */
+  /* Dark mode system theme (default) */
+  --bg-app: #07070a;
+  --bg-surface: #0b0b12;
+  --bg-card: #10101a;
+  --bg-elevated: #151523;
 
-  --text-primary: #1C1C1E;
-  /* Charcoal */
-  --text-secondary: #6E6E73;
-  /* Stone */
-  --text-tertiary: #A1A1A6;
+  --text-primary: #f5f3ff;
+  --text-secondary: #c4bfd6;
+  --text-tertiary: #8d87a3;
 
-  --color-gold: #C5A059;
-  /* Brass Gold */
-  --color-gold-dim: #E5CD98;
-  --color-gold-hover: #B08D45;
+  /* Accent: glowing magenta */
+  --color-magenta: #ff2bd6;
+  --color-magenta-dim: #ff7ae6;
+  --color-magenta-hover: #ff4bdd;
 
-  --color-sage: #738A79;
-  /* Sage (Primary Accent) */
-  --color-sage-mist: #E8EDE9;
-  --color-sage-dark: #5A6E5F;
+  /* Legacy accent names (map to magenta) */
+  --color-sage: var(--color-magenta);
+  --color-sage-mist: rgba(255, 43, 214, 0.12);
+  --color-sage-dark: #ff7ae6;
 
-  --border-subtle: #EBEBEB;
-  --border-strong: #D6D6D6;
+  /* Backwards-compat: previously "gold" now magenta */
+  --color-gold: var(--color-magenta);
+  --color-gold-dim: var(--color-magenta-dim);
+  --color-gold-hover: var(--color-magenta-hover);
+
+  /* Backwards-compat: some pages reference older tokens */
+  --bg-ivory: var(--bg-surface);
+  --bg-paper: var(--bg-card);
+  --accent-gold: var(--color-magenta);
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Tailwind convenience vars (used in tailwind.config.ts) */
+  --background: var(--bg-app);
+  --foreground: var(--text-primary);
 
   /* Spacing */
   --spacing-section: 4rem;
@@ -38,17 +47,13 @@
   --radius-btn: 4px;
   /* Sharper buttons for luxury feel */
 
-  /* Shadows - Deep & Soft */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-}
-
-@media (prefers-color-scheme: dark) {
-  /* Optional Dark Mode overrides if we want to support it later, 
-     but user asked for "Light Luxury" previously. 
-     Keeping it light for now as requested. */
+  /* Shadows + glow */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
+  --shadow-md: 0 10px 30px -16px rgb(0 0 0 / 0.65), 0 2px 10px -6px rgb(0 0 0 / 0.4);
+  --shadow-lg: 0 20px 60px -26px rgb(0 0 0 / 0.75), 0 4px 18px -10px rgb(0 0 0 / 0.45);
+  --shadow-xl: 0 30px 90px -38px rgb(0 0 0 / 0.85), 0 6px 24px -12px rgb(0 0 0 / 0.5);
+  --glow-magenta-sm: 0 0 0 3px rgba(255, 43, 214, 0.22);
+  --glow-magenta-md: 0 0 0 3px rgba(255, 43, 214, 0.22), 0 0 24px rgba(255, 43, 214, 0.22);
 }
 
 body {
@@ -82,6 +87,11 @@ h6 {
   gap: 0.5rem;
 }
 
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--glow-magenta-sm);
+}
+
 .btn:active {
   transform: scale(0.98);
 }
@@ -105,36 +115,39 @@ h6 {
 }
 
 .btn-primary {
-  background-color: var(--text-primary);
-  color: white;
-  border: 1px solid transparent;
+  background: linear-gradient(180deg, rgba(255, 43, 214, 0.95), rgba(255, 43, 214, 0.78));
+  color: #120014;
+  border: 1px solid rgba(255, 43, 214, 0.45);
+  box-shadow: 0 12px 35px -20px rgba(255, 43, 214, 0.75);
 }
 
 .btn-primary:hover {
-  background-color: black;
-  box-shadow: var(--shadow-md);
+  background: linear-gradient(180deg, rgba(255, 75, 221, 0.98), rgba(255, 43, 214, 0.82));
+  box-shadow: var(--glow-magenta-md);
+  transform: translateY(-1px);
 }
 
 .btn-gold {
-  background-color: var(--color-gold);
-  color: white;
-  border: 1px solid transparent;
+  background: rgba(255, 43, 214, 0.1);
+  color: var(--text-primary);
+  border: 1px solid rgba(255, 43, 214, 0.35);
 }
 
 .btn-gold:hover {
-  background-color: var(--color-gold-hover);
-  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.2);
+  background: rgba(255, 43, 214, 0.14);
+  box-shadow: var(--glow-magenta-sm);
 }
 
 .btn-outline {
   background-color: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-strong);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .btn-outline:hover {
-  border-color: var(--text-primary);
-  background-color: var(--bg-surface);
+  border-color: rgba(255, 43, 214, 0.55);
+  background-color: rgba(255, 43, 214, 0.06);
+  box-shadow: 0 0 0 1px rgba(255, 43, 214, 0.25);
 }
 
 .btn-ghost {
@@ -143,15 +156,17 @@ h6 {
 }
 
 .btn-ghost:hover {
-  background-color: var(--bg-surface);
+  background-color: rgba(255, 255, 255, 0.04);
   color: var(--text-primary);
 }
 
 .card {
-  background-color: var(--bg-card);
+  background:
+    radial-gradient(1200px 800px at 20% 0%, rgba(255, 43, 214, 0.06), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
   padding: var(--spacing-card-p);
   overflow: hidden;
 }
@@ -172,7 +187,7 @@ h6 {
   height: 100vh;
   position: sticky;
   top: 0;
-  background: var(--bg-card);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02));
   display: flex;
   flex-direction: column;
 }
@@ -198,7 +213,7 @@ h6 {
   padding: 0.75rem 1rem;
   border-radius: var(--radius-btn);
   border: 1px solid var(--border-strong);
-  background: var(--bg-card);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text-primary);
   font-size: 1rem;
   transition: all 0.2s ease;
@@ -206,8 +221,8 @@ h6 {
 
 .input-field:focus {
   outline: none;
-  border-color: var(--color-gold);
-  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.1);
+  border-color: rgba(255, 43, 214, 0.65);
+  box-shadow: var(--glow-magenta-sm);
 }
 
 /* Mobile Visibility */

@@ -11,16 +11,13 @@ const config: Config = {
                 background: "var(--background)",
                 foreground: "var(--foreground)",
                 gold: "var(--color-gold)",
+                magenta: "var(--color-magenta)",
                 secondary: "var(--text-secondary)",
-                // Quiet Luxury additions
-                sage: {
-                    DEFAULT: "var(--color-sage)",
-                    mist: "var(--color-sage-mist)",
-                    dark: "var(--color-sage-dark)",
-                },
-                ivory: "var(--bg-ivory)",
-                paper: "var(--bg-paper)",
-                charcoal: "var(--text-primary)",
+                surface: "var(--bg-surface)",
+                card: "var(--bg-card)",
+                elevated: "var(--bg-elevated)",
+                primaryText: "var(--text-primary)",
+                tertiary: "var(--text-tertiary)",
             },
             fontFamily: {
                 serif: ['var(--font-cardo)', 'serif'],

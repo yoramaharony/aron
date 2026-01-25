@@ -23,7 +23,7 @@ const staggerContainer = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-ivory)] text-[var(--text-primary)] font-sans selection:bg-[var(--color-sage-mist)] selection:text-[var(--color-sage-dark)]">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-primary)] font-sans selection:bg-[rgba(255,43,214,0.25)] selection:text-[var(--text-primary)]">
 
       {/* HEADER */}
       <header className="p-6 md:px-12 md:py-8 flex justify-between items-end max-w-7xl mx-auto w-full z-10 relative border-b border-transparent">
@@ -37,7 +37,7 @@ export default function LandingPage() {
         </div>
 
         <Link href="/auth/login">
-          <Button variant="ghost" className="text-sm font-medium hover:bg-[var(--color-sage-mist)] hover:text-[var(--color-sage-dark)] transition-colors px-6">
+          <Button variant="ghost" className="text-sm font-medium hover:bg-[rgba(255,43,214,0.10)] hover:text-[var(--text-primary)] transition-colors px-6">
             Member Login
           </Button>
         </Link>
@@ -70,15 +70,15 @@ export default function LandingPage() {
                   <input
                     type="text"
                     placeholder="Enter code"
-                    className="flex-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] px-4 py-3 text-lg outline-none focus:border-[var(--color-sage)] focus:ring-1 focus:ring-[var(--color-sage)] transition-all rounded-sm"
+                    className="flex-1 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.10)] px-4 py-3 text-lg outline-none focus:border-[rgba(255,43,214,0.65)] focus:ring-1 focus:ring-[rgba(255,43,214,0.55)] transition-all rounded-sm placeholder:text-[var(--text-tertiary)]"
                   />
-                  <Button variant="primary" className="bg-[var(--text-primary)] text-white hover:bg-black px-8 rounded-sm">
+                  <Button variant="primary" className="px-8 rounded-sm">
                     Continue
                   </Button>
                 </div>
                 <div className="flex justify-between items-center mt-2 px-1">
                   <span className="text-xs text-[var(--text-secondary)] italic">Access is limited.</span>
-                  <Link href="#" className="text-xs font-medium text-[var(--text-secondary)] underline decoration-[var(--color-sage)] underline-offset-4 hover:text-[var(--text-primary)]">
+                  <Link href="#" className="text-xs font-medium text-[var(--text-secondary)] underline decoration-[var(--color-gold)] underline-offset-4 hover:text-[var(--text-primary)]">
                     Request an invitation
                   </Link>
                 </div>
@@ -88,7 +88,7 @@ export default function LandingPage() {
         </section>
 
         {/* 2) THE LEVERAGE ENGINE (Signature Feature - Moved Up) */}
-        <section className="px-6 py-24 bg-[var(--text-primary)] text-white overflow-hidden relative">
+        <section className="px-6 py-24 overflow-hidden relative bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
           <div className="absolute top-0 right-0 p-32 opacity-5 pointer-events-none">
             <Zap size={400} />
           </div>
@@ -97,7 +97,7 @@ export default function LandingPage() {
             <div className="flex-1 space-y-8">
               <span className="text-[var(--color-gold)] font-bold tracking-[0.2em] text-xs uppercase border border-[var(--color-gold)] px-3 py-1 rounded-full">The Leverage Engine</span>
               <h2 className="text-5xl md:text-6xl font-serif leading-tight">One tap — and your pledge becomes a catalyst.</h2>
-              <p className="text-gray-400 text-lg leading-relaxed max-w-xl">
+              <p className="text-[var(--text-secondary)] text-lg leading-relaxed max-w-xl">
                 Most needs are bigger than any single donor. Yesod turns partial intent into full outcomes by structuring challenge grants, matching aligned donors, and triggering campaigns with clear terms.
               </p>
 
@@ -110,12 +110,12 @@ export default function LandingPage() {
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <CheckCircle size={18} className="text-[var(--color-gold)] mt-1 shrink-0" />
-                    <span className="text-gray-300 text-sm font-medium">{item}</span>
+                    <span className="text-[var(--text-secondary)] text-sm font-medium">{item}</span>
                   </div>
                 ))}
               </div>
 
-              <div className="pt-8 border-t border-gray-800 mt-8">
+              <div className="pt-8 border-t border-[rgba(255,255,255,0.10)] mt-8">
                 <p className="text-[var(--color-gold)] italic font-serif text-xl border-l-2 border-[var(--color-gold)] pl-6">
                   "This isn’t crowdfunding. It’s catalytic capital—private, structured, outcome-driven."
                 </p>
@@ -124,22 +124,22 @@ export default function LandingPage() {
 
             {/* Visual Abstract for Leverage */}
             <div className="flex-1 flex justify-center w-full">
-              <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-8 rounded-2xl w-full max-w-sm relative">
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-[var(--color-gold)] rounded-full blur-[80px] opacity-40"></div>
+              <div className="backdrop-blur-sm border border-white/10 p-8 rounded-2xl w-full max-w-sm relative bg-[rgba(255,255,255,0.03)] shadow-[0_25px_80px_-55px_rgba(0,0,0,0.9)]">
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-[var(--color-gold)] rounded-full blur-[80px] opacity-45"></div>
 
                 <div className="space-y-6">
-                  <div className="flex justify-between items-center text-sm text-gray-400 uppercase tracking-wider font-medium">
+                  <div className="flex justify-between items-center text-sm text-[var(--text-tertiary)] uppercase tracking-wider font-medium">
                     <span>Leverage Offer</span>
                     <span className="text-[var(--color-gold)]">Draft</span>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="bg-white/10 p-4 rounded border border-white/10">
-                      <div className="text-xs text-gray-400 uppercase mb-1">Anchor Pledge</div>
-                      <div className="text-2xl font-serif text-white">$250,000</div>
+                    <div className="bg-white/5 p-4 rounded border border-white/10">
+                      <div className="text-xs text-[var(--text-tertiary)] uppercase mb-1">Anchor Pledge</div>
+                      <div className="text-2xl font-serif text-[var(--text-primary)]">$250,000</div>
                     </div>
                     <div className="flex justify-center -my-2 relative z-10">
-                      <div className="bg-[var(--text-primary)] rounded-full p-1 border border-white/20">
+                      <div className="bg-[rgba(255,255,255,0.06)] rounded-full p-1 border border-white/10">
                         <ChevronRight className="rotate-90 text-[var(--color-gold)]" size={16} />
                       </div>
                     </div>
@@ -150,7 +150,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <Button className="w-full bg-[var(--color-gold)] text-[var(--text-primary)] hover:bg-white font-bold">
+                  <Button variant="primary" className="w-full font-bold">
                     Create Catalytic Offer
                   </Button>
                 </div>
@@ -220,7 +220,7 @@ export default function LandingPage() {
         {/* We keep the parallax component but update the text context around it? 
             Or rely on its internal animation. Let's wrap it in a "Yesod Flow" section header 
         */}
-        <section id="how-it-works" className="py-24 bg-white border-y border-[var(--border-subtle)]">
+        <section id="how-it-works" className="py-24 bg-[var(--bg-surface)] border-y border-[var(--border-subtle)]">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-serif">The Yesod Flow</h2>
             <p className="text-[var(--text-secondary)] mt-2">From intent to outcome in 10 steps</p>
@@ -252,18 +252,18 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="max-w-md mx-auto bg-white p-2 rounded-sm shadow-sm border border-[var(--border-subtle)] flex gap-2">
+            <div className="max-w-md mx-auto bg-[rgba(255,255,255,0.03)] p-2 rounded-sm border border-[rgba(255,255,255,0.10)] flex gap-2 shadow-[0_18px_60px_-45px_rgba(0,0,0,0.9)]">
               <input
                 type="text"
                 placeholder="Invite Code"
-                className="flex-1 bg-white px-4 py-3 outline-none"
+                className="flex-1 bg-transparent px-4 py-3 outline-none text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)]"
               />
-              <Button className="bg-[var(--text-primary)] text-white hover:bg-black px-8">
+              <Button variant="primary" className="px-8">
                 Continue
               </Button>
             </div>
             <div className="text-center mt-6">
-              <Link href="#" className="text-sm font-medium text-[var(--color-sage)] hover:text-[var(--text-primary)] transition-colors">Request an invitation</Link>
+              <Link href="#" className="text-sm font-medium text-[var(--color-gold)] hover:text-[var(--text-primary)] transition-colors">Request an invitation</Link>
             </div>
           </div>
         </section>
@@ -296,16 +296,16 @@ export default function LandingPage() {
         </section>
 
         {/* 7) DISCRETION */}
-        <section className="bg-[var(--text-primary)] text-white px-6 py-32 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-gold)] to-transparent opacity-20" />
+        <section className="px-6 py-32 relative overflow-hidden bg-[radial-gradient(900px_500px_at_70%_0%,rgba(255,43,214,0.16),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-gold)] to-transparent opacity-25" />
 
           <div className="max-w-4xl mx-auto text-center relative z-10">
             <Lock className="mx-auto mb-8 text-[var(--color-gold)]" size={40} />
             <h2 className="text-4xl md:text-5xl font-serif mb-8">Discretion Is a Feature.</h2>
-            <p className="text-gray-400 mb-12 max-w-2xl mx-auto text-lg leading-relaxed">
+            <p className="text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto text-lg leading-relaxed">
               Sensitive details stay private. Every action is logged. Every grant is traceable. Every report is verifiable.
             </p>
-            <div className="flex flex-wrap justify-center gap-12 text-sm font-bold tracking-widest uppercase text-[var(--color-sage)]">
+            <div className="flex flex-wrap justify-center gap-12 text-sm font-bold tracking-widest uppercase text-[var(--color-gold)]">
               <span>Privacy-first defaults</span>
               <span>Audit-ready records</span>
               <span>Controlled visibility</span>
@@ -314,24 +314,24 @@ export default function LandingPage() {
         </section>
 
         {/* 8) FINAL CTA */}
-        <section className="px-6 py-40 text-center bg-[var(--bg-ivory)] relative">
+        <section className="px-6 py-40 text-center bg-[var(--bg-app)] relative">
           <h2 className="text-5xl md:text-7xl font-serif mb-12 text-[var(--text-primary)] tracking-tight">If You’re Invited,<br />You’ll Know.</h2>
 
           <div className="max-w-sm mx-auto mb-8">
-            <div className="flex gap-2 p-1 border border-[var(--border-subtle)] bg-white rounded-sm shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex gap-2 p-1 border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] rounded-sm shadow-[0_18px_60px_-45px_rgba(0,0,0,0.9)] hover:shadow-[0_22px_80px_-55px_rgba(0,0,0,0.9)] transition-shadow">
               <input
                 type="text"
                 placeholder="Enter Invite Code"
-                className="flex-1 bg-transparent px-4 py-3 outline-none text-lg text-center font-medium placeholder:text-gray-300"
+                className="flex-1 bg-transparent px-4 py-3 outline-none text-lg text-center font-medium placeholder:text-[var(--text-tertiary)]"
               />
-              <Button className="bg-[var(--text-primary)] text-white px-8 rounded-sm hover:bg-black font-medium">
+              <Button variant="primary" className="px-8 rounded-sm font-medium">
                 Continue
               </Button>
             </div>
           </div>
 
           <p className="text-[var(--text-secondary)] mb-16">
-            Or <a href="#" className="text-[var(--text-primary)] font-medium underline decoration-[var(--color-sage)] underline-offset-4">request an invitation</a>. Our concierge reviews referrals discreetly.
+            Or <a href="#" className="text-[var(--text-primary)] font-medium underline decoration-[var(--color-gold)] underline-offset-4">request an invitation</a>. Our concierge reviews referrals discreetly.
           </p>
 
           <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.25em] max-w-lg mx-auto leading-loose">

@@ -48,7 +48,7 @@ export default function SignupPage() {
         <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
             <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
                 <div className="text-center mb-8">
-                    <div className="mx-auto w-14 h-14 bg-[rgba(197,160,89,0.1)] rounded-2xl flex items-center justify-center mb-6 text-gold">
+                    <div className="mx-auto w-14 h-14 bg-[rgba(255,43,214,0.10)] rounded-2xl flex items-center justify-center mb-6 text-gold shadow-[0_0_0_1px_rgba(255,43,214,0.20)]">
                         <UserPlus size={28} />
                     </div>
                     <h1 className="text-3xl font-serif mb-3">Create Account</h1>
@@ -58,14 +58,14 @@ export default function SignupPage() {
                 <div className="flex gap-4 p-1 rounded-xl mb-8 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
                     <button
                         type="button"
-                        className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all ${role === 'requestor' ? 'bg-white text-primary shadow-sm border border-[var(--border-subtle)]' : 'text-secondary hover:text-primary'}`}
+                        className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all ${role === 'requestor' ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border border-[rgba(255,43,214,0.20)]' : 'text-secondary hover:text-primary hover:bg-[rgba(255,255,255,0.04)]'}`}
                         onClick={() => setRole('requestor')}
                     >
                         Nonprofit
                     </button>
                     <button
                         type="button"
-                        className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all ${role === 'donor' ? 'bg-white text-primary shadow-sm border border-[var(--border-subtle)]' : 'text-secondary hover:text-primary'}`}
+                        className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all ${role === 'donor' ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border border-[rgba(255,43,214,0.20)]' : 'text-secondary hover:text-primary hover:bg-[rgba(255,255,255,0.04)]'}`}
                         onClick={() => setRole('donor')}
                     >
                         Donor

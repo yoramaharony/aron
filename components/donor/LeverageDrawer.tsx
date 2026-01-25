@@ -30,7 +30,7 @@ export function LeverageDrawer() {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] bg-white z-[101] shadow-2xl overflow-y-auto"
+                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border-l border-[rgba(255,255,255,0.10)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.10),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
                     >
                         <LeverageForm onClose={closeLeverageDrawer} opportunity={activeOpportunity} onCreate={createOffer} />
                     </motion.div>
@@ -99,13 +99,13 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     </div>
                     <h2 className="text-2xl font-serif">Confirm Conditional Offer?</h2>
 
-                    <div className="bg-gray-50 p-6 rounded-lg w-full text-left space-y-3">
+                    <div className="bg-[rgba(255,255,255,0.03)] p-6 rounded-lg w-full text-left space-y-3 border border-[rgba(255,255,255,0.10)]">
                         <div className="flex justify-between">
-                            <span className="text-gray-500">Anchor (Pay Now)</span>
+                            <span className="text-[var(--text-secondary)]">Anchor (Pay Now)</span>
                             <span className="font-bold">${anchor.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span className="text-gray-500">Condition</span>
+                            <span className="text-[var(--text-secondary)]">Condition</span>
                             <span className="font-bold">Raises ${challengeGoal.toLocaleString()}</span>
                         </div>
                         <div className="border-t pt-2 mt-2 flex justify-between text-lg">
@@ -117,7 +117,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     <Button variant="gold" size="lg" className="w-full" onClick={handleCreate}>
                         Create Offer
                     </Button>
-                    <p className="text-xs text-gray-400">Funds are held in escrow until verification.</p>
+                    <p className="text-xs text-[var(--text-tertiary)]">Funds are held in escrow until verification.</p>
                 </div>
             </div>
         );
@@ -126,9 +126,9 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
+            <div className="p-6 border-b border-[rgba(255,255,255,0.10)] flex justify-between items-center sticky top-0 bg-[rgba(10,10,16,0.65)] backdrop-blur z-10">
                 <h2 className="text-lg font-serif">Structure Leverage</h2>
-                <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full"><X size={20} /></button>
+                <button onClick={onClose} className="p-2 hover:bg-[rgba(255,255,255,0.06)] rounded-full"><X size={20} /></button>
             </div>
 
             {/* Content */}
@@ -138,10 +138,10 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                 <div className="space-y-3">
                     <div className="flex gap-2 mb-2">
                         <span className="bg-[var(--bg-ivory)] border border-[var(--color-gold)] text-[var(--color-gold)] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">{opportunity.category}</span>
-                        <span className="bg-gray-100 text-gray-600 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">Gap: ${(opportunity.fundingGap / 1000).toFixed(0)}k</span>
+                        <span className="bg-[rgba(255,255,255,0.06)] text-[var(--text-secondary)] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-[rgba(255,255,255,0.10)]">Gap: ${(opportunity.fundingGap / 1000).toFixed(0)}k</span>
                     </div>
                     <h1 className="text-2xl font-serif leading-tight">{opportunity.title}</h1>
-                    <p className="text-sm text-gray-500">{opportunity.orgName} • {opportunity.location}</p>
+                    <p className="text-sm text-[var(--text-secondary)]">{opportunity.orgName} • {opportunity.location}</p>
                 </div>
 
                 {/* Section B: Builder */}
@@ -158,7 +158,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                     onClick={() => setAnchor(amt)}
                                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${anchor === amt
                                             ? 'bg-[var(--text-primary)] text-white shadow-lg'
-                                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                            : 'bg-[rgba(255,255,255,0.06)] text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.10)]'
                                         }`}
                                 >
                                     ${(amt / 1000).toFixed(0)}k
@@ -176,22 +176,22 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     {/* B2: Goal */}
                     <div>
                         <label className="block text-sm font-medium mb-3">Challenge Goal</label>
-                        <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-lg">
+                        <div className="grid grid-cols-2 gap-2 p-1 bg-[rgba(255,255,255,0.04)] rounded-lg border border-[rgba(255,255,255,0.10)]">
                             <button
                                 onClick={() => setMatchMode('match')}
-                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'match' ? 'bg-white shadow-sm text-black' : 'text-gray-500'}`}
+                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'match' ? 'bg-[rgba(255,43,214,0.12)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
                             >
                                 Match Me (1:1)
                             </button>
                             <button
                                 onClick={() => setMatchMode('remainder')}
-                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'remainder' ? 'bg-white shadow-sm text-black' : 'text-gray-500'}`}
+                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'remainder' ? 'bg-[rgba(255,43,214,0.12)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
                             >
                                 Cover Remainder
                             </button>
                         </div>
-                        <div className="mt-3 text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-100">
-                            Required to raise: <span className="font-bold">${challengeGoal.toLocaleString()}</span>
+                        <div className="mt-3 text-sm text-[var(--text-secondary)] bg-[rgba(255,43,214,0.08)] p-3 rounded border border-[rgba(255,43,214,0.18)]">
+                            Required to raise: <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -202,17 +202,17 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                             type="date"
                             value={deadline}
                             onChange={(e) => setDeadline(e.target.value)}
-                            className="w-full p-2 border rounded-lg focus:ring-[var(--color-gold)]"
+                            className="w-full p-2 border border-[rgba(255,255,255,0.12)] rounded-lg bg-[rgba(255,255,255,0.03)] text-[var(--text-primary)] focus:ring-[var(--color-gold)]"
                         />
                     </div>
 
                     {/* Terms */}
                     <div className="space-y-2 pt-2">
-                        <label className="flex items-center gap-2 text-sm text-gray-600">
+                        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                             <input type="checkbox" checked={proofRequired} onChange={e => setProofRequired(e.target.checked)} className="rounded text-[var(--color-gold)] focus:ring-[var(--color-gold)]" />
                             Require 3rd party verification
                         </label>
-                        <label className="flex items-center gap-2 text-sm text-gray-600">
+                        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                             <input type="checkbox" checked={milestones} onChange={e => setMilestones(e.target.checked)} className="rounded text-[var(--color-gold)] focus:ring-[var(--color-gold)]" />
                             Release in milestones (50/50)
                         </label>
@@ -224,10 +224,10 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
             {/* Footer */}
             <div className="p-6 border-t bg-[var(--bg-surface)] sticky bottom-0">
                 {/* Live Summary */}
-                <div className="mb-4 text-sm leading-relaxed text-gray-600 bg-white p-3 rounded border shadow-sm">
-                    Commit <span className="font-bold text-black">${anchor.toLocaleString()}</span> now.
-                    If they raise <span className="font-bold text-black">${challengeGoal.toLocaleString()}</span> by {deadline},
-                    we release <span className="font-bold text-black">${topUpAmount.toLocaleString()}</span>.
+                <div className="mb-4 text-sm leading-relaxed text-[var(--text-secondary)] bg-[rgba(255,255,255,0.03)] p-3 rounded border border-[rgba(255,255,255,0.10)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)]">
+                    Commit <span className="font-bold text-[var(--text-primary)]">${anchor.toLocaleString()}</span> now.
+                    If they raise <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span> by {deadline},
+                    we release <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>.
                 </div>
 
                 <div className="flex gap-3">

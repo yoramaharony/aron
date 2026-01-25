@@ -35,11 +35,11 @@ export function RequestorNav() {
                                 className={clsx(
                                     'flex items-center gap-3 p-3 rounded-lg transition-all duration-200',
                                     isActive
-                                        ? 'bg-[var(--bg-surface)] text-[var(--color-gold)] font-medium shadow-sm'
-                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-gray-50'
+                                        ? 'bg-[rgba(255,43,214,0.10)] text-[var(--color-gold)] font-medium shadow-[0_0_0_1px_rgba(255,43,214,0.25)]'
+                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
                                 )}
                             >
-                                <item.icon size={20} className={isActive ? 'text-[var(--color-gold)]' : 'text-gray-400'} />
+                                <item.icon size={20} className={isActive ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'} />
                                 <span>{item.label}</span>
                             </Link>
                         );
@@ -48,7 +48,7 @@ export function RequestorNav() {
 
                 <div className="pt-6 border-t border-[var(--border-subtle)]">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-medium">
+                        <div className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.06)] text-[var(--text-primary)] flex items-center justify-center text-xs font-medium border border-[var(--border-subtle)]">
                             NP
                         </div>
                         <div>
