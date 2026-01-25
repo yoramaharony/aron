@@ -18,6 +18,9 @@
   --color-magenta-dim: #ff7ae6;
   --color-magenta-hover: #ff4bdd;
 
+  /* Success */
+  --color-green: #22c55e;
+
   /* Legacy accent names (map to magenta) */
   --color-sage: var(--color-magenta);
   --color-sage-mist: rgba(255, 43, 214, 0.12);
@@ -64,16 +67,17 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: 'Playfair Display', serif;
-  /* Keep serif for headers for luxury feel */
-  font-weight: 600;
-  letter-spacing: -0.02em;
+/* Headings inherit the site font (Inter) for consistency. */
+
+/* Material Symbols (Google icons) */
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 500,
+    'GRAD' 0,
+    'opsz' 24;
+  line-height: 1;
+  user-select: none;
 }
 
 /* Components */

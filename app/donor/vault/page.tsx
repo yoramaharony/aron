@@ -31,7 +31,7 @@ export default function DonorVault() {
         <div style={{ paddingTop: '2rem' }}>
             <div className="flex justify-between items-end mb-8">
                 <div>
-                    <h1 className="text-3xl font-serif">Vault</h1>
+                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Vault</h1>
                     <p className="text-secondary">Secure storage for your legal and tax documents</p>
                 </div>
                 <Button variant="primary" size="sm" leftIcon={<Download size={16} />}>
@@ -40,10 +40,16 @@ export default function DonorVault() {
             </div>
 
             <Card noPadding className="overflow-hidden">
-                <div className="p-4 border-b border-[var(--border-subtle)] flex gap-4 items-center bg-gray-50/50">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-500 ml-2">Filter by:</span>
+                <div className="p-4 border-b border-[var(--border-subtle)] flex gap-4 items-center bg-[rgba(255,255,255,0.03)]">
+                    <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] ml-2">Filter by:</span>
                     {['All', 'Legal', 'Tax', 'Strategy', 'Offers'].map(f => (
-                        <button key={f} className={`text-xs font-medium px-3 py-1.5 rounded-full ${f === 'All' ? 'bg-white shadow-sm text-black' : 'text-gray-500 hover:bg-gray-200'}`}>
+                        <button
+                            key={f}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors ${f === 'All'
+                                ? 'bg-[var(--bg-card)] shadow-sm text-[var(--text-primary)] border border-[var(--border-subtle)]'
+                                : 'text-[var(--text-tertiary)] hover:bg-[rgba(255,255,255,0.06)] hover:text-[var(--text-primary)]'
+                                }`}
+                        >
                             {f}
                         </button>
                     ))}
@@ -51,17 +57,20 @@ export default function DonorVault() {
 
                 <div className="divide-y divide-[var(--border-subtle)]">
                     {allDocs.map((doc) => (
-                        <div key={doc.id} className={`p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors group ${doc.isNew ? 'bg-[var(--bg-ivory)]' : ''}`}>
-                            <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center shrink-0">
-                                <FileText size={20} className={doc.isNew ? 'text-[var(--color-gold)]' : 'text-gray-400'} />
+                        <div
+                            key={doc.id}
+                            className={`p-4 flex items-center gap-4 transition-colors group hover:bg-[rgba(255,255,255,0.04)] ${doc.isNew ? 'bg-[rgba(255,43,214,0.06)]' : ''}`}
+                        >
+                            <div className="w-10 h-10 rounded bg-[rgba(255,255,255,0.04)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
+                                <FileText size={20} className={doc.isNew ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'} />
                             </div>
 
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-medium text-gray-900 truncate">{doc.name}</h4>
+                                    <h4 className="font-medium text-[var(--text-primary)] truncate">{doc.name}</h4>
                                     {doc.isNew && <span className="bg-[var(--color-gold)] text-white text-[9px] font-bold px-1.5 py-0.5 rounded uppercase">New</span>}
                                 </div>
-                                <div className="flex items-center gap-3 text-xs text-gray-500">
+                                <div className="flex items-center gap-3 text-xs text-[var(--text-tertiary)]">
                                     <span>{doc.type}</span>
                                     <span>•</span>
                                     <span>{doc.size}</span>
@@ -71,7 +80,7 @@ export default function DonorVault() {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                <span className="text-xs font-medium px-2 py-1 bg-gray-100 rounded text-gray-600 hidden md:block">
+                                <span className="text-xs font-medium px-2 py-1 bg-[rgba(255,255,255,0.04)] border border-[var(--border-subtle)] rounded text-[var(--text-secondary)] hidden md:block">
                                     {doc.category}
                                 </span>
                                 <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">

@@ -19,7 +19,7 @@ export default function OpportunityDetailsPage() {
     const opportunity = MOCK_REQUESTS.find(r => r.id === id);
 
     if (!opportunity) {
-        return <div className="p-8 text-center text-gray-500">Opportunity not found</div>;
+        return <div className="p-8 text-center text-[var(--text-tertiary)]">Opportunity not found</div>;
     }
 
     // Determine current status for button states
@@ -50,14 +50,14 @@ export default function OpportunityDetailsPage() {
         <div className="max-w-5xl mx-auto pb-24 pt-8 animate-in fade-in duration-300">
             {/* HEADER */}
             <header className="flex justify-between items-start mb-6 px-4 md:px-0 sticky top-4 z-40">
-                <Button variant="outline" size="sm" onClick={handleBack} className="gap-2 bg-white/90 backdrop-blur">
+                <Button variant="outline" size="sm" onClick={handleBack} className="gap-2 bg-[rgba(255,255,255,0.06)] backdrop-blur">
                     <ChevronLeft size={16} />
                     Back
                 </Button>
 
                 <div className="flex gap-3">
                     {!isSaved && (
-                        <Button variant="outline" size="sm" onClick={handleSave} className="bg-white/90 backdrop-blur">
+                        <Button variant="outline" size="sm" onClick={handleSave} className="bg-[rgba(255,255,255,0.06)] backdrop-blur">
                             <Heart size={16} className="mr-2" />
                             Save
                         </Button>
@@ -67,7 +67,12 @@ export default function OpportunityDetailsPage() {
                         Leverage
                     </Button>
                     {!isPassed && (
-                        <Button variant="ghost" size="sm" onClick={handlePass} className="text-gray-500 hover:text-red-500 hover:bg-red-50">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handlePass}
+                            className="text-[var(--text-tertiary)] hover:text-[rgba(248,113,113,1)] hover:bg-[rgba(248,113,113,0.10)]"
+                        >
                             <X size={16} className="mr-2" />
                             Pass
                         </Button>
@@ -82,7 +87,7 @@ export default function OpportunityDetailsPage() {
                     <div className="relative h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-sm">
                         <img src={opportunity.imageUrl} alt={opportunity.title} className="w-full h-full object-cover" />
                         <div className="absolute top-4 left-4 flex gap-2">
-                            <span className="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-gold">
+                            <span className="bg-[rgba(255,255,255,0.08)] border border-[var(--border-subtle)] backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-[var(--color-gold)]">
                                 {opportunity.matchPotential}% Match
                             </span>
                             <span className="bg-black/50 backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-white">
@@ -94,33 +99,33 @@ export default function OpportunityDetailsPage() {
                     <div>
                         <div className="flex justify-between items-start">
                             <div>
-                                <h1 className="text-3xl font-serif text-gray-900 mb-2">{opportunity.title}</h1>
-                                <p className="text-gray-500 text-lg">{opportunity.orgName} • {opportunity.location}</p>
+                                <h1 className="text-3xl font-semibold text-[var(--text-primary)] mb-2">{opportunity.title}</h1>
+                                <p className="text-[var(--text-secondary)] text-lg">{opportunity.orgName} • {opportunity.location}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="prose prose-lg text-secondary">
+                    <div className="text-[var(--text-secondary)] text-lg leading-relaxed">
                         <p>{opportunity.summary}</p>
                     </div>
 
                     {/* KEY METRICS CARD */}
-                    <Card className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-gray-100 bg-gray-50/50">
+                    <Card className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)]">
                         <div className="p-4 text-center">
                             <div className="text-xs text-secondary uppercase tracking-wider mb-1">Funding Gap</div>
-                            <div className="text-xl font-bold font-serif text-gray-900">${(opportunity.fundingGap / 1000).toFixed(0)}k</div>
+                            <div className="text-xl font-bold text-[var(--text-primary)]">${(opportunity.fundingGap / 1000).toFixed(0)}k</div>
                         </div>
                         <div className="p-4 text-center">
                             <div className="text-xs text-secondary uppercase tracking-wider mb-1">Timeline</div>
-                            <div className="text-xl font-bold font-serif text-gray-900">6 mo</div>
+                            <div className="text-xl font-bold text-[var(--text-primary)]">6 mo</div>
                         </div>
                         <div className="p-4 text-center">
                             <div className="text-xs text-secondary uppercase tracking-wider mb-1">Confidence</div>
-                            <div className="text-xl font-bold font-serif text-green-600">{opportunity.executionConfidence}%</div>
+                            <div className="text-xl font-bold text-[var(--color-green)]">{opportunity.executionConfidence}%</div>
                         </div>
                         <div className="p-4 text-center">
                             <div className="text-xs text-secondary uppercase tracking-wider mb-1">Overhead</div>
-                            <div className="text-xl font-bold font-serif text-gray-900">{opportunity.overhead}%</div>
+                            <div className="text-xl font-bold text-[var(--text-primary)]">{opportunity.overhead}%</div>
                         </div>
                     </Card>
                 </div>
@@ -129,42 +134,42 @@ export default function OpportunityDetailsPage() {
                 <div className="space-y-6">
 
                     {/* AI INSIGHTS */}
-                    <Card className="!border-violet-100 !bg-violet-50/30 overflow-hidden relative">
+                    <Card className="overflow-hidden relative border-[rgba(255,43,214,0.20)] bg-[rgba(255,43,214,0.06)]">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
                             <Zap size={80} />
                         </div>
                         <div className="p-6 relative">
-                            <h3 className="text-sm font-bold text-violet-900 uppercase tracking-widest mb-4 flex items-center gap-2">
-                                <Zap size={16} className="text-violet-600" fill="currentColor" />
+                            <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <Zap size={16} className="text-[var(--color-gold)]" fill="currentColor" />
                                 AI Insights
                             </h3>
 
                             <div className="space-y-4">
                                 <div>
-                                    <h4 className="text-xs font-bold text-violet-800 uppercase mb-2">Why It Matches</h4>
+                                    <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase mb-2">Why It Matches</h4>
                                     <div className="space-y-2">
                                         {opportunity.aiInsights?.matchReason.map((reason, i) => (
-                                            <div key={i} className="flex items-start gap-2 text-sm text-violet-900">
-                                                <CheckCircle size={14} className="mt-0.5 text-violet-600 shrink-0" />
+                                            <div key={i} className="flex items-start gap-2 text-sm text-[var(--text-primary)]">
+                                                <CheckCircle size={14} className="mt-0.5 text-[var(--color-gold)] shrink-0" />
                                                 <span>{reason.label}</span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="h-px bg-violet-200/50" />
+                                <div className="h-px bg-[var(--border-subtle)]" />
 
                                 <div>
-                                    <h4 className="text-xs font-bold text-red-800 uppercase mb-2">Risks & Mitigations</h4>
+                                    <h4 className="text-xs font-bold text-[rgba(248,113,113,1)] uppercase mb-2">Risks & Mitigations</h4>
                                     <div className="space-y-3">
                                         {opportunity.aiInsights?.risks.map((risk, i) => (
-                                            <div key={i} className="bg-white/60 p-2 rounded border border-violet-100">
-                                                <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+                                            <div key={i} className="bg-[rgba(255,255,255,0.03)] p-2 rounded border border-[var(--border-subtle)]">
+                                                <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
                                                     <AlertTriangle size={14} className={risk.severity === 'High' ? 'text-red-500' : 'text-amber-500'} />
                                                     {risk.label}
                                                 </div>
                                                 {risk.mitigation && (
-                                                    <div className="text-xs text-gray-500 ml-6 mt-1">Mitigation: {risk.mitigation}</div>
+                                                    <div className="text-xs text-[var(--text-tertiary)] ml-6 mt-1">Mitigation: {risk.mitigation}</div>
                                                 )}
                                             </div>
                                         ))}
@@ -187,16 +192,21 @@ export default function OpportunityDetailsPage() {
                     {/* DILIGENCE PACK */}
                     <Card>
                         <div className="p-6">
-                            <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-widest mb-4 flex items-center gap-2">
                                 <ShieldCheck size={16} />
                                 Diligence Pack
                             </h3>
 
                             <div className="space-y-3">
                                 {opportunity.diligence && Object.entries(opportunity.diligence).map(([key, status]) => (
-                                    <div key={key} className="flex justify-between items-center text-sm py-1 border-b border-gray-50 last:border-0">
-                                        <span className="capitalize text-gray-600">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${status === 'Reviewed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                    <div key={key} className="flex justify-between items-center text-sm py-1 border-b border-[var(--border-subtle)] last:border-0">
+                                        <span className="capitalize text-[var(--text-secondary)]">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                        <span
+                                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${status === 'Reviewed'
+                                                ? 'bg-[rgba(34,197,94,0.14)] text-[var(--color-green)] border-[rgba(34,197,94,0.22)]'
+                                                : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[var(--border-subtle)]'
+                                                }`}
+                                        >
                                             {status}
                                         </span>
                                     </div>

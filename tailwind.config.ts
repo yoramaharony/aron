@@ -20,7 +20,8 @@ const config: Config = {
                 tertiary: "var(--text-tertiary)",
             },
             fontFamily: {
-                serif: ['var(--font-cardo)', 'serif'],
+                // Keep `font-serif` available, but map it to the same font as the rest of the app.
+                serif: ['var(--font-inter)', 'sans-serif'],
                 sans: ['var(--font-inter)', 'sans-serif'],
             }
         },

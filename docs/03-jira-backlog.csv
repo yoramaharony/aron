@@ -1,0 +1,22 @@
+Issue Type,Summary,Description,Priority,Labels,Epic Name
+Epic,Auth & Access,Authentication, sessions, and role-based access control.,High,"auth,security",Auth & Access
+Story,Invite-code gating (landing),Implement invite-code validation + flow (or remove UI if not in scope). Decide storage/issuance of codes.,High,"mvp,auth",Auth & Access
+Story,Password reset / account recovery,Implement password reset flow (email provider + token storage).,Medium,"auth",Auth & Access
+Epic,Requestor (Nonprofit) Portal,Everything under /requestor for authenticated nonprofits.,High,"requestor,mvp",Requestor (Nonprofit) Portal
+Story,Request edit + draft saving,Add PUT/PATCH API for requests + UI to save drafts; enforce ownership.,High,"requests,mvp",Requestor (Nonprofit) Portal
+Story,Request attachments upload,Implement real file uploads (S3/GCS/etc) + link to requests.,Medium,"files",Requestor (Nonprofit) Portal
+Story,Request status workflow,Define statuses + transitions (draft->pending->active/rejected) and implement.,High,"workflow",Requestor (Nonprofit) Portal
+Epic,Donor Portal,Everything under /donor for authenticated donors.,High,"donor,mvp",Donor Portal
+Story,Replace donor mock feed with DB data,Wire donor feed/details to real requests from DB (or a dedicated donor feed API).,High,"requests,mvp",Donor Portal
+Story,Persist leverage offers,Add DB tables + APIs for leverage offers; replace client-only context state.,High,"leverage",Donor Portal
+Story,Persist inbox messages + vault docs,Add DB tables + APIs; connect UI to server data.,Medium,"inbox,vault",Donor Portal
+Story,Persist legacy plan,Add DB table/API and store generated legacy plan per donor.,Medium,"legacy",Donor Portal
+Epic,Campaigns,Campaign lifecycle and analytics.,Medium,"campaigns",Campaigns
+Story,Campaign create/update APIs,Implement POST/PUT for campaigns + permission checks.,Medium,"campaigns",Campaigns
+Story,Campaigns UI (requestor),Connect /requestor/campaigns to real data and basic KPIs.,Low,"campaigns,ui",Campaigns
+Epic,Requester Portal (Grant Seekers),Unprotected /requester flows and submission wizard.,Medium,"requester",Requester Portal (Grant Seekers)
+Story,Decide requester vs requestor product direction,Clarify if /requester is public and how it maps to authenticated requestors.,High,"product",Requester Portal (Grant Seekers)
+Story,Connect requester wizard to backend,Add API endpoints + persistence for /requester/projects/new flow.,Medium,"requester,api",Requester Portal (Grant Seekers)
+Epic,Admin/Concierge Tools,Internal tooling for review and operations.,Medium,"admin",Admin/Concierge Tools
+Story,Admin review queue for requests,Build simple admin UI + APIs to approve/reject requests.,High,"admin,workflow",Admin/Concierge Tools
+Story,Audit log,Add audit logging for sensitive actions (auth, approvals, offer creation).,Low,"security",Admin/Concierge Tools

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLeverage, LeverageOffer } from '@/components/providers/LeverageContext';
 import { Button } from '@/components/ui/Button';
-import { X, Calendar, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { X, Calendar, ChevronRight, CheckCircle2, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function LeverageDrawer() {
@@ -21,7 +21,7 @@ export function LeverageDrawer() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={closeLeverageDrawer}
-                        className="fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
+                        className="fixed inset-0 bg-black/65 z-[100] backdrop-blur-[2px]"
                     />
 
                     {/* Drawer */}
@@ -30,7 +30,7 @@ export function LeverageDrawer() {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border-l border-[rgba(255,255,255,0.10)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.10),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
+                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border-l border-[rgba(255,255,255,0.10)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.14),transparent_55%),linear-gradient(180deg,rgba(12,12,20,0.92),rgba(10,10,16,0.86))]"
                     >
                         <LeverageForm onClose={closeLeverageDrawer} opportunity={activeOpportunity} onCreate={createOffer} />
                     </motion.div>
@@ -126,8 +126,8 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="p-6 border-b border-[rgba(255,255,255,0.10)] flex justify-between items-center sticky top-0 bg-[rgba(10,10,16,0.65)] backdrop-blur z-10">
-                <h2 className="text-lg font-serif">Structure Leverage</h2>
+            <div className="p-6 border-b border-[rgba(255,255,255,0.10)] flex justify-between items-center sticky top-0 bg-[rgba(10,10,16,0.88)] backdrop-blur z-10">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)]">Structure Leverage</h2>
                 <button onClick={onClose} className="p-2 hover:bg-[rgba(255,255,255,0.06)] rounded-full"><X size={20} /></button>
             </div>
 
@@ -140,7 +140,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         <span className="bg-[var(--bg-ivory)] border border-[var(--color-gold)] text-[var(--color-gold)] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">{opportunity.category}</span>
                         <span className="bg-[rgba(255,255,255,0.06)] text-[var(--text-secondary)] text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider border border-[rgba(255,255,255,0.10)]">Gap: ${(opportunity.fundingGap / 1000).toFixed(0)}k</span>
                     </div>
-                    <h1 className="text-2xl font-serif leading-tight">{opportunity.title}</h1>
+                    <h1 className="text-2xl font-semibold leading-tight text-[var(--text-primary)]">{opportunity.title}</h1>
                     <p className="text-sm text-[var(--text-secondary)]">{opportunity.orgName} • {opportunity.location}</p>
                 </div>
 
@@ -156,9 +156,9 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                 <button
                                     key={amt}
                                     onClick={() => setAnchor(amt)}
-                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${anchor === amt
-                                            ? 'bg-[var(--text-primary)] text-white shadow-lg'
-                                            : 'bg-[rgba(255,255,255,0.06)] text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.10)] border border-[rgba(255,255,255,0.10)]'
+                                    className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all border focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] ${anchor === amt
+                                        ? 'bg-[rgba(255,43,214,0.20)] text-[var(--text-primary)] border-[rgba(255,43,214,0.35)] shadow-[0_18px_50px_-34px_rgba(255,43,214,0.9)]'
+                                        : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:text-[var(--text-primary)]'
                                         }`}
                                 >
                                     ${(amt / 1000).toFixed(0)}k
@@ -208,13 +208,37 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
 
                     {/* Terms */}
                     <div className="space-y-2 pt-2">
-                        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                            <input type="checkbox" checked={proofRequired} onChange={e => setProofRequired(e.target.checked)} className="rounded text-[var(--color-gold)] focus:ring-[var(--color-gold)]" />
-                            Require 3rd party verification
+                        <label className="group flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={proofRequired}
+                                onChange={e => setProofRequired(e.target.checked)}
+                                className="peer sr-only"
+                            />
+                            <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] flex items-center justify-center transition-all group-hover:bg-[rgba(255,255,255,0.06)] peer-checked:bg-[rgba(255,43,214,0.22)] peer-checked:border-[rgba(255,43,214,0.45)] peer-focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] peer-checked:[&>span]:opacity-100 peer-checked:[&>span]:scale-100">
+                                <span className="text-[var(--text-primary)] opacity-0 scale-75 transition-all">
+                                    <Check size={14} strokeWidth={3} />
+                                </span>
+                            </span>
+                            <span className="group-hover:text-[var(--text-primary)] transition-colors">
+                                Require 3rd party verification
+                            </span>
                         </label>
-                        <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                            <input type="checkbox" checked={milestones} onChange={e => setMilestones(e.target.checked)} className="rounded text-[var(--color-gold)] focus:ring-[var(--color-gold)]" />
-                            Release in milestones (50/50)
+                        <label className="group flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer select-none">
+                            <input
+                                type="checkbox"
+                                checked={milestones}
+                                onChange={e => setMilestones(e.target.checked)}
+                                className="peer sr-only"
+                            />
+                            <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] flex items-center justify-center transition-all group-hover:bg-[rgba(255,255,255,0.06)] peer-checked:bg-[rgba(255,43,214,0.22)] peer-checked:border-[rgba(255,43,214,0.45)] peer-focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] peer-checked:[&>span]:opacity-100 peer-checked:[&>span]:scale-100">
+                                <span className="text-[var(--text-primary)] opacity-0 scale-75 transition-all">
+                                    <Check size={14} strokeWidth={3} />
+                                </span>
+                            </span>
+                            <span className="group-hover:text-[var(--text-primary)] transition-colors">
+                                Release in milestones (50/50)
+                            </span>
                         </label>
                     </div>
 
