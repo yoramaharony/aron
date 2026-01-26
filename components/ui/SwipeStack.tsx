@@ -4,13 +4,11 @@ import { useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform, PanInfo } from 'framer-motion';
 import { Card } from './Card';
 import { Button } from './Button';
-import { X, Heart, Zap, RefreshCcw, MessageSquare } from 'lucide-react';
+import { X, Heart, Zap, RefreshCcw, CheckCircle, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { DonationRequest } from '@/lib/mock-data';
-import { useRouter } from 'next/navigation';
 import { useLeverage } from '@/components/providers/LeverageContext';
 
-export function SwipeStack({ items }: { items: DonationRequest[] }) {
-    const router = useRouter(); // Initialize Router
+export function SwipeStack({ items, variant = 'compact' }: { items: DonationRequest[], variant?: 'compact' | 'detail' }) {
     const { saveOpportunity, passOpportunity, openLeverageDrawer } = useLeverage();
     // ... existing state ...
     const [stack, setStack] = useState(items);
@@ -40,10 +38,6 @@ export function SwipeStack({ items }: { items: DonationRequest[] }) {
         setStack((prev) => prev.slice(1));
     };
 
-    const handleTap = (id: string) => {
-        router.push(`/donor/${id}`);
-    };
-
     // ... handleSwipe ...
     const handleSwipe = (id: string, dir: 'left' | 'right' | 'up') => {
         if (dir === 'left') {
@@ -70,28 +64,42 @@ export function SwipeStack({ items }: { items: DonationRequest[] }) {
     };
 
     return (
-        <div className="relative h-[500px] w-full max-w-md mx-auto mt-4 flex items-center justify-center">
+        <div className={variant === 'detail'
+            ? 'relative w-full mx-auto mt-4 flex items-center justify-center h-[calc(100vh-260px)] min-h-[620px]'
+            : 'relative h-[500px] w-full max-w-md mx-auto mt-4 flex items-center justify-center'
+        }>
 
             {/* BACKGROUND/NEXT CARD */}
             {nextItem && (
                 <div className="absolute w-full h-full scale-[0.95] translate-y-4 opacity-100 -z-10">
-                    <StaticCard item={nextItem} />
+                    {variant === 'detail' ? <StaticCard item={nextItem} variant="detail" /> : <StaticCard item={nextItem} />}
                 </div>
             )}
 
             {/* ACTIVE CARD */}
             <AnimatePresence>
-                <DraggableCard
-                    key={activeItem.id}
-                    item={activeItem}
-                    // ... existing props ...
-                    onSwipe={(id, dir) => handleSwipe(id, dir)}
-                    onLeverage={() => openLeverageDrawer(activeItem)}
-                    onTap={() => handleTap(activeItem.id)}
-                />
+                {variant === 'detail' ? (
+                    <DraggableDetailCard
+                        key={activeItem.id}
+                        item={activeItem}
+                        onSwipe={(id, dir) => handleSwipe(id, dir)}
+                        onLeverage={() => openLeverageDrawer(activeItem)}
+                    />
+                ) : (
+                    <DraggableCard
+                        key={activeItem.id}
+                        item={activeItem}
+                        onSwipe={(id, dir) => handleSwipe(id, dir)}
+                        onLeverage={() => openLeverageDrawer(activeItem)}
+                        onTap={() => {}}
+                    />
+                )}
             </AnimatePresence>
             {/* ... controls ... */}
-            <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-4 items-center z-50">
+            <div className={variant === 'detail'
+                ? 'absolute -bottom-16 left-0 right-0 flex justify-center gap-4 items-center z-50'
+                : 'absolute -bottom-16 left-0 right-0 flex justify-center gap-4 items-center z-50'
+            }>
                 <Button
                     variant="outline"
                     className="h-12 px-6 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] hover:scale-105 transition-transform text-[var(--text-secondary)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)] flex items-center gap-2"
@@ -242,10 +250,190 @@ function DraggableCard({ item, onSwipe, onLeverage, onTap }: { item: DonationReq
     );
 }
 
-function StaticCard({ item }: { item: DonationRequest }) {
+function DraggableDetailCard({ item, onSwipe, onLeverage }: { item: DonationRequest, onSwipe: (id: string, dir: 'left' | 'right' | 'up') => void, onLeverage: () => void }) {
+    const x = useMotionValue(0);
+    const rotate = useTransform(x, [-220, 220], [-6, 6]);
+
+    const handleDragEnd = (_: any, info: PanInfo) => {
+        const threshold = 120;
+        if (info.offset.x > threshold) {
+            onSwipe(item.id, 'right');
+        } else if (info.offset.x < -threshold) {
+            onSwipe(item.id, 'left');
+        }
+    };
+
+    return (
+        <motion.div
+            style={{ x, rotate }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.18}
+            onDragEnd={handleDragEnd}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 18, transition: { duration: 0.15 } }}
+            className="absolute w-full h-full"
+        >
+            <Card noPadding className="h-full overflow-hidden border-[var(--border-subtle)] shadow-2xl select-none">
+                {/* Actions bar (no Back button) */}
+                <div className="sticky top-0 z-20 px-5 py-4 border-b border-[var(--border-subtle)] bg-[rgba(10,10,16,0.88)] backdrop-blur flex justify-end gap-3">
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => onSwipe(item.id, 'right')}>
+                        <Heart size={16} />
+                        Save
+                    </Button>
+                    <Button variant="gold" size="sm" className="gap-2" onClick={onLeverage}>
+                        <Zap size={16} />
+                        Leverage
+                    </Button>
+                    <Button variant="ghost" size="sm" className="gap-2" onClick={() => onSwipe(item.id, 'left')}>
+                        <X size={16} />
+                        Pass
+                    </Button>
+                </div>
+
+                {/* Content (full detail) */}
+                <div className="h-full overflow-y-auto">
+                    {/* HERO */}
+                    <div className="relative h-[320px] md:h-[420px] overflow-hidden">
+                        <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                        <div className="absolute top-5 left-5 flex gap-2">
+                            <span className="bg-[rgba(255,255,255,0.10)] border border-[var(--border-subtle)] backdrop-blur px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-[var(--color-gold)]">
+                                {item.matchPotential}% Match
+                            </span>
+                            <span className="bg-black/50 border border-[rgba(255,255,255,0.10)] backdrop-blur px-3 py-1 rounded-full text-xs font-medium text-white">
+                                {item.category}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="p-6 md:p-8 space-y-8">
+                        <div className="space-y-2">
+                            <h1 className="text-3xl md:text-4xl font-semibold text-[var(--text-primary)] leading-tight">
+                                {item.title}
+                            </h1>
+                            <p className="text-[var(--text-secondary)] text-lg">
+                                {item.orgName} • {item.location}
+                            </p>
+                            <p className="text-[var(--text-secondary)] text-lg leading-relaxed max-w-3xl">
+                                {item.summary}
+                            </p>
+                        </div>
+
+                        {/* METRICS */}
+                        <Card className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)]">
+                            <div className="p-4 text-center">
+                                <div className="text-xs text-secondary uppercase tracking-wider mb-1">Funding Gap</div>
+                                <div className="text-xl font-bold text-[var(--text-primary)]">${(item.fundingGap / 1000).toFixed(0)}k</div>
+                            </div>
+                            <div className="p-4 text-center">
+                                <div className="text-xs text-secondary uppercase tracking-wider mb-1">Timeline</div>
+                                <div className="text-xl font-bold text-[var(--text-primary)]">6 mo</div>
+                            </div>
+                            <div className="p-4 text-center">
+                                <div className="text-xs text-secondary uppercase tracking-wider mb-1">Confidence</div>
+                                <div className="text-xl font-bold text-[var(--color-green)]">{item.executionConfidence}%</div>
+                            </div>
+                            <div className="p-4 text-center">
+                                <div className="text-xs text-secondary uppercase tracking-wider mb-1">Overhead</div>
+                                <div className="text-xl font-bold text-[var(--text-primary)]">{item.overhead}%</div>
+                            </div>
+                        </Card>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            {/* AI INSIGHTS */}
+                            <div className="lg:col-span-1">
+                                <Card className="overflow-hidden relative border-[rgba(255,43,214,0.20)] bg-[rgba(255,43,214,0.06)]">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                                        <Zap size={80} />
+                                    </div>
+                                    <div className="p-6 relative">
+                                        <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <Zap size={16} className="text-[var(--color-gold)]" fill="currentColor" />
+                                            AI Insights
+                                        </h3>
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h4 className="text-xs font-bold text-[var(--text-secondary)] uppercase mb-2">Why It Matches</h4>
+                                                <div className="space-y-2">
+                                                    {item.aiInsights?.matchReason?.map((reason, i) => (
+                                                        <div key={i} className="flex items-start gap-2 text-sm text-[var(--text-primary)]">
+                                                            <CheckCircle size={14} className="mt-0.5 text-[var(--color-gold)] shrink-0" />
+                                                            <span>{reason.label}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="h-px bg-[var(--border-subtle)]" />
+
+                                            <div>
+                                                <h4 className="text-xs font-bold text-[rgba(248,113,113,1)] uppercase mb-2">Risks & Mitigations</h4>
+                                                <div className="space-y-3">
+                                                    {item.aiInsights?.risks?.map((risk, i) => (
+                                                        <div key={i} className="bg-[rgba(255,255,255,0.03)] p-3 rounded border border-[var(--border-subtle)]">
+                                                            <div className="flex items-center gap-2 text-sm font-medium text-[var(--text-primary)]">
+                                                                <AlertTriangle size={14} className={risk.severity === 'High' ? 'text-red-500' : 'text-amber-500'} />
+                                                                {risk.label}
+                                                            </div>
+                                                            {risk.mitigation && (
+                                                                <div className="text-xs text-[var(--text-tertiary)] ml-6 mt-1">
+                                                                    Mitigation: {risk.mitigation}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </Card>
+                            </div>
+
+                            {/* DILIGENCE */}
+                            <div className="lg:col-span-2">
+                                <Card>
+                                    <div className="p-6">
+                                        <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-widest mb-4 flex items-center gap-2">
+                                            <ShieldCheck size={16} />
+                                            Diligence Pack
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {item.diligence && Object.entries(item.diligence).map(([key, status]) => (
+                                                <div key={key} className="flex justify-between items-center text-sm py-2 border-b border-[var(--border-subtle)] last:border-0">
+                                                    <span className="capitalize text-[var(--text-secondary)]">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                                                    <span
+                                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase border ${status === 'Reviewed'
+                                                            ? 'bg-[rgba(34,197,94,0.14)] text-[var(--color-green)] border-[rgba(34,197,94,0.22)]'
+                                                            : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[var(--border-subtle)]'
+                                                            }`}
+                                                    >
+                                                        {status}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </Card>
+                            </div>
+                        </div>
+
+                        <div className="pb-10 text-xs text-[var(--text-tertiary)]">
+                            Tip: swipe left/right to Pass/Save (optional).
+                        </div>
+                    </div>
+                </div>
+            </Card>
+        </motion.div>
+    );
+}
+
+function StaticCard({ item, variant = 'compact' }: { item: DonationRequest, variant?: 'compact' | 'detail' }) {
     return (
         <Card noPadding className="h-full flex flex-col overflow-hidden border-[var(--border-subtle)] shadow-sm select-none opacity-90">
-            <div className="relative h-[40%] bg-[rgba(255,255,255,0.03)]">
+            <div className={variant === 'detail' ? 'relative h-[320px] bg-[rgba(255,255,255,0.03)]' : 'relative h-[40%] bg-[rgba(255,255,255,0.03)]'}>
                 <img src={item.imageUrl} className="w-full h-full object-cover opacity-50 grayscale" alt="" />
             </div>
             <div className="p-5 flex-1">

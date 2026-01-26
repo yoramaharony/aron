@@ -145,6 +145,7 @@ export default function DonorFeed() {
                         ) : (
                             <SwipeStack
                                 items={discoverItems}
+                                variant="detail"
                             />
                         )
                     )}
