@@ -49,7 +49,7 @@ export default function DonorPledges() {
         <div style={{ paddingTop: '2rem' }} className="relative">
             <div className="flex justify-between items-end mb-8">
                 <div>
-                    <h1 className="text-3xl font-serif">My Pledges</h1>
+                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">My Pledges</h1>
                     <p className="text-secondary">Track your commitments and payment schedules</p>
                 </div>
                 <Button variant="outline" size="sm" leftIcon={<Download size={16} />}>
@@ -61,10 +61,10 @@ export default function DonorPledges() {
             {offers.length > 0 && (
                 <div className="mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
                     <div className="flex items-center gap-2 mb-4">
-                        <div className="p-1.5 bg-[var(--color-gold)] text-black rounded">
+                        <div className="p-1.5 bg-[var(--color-gold)] text-[#120014] rounded">
                             <Zap size={16} fill="currentColor" />
                         </div>
-                        <h2 className="text-lg font-serif">Conditional Offers</h2>
+                        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Conditional Offers</h2>
                     </div>
 
                     <div className="space-y-4">
@@ -72,12 +72,12 @@ export default function DonorPledges() {
                             <Card key={offer.id} className="flex flex-col md:flex-row gap-6 items-center p-6 border-[var(--color-gold)]/30 bg-[var(--bg-ivory)]">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-white px-2 py-0.5 rounded border border-[var(--color-gold)] text-[var(--color-gold)]">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-[rgba(255,255,255,0.04)] px-2 py-0.5 rounded border border-[rgba(255,43,214,0.30)] text-[var(--color-gold)]">
                                             {offer.status.replace('_', ' ')}
                                         </span>
                                         <span className="text-xs text-secondary">Created {new Date(offer.createdAt).toLocaleDateString()}</span>
                                     </div>
-                                    <h3 className="text-xl font-serif">{offer.opportunityTitle}</h3>
+                                    <h3 className="text-xl font-semibold text-[var(--text-primary)]">{offer.opportunityTitle}</h3>
                                     <div className="text-sm text-secondary">{offer.opportunityOrg}</div>
                                 </div>
 
@@ -106,7 +106,7 @@ export default function DonorPledges() {
             )}
 
             {/* ACTIVE COMMITMENTS (Consolidated List) */}
-            <h2 className="text-lg font-serif mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-green-500"></span>
                 Active Commitments
             </h2>
@@ -119,7 +119,7 @@ export default function DonorPledges() {
                                     <span className={`w-2 h-2 rounded-full ${comm.status === 'On Track' || comm.status === 'Active' ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
                                     <span className="text-xs text-secondary font-medium">{comm.status}</span>
                                 </div>
-                                <h3 className="text-xl font-serif group-hover:text-[var(--color-gold)] transition-colors">{comm.title}</h3>
+                                <h3 className="text-xl font-semibold text-[var(--text-primary)] group-hover:text-[var(--color-gold)] transition-colors">{comm.title}</h3>
                                 <div className="text-sm text-secondary">{comm.org}</div>
                             </div>
                             <div className="text-right">
@@ -147,7 +147,7 @@ export default function DonorPledges() {
                             <div className="text-sm text-secondary">Fulfilled Dec 12, 2024</div>
                         </div>
                         <div className="flex items-center gap-6">
-                            <span className="font-serif">$500,000</span>
+                            <span className="font-semibold text-[var(--text-primary)]">$500,000</span>
                             <Button variant="ghost" size="sm" rightIcon={<Download size={14} />}>Receipt</Button>
                         </div>
                     </Card>
@@ -158,7 +158,7 @@ export default function DonorPledges() {
                             <div className="text-sm text-secondary">Fulfilled Oct 05, 2024</div>
                         </div>
                         <div className="flex items-center gap-6">
-                            <span className="font-serif">$50,000</span>
+                            <span className="font-semibold text-[var(--text-primary)]">$50,000</span>
                             <Button variant="ghost" size="sm" rightIcon={<Download size={14} />}>Receipt</Button>
                         </div>
                     </Card>
@@ -186,7 +186,7 @@ export default function DonorPledges() {
                             <div className="p-6 border-b border-[var(--border-subtle)] flex justify-between items-start">
                                 <div>
                                     <div className="text-xs uppercase tracking-widest text-[var(--color-sage)] font-bold mb-2">Commitment Details</div>
-                                    <h2 className="text-2xl font-serif text-[var(--text-primary)]">{selectedCommitment.title}</h2>
+                                    <h2 className="text-2xl font-semibold text-[var(--text-primary)]">{selectedCommitment.title}</h2>
                                     <div className="text-sm text-[var(--text-secondary)]">{selectedCommitment.org} • {selectedCommitment.grantId}</div>
                                 </div>
                                 <button onClick={() => setSelectedCommitment(null)} className="p-2 hover:bg-[var(--bg-surface)] rounded-full transition-colors">
@@ -225,12 +225,12 @@ export default function DonorPledges() {
 
                                 {/* Actions */}
                                 <div className="space-y-3">
-                                    <h3 className="font-serif text-lg">Actions</h3>
-                                    <button className="w-full flex items-center justify-between p-4 bg-white border border-[var(--border-subtle)] rounded hover:border-[var(--color-gold)] transition-colors text-left group">
+                                    <h3 className="font-semibold text-lg text-[var(--text-primary)]">Actions</h3>
+                                    <button className="w-full flex items-center justify-between p-4 bg-[rgba(255,255,255,0.02)] border border-[var(--border-subtle)] rounded hover:border-[var(--color-gold)] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-left group">
                                         <span className="font-medium text-[var(--text-primary)]">View Grant Agreement</span>
                                         <ExternalLink size={16} className="text-[var(--text-tertiary)] group-hover:text-[var(--color-gold)]" />
                                     </button>
-                                    <button className="w-full flex items-center justify-between p-4 bg-white border border-[var(--border-subtle)] rounded hover:border-[var(--color-gold)] transition-colors text-left group">
+                                    <button className="w-full flex items-center justify-between p-4 bg-[rgba(255,255,255,0.02)] border border-[var(--border-subtle)] rounded hover:border-[var(--color-gold)] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-left group">
                                         <span className="font-medium text-[var(--text-primary)]">Download Tax Receipt</span>
                                         <Download size={16} className="text-[var(--text-tertiary)] group-hover:text-[var(--color-gold)]" />
                                     </button>
@@ -250,15 +250,15 @@ export default function DonorPledges() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="p-4 bg-green-50 text-green-800 text-sm rounded flex items-center gap-2">
-                                        <span className="w-2 h-2 bg-green-500 rounded-full" />
+                                    <div className="p-4 bg-[rgba(34,197,94,0.12)] border border-[rgba(34,197,94,0.18)] text-[var(--color-green)] text-sm rounded flex items-center gap-2">
+                                        <span className="w-2 h-2 bg-[var(--color-green)] rounded-full" />
                                         This pledge is fully fulfilled.
                                     </div>
                                 )}
                             </div>
 
                             <div className="p-6 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-                                <Button className="w-full bg-[var(--text-primary)] text-white hover:bg-black">
+                                <Button className="w-full">
                                     Manage Payments
                                 </Button>
                             </div>
