@@ -79,10 +79,8 @@ export default function DonorInbox() {
     }, [allMessages, query]);
 
     const selectedMessage = useMemo(() => {
-        const fromSelection =
-            (selectedId && filteredMessages.find((m) => m.id === selectedId)) ||
-            (filteredMessages.length > 0 ? filteredMessages[0] : null);
-        return fromSelection;
+        if (!selectedId) return null;
+        return filteredMessages.find((m) => m.id === selectedId) ?? null;
     }, [filteredMessages, selectedId]);
 
     return (
@@ -113,14 +111,20 @@ export default function DonorInbox() {
 
                 <div className="flex-1 flex flex-col md:flex-row min-h-0">
                     {/* List */}
-                    <div className={`md:w-[420px] md:border-r md:border-[var(--border-subtle)] overflow-y-auto ${selectedMessage ? 'hidden md:block' : ''}`}>
+                    <div
+                        className={[
+                            selectedMessage ? 'md:w-[420px] md:border-r md:border-[var(--border-subtle)]' : 'md:w-full',
+                            'overflow-y-auto',
+                            selectedMessage ? 'hidden md:block' : '',
+                        ].join(' ')}
+                    >
                         {filteredMessages.length === 0 ? (
                             <div className="p-10 text-center text-[var(--text-tertiary)]">
                                 No messages found.
                             </div>
                         ) : (
                             filteredMessages.map((msg) => {
-                                const isSelected = selectedMessage?.id === msg.id;
+                                const isSelected = selectedId === msg.id;
                                 return (
                                     <div
                                         key={msg.id}
@@ -177,7 +181,7 @@ export default function DonorInbox() {
                     </div>
 
                     {/* Detail */}
-                    <div className="flex-1 min-w-0 overflow-y-auto">
+                    <div className={`flex-1 min-w-0 overflow-y-auto ${selectedMessage ? '' : 'hidden md:block'}`}>
                         {!selectedMessage ? (
                             <div className="p-10 text-center text-[var(--text-tertiary)]">
                                 Select a message to read it.
