@@ -64,10 +64,46 @@ export function SwipeStack({ items, variant = 'compact' }: { items: DonationRequ
     };
 
     return (
-        <div className={variant === 'detail'
-            ? 'relative w-full mx-auto mt-4 flex items-center justify-center h-[calc(100vh-260px)] min-h-[620px]'
-            : 'relative h-[500px] w-full max-w-md mx-auto mt-4 flex items-center justify-center'
-        }>
+        <div
+            className={variant === 'detail'
+                ? 'relative w-full mx-auto mt-4 flex items-center justify-center h-[calc(100vh-260px)] min-h-[620px] px-4 md:px-[10vw] pt-16'
+                : 'relative h-[500px] w-full max-w-md mx-auto mt-4 flex items-center justify-center'
+            }
+        >
+            {/* Top-centered action bar (detail variant) */}
+            {variant === 'detail' && (
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 z-50">
+                    <div className="flex items-center gap-3 px-3 py-2 rounded-xl border border-[var(--border-subtle)] bg-[rgba(10,10,16,0.82)] backdrop-blur shadow-[0_20px_70px_-45px_rgba(0,0,0,0.9)]">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                            onClick={() => handleSwipe(activeItem.id, 'left')}
+                        >
+                            <X size={16} />
+                            Pass
+                        </Button>
+                        <Button
+                            variant="gold"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => openLeverageDrawer(activeItem)}
+                        >
+                            <Zap size={16} />
+                            Leverage
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => handleSwipe(activeItem.id, 'right')}
+                        >
+                            <Heart size={16} />
+                            Save
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {/* BACKGROUND/NEXT CARD */}
             {nextItem && (
@@ -86,20 +122,18 @@ export function SwipeStack({ items, variant = 'compact' }: { items: DonationRequ
                         onLeverage={() => openLeverageDrawer(activeItem)}
                     />
                 ) : (
-                    <DraggableCard
-                        key={activeItem.id}
-                        item={activeItem}
-                        onSwipe={(id, dir) => handleSwipe(id, dir)}
-                        onLeverage={() => openLeverageDrawer(activeItem)}
+                <DraggableCard
+                    key={activeItem.id}
+                    item={activeItem}
+                    onSwipe={(id, dir) => handleSwipe(id, dir)}
+                    onLeverage={() => openLeverageDrawer(activeItem)}
                         onTap={() => {}}
-                    />
+                />
                 )}
             </AnimatePresence>
             {/* ... controls ... */}
-            <div className={variant === 'detail'
-                ? 'absolute -bottom-16 left-0 right-0 flex justify-center gap-4 items-center z-50'
-                : 'absolute -bottom-16 left-0 right-0 flex justify-center gap-4 items-center z-50'
-            }>
+            {variant !== 'detail' && (
+            <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-4 items-center z-50">
                 <Button
                     variant="outline"
                     className="h-12 px-6 rounded-full border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] hover:scale-105 transition-transform text-[var(--text-secondary)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)] flex items-center gap-2"
@@ -128,6 +162,7 @@ export function SwipeStack({ items, variant = 'compact' }: { items: DonationRequ
                     <span className="font-medium text-sm">Save</span>
                 </Button>
             </div>
+            )}
 
             {/* DECLINE REASON MODAL */}
             {showDeclineModal && (
@@ -276,22 +311,6 @@ function DraggableDetailCard({ item, onSwipe, onLeverage }: { item: DonationRequ
             className="absolute w-full h-full"
         >
             <Card noPadding className="h-full overflow-hidden border-[var(--border-subtle)] shadow-2xl select-none">
-                {/* Actions bar (no Back button) */}
-                <div className="sticky top-0 z-20 px-5 py-4 border-b border-[var(--border-subtle)] bg-[rgba(10,10,16,0.88)] backdrop-blur flex justify-end gap-3">
-                    <Button variant="outline" size="sm" className="gap-2" onClick={() => onSwipe(item.id, 'right')}>
-                        <Heart size={16} />
-                        Save
-                    </Button>
-                    <Button variant="gold" size="sm" className="gap-2" onClick={onLeverage}>
-                        <Zap size={16} />
-                        Leverage
-                    </Button>
-                    <Button variant="ghost" size="sm" className="gap-2" onClick={() => onSwipe(item.id, 'left')}>
-                        <X size={16} />
-                        Pass
-                    </Button>
-                </div>
-
                 {/* Content (full detail) */}
                 <div className="h-full overflow-y-auto">
                     {/* HERO */}
@@ -341,9 +360,9 @@ function DraggableDetailCard({ item, onSwipe, onLeverage }: { item: DonationRequ
                             </div>
                         </Card>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* AI INSIGHTS */}
-                            <div className="lg:col-span-1">
+                            <div>
                                 <Card className="overflow-hidden relative border-[rgba(255,43,214,0.20)] bg-[rgba(255,43,214,0.06)]">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                                         <Zap size={80} />
@@ -392,7 +411,7 @@ function DraggableDetailCard({ item, onSwipe, onLeverage }: { item: DonationRequ
                             </div>
 
                             {/* DILIGENCE */}
-                            <div className="lg:col-span-2">
+                            <div>
                                 <Card>
                                     <div className="p-6">
                                         <h3 className="text-sm font-bold text-[var(--text-primary)] uppercase tracking-widest mb-4 flex items-center gap-2">
