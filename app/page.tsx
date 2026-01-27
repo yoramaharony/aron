@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight, ShieldCheck, Zap, Lock, Filter, FileText, CheckCircle, ChevronRight, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { IntelligentSpine } from '@/components/landing/IntelligentSpine';
+import { RotatingVideoBackground } from '@/components/landing/RotatingVideoBackground';
 
 // Animation variants
 const fadeInUp = {
@@ -45,8 +46,19 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* 1) HERO SECTION */}
-        <section className="relative px-6 py-24 md:py-32 max-w-5xl mx-auto text-center">
-          <motion.div initial="initial" animate="animate" variants={staggerContainer} className="space-y-8">
+        <section className="relative overflow-hidden">
+          <RotatingVideoBackground
+            sources={[
+              '/assets/videos/seed-to-forest.mp4',
+              '/assets/videos/impact-waves.mp4',
+              '/assets/videos/social-contract.mp4',
+              '/assets/videos/math-3d.mp4',
+            ]}
+            className="pointer-events-none"
+          />
+
+          <div className="relative px-6 py-24 md:py-32 max-w-5xl mx-auto text-center z-10">
+            <motion.div initial="initial" animate="animate" variants={staggerContainer} className="space-y-8">
             <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium leading-[1.1] text-[var(--text-primary)]">
               A Private Foundation.<br />
               <span className="text-[var(--text-secondary)] italic">Without the Headcount.</span>
@@ -84,7 +96,8 @@ export default function LandingPage() {
                 </div>
               </div>
             </motion.div>
-          </motion.div>
+            </motion.div>
+          </div>
         </section>
 
         {/* 2) THE LEVERAGE ENGINE (Signature Feature - Moved Up) */}
