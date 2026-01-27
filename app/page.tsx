@@ -53,6 +53,7 @@ export default function LandingPage() {
               '/assets/videos/impact-waves.mp4',
               '/assets/videos/social-contract.mp4',
               '/assets/videos/math-3d.mp4',
+              '/assets/videos/old.mp4',
             ]}
             className="pointer-events-none"
           />
