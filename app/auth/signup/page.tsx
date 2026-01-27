@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -11,8 +11,18 @@ export default function SignupPage() {
     const router = useRouter();
     const [role, setRole] = useState<'donor' | 'requestor'>('requestor');
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+    const [inviteCode, setInviteCode] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const invite = params.get('invite');
+        const intendedRole = params.get('role');
+        if (invite) setInviteCode(invite);
+        if (intendedRole === 'donor' || intendedRole === 'requestor') setRole(intendedRole);
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,7 +33,7 @@ export default function SignupPage() {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...formData, role }),
+                body: JSON.stringify({ ...formData, role, inviteCode }),
             });
 
             const data = await res.json();
@@ -85,6 +95,21 @@ export default function SignupPage() {
                 )}
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                    <div>
+                        <label className="label">Invite Code</label>
+                        <input
+                            required={role === 'requestor'}
+                            className="input-field font-mono tracking-wider"
+                            placeholder="XXXX-XXXX-XXXX"
+                            value={inviteCode}
+                            onChange={e => setInviteCode(e.target.value)}
+                        />
+                        <div className="mt-1 text-xs text-[var(--text-tertiary)]">
+                            {role === 'requestor'
+                                ? 'Nonprofits require a one-time invite code.'
+                                : 'Donors require an invite code (except the very first donor in a fresh dev DB).'}
+                        </div>
+                    </div>
                     <div>
                         <label className="label">Organization / Name</label>
                         <input

@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { ArrowRight, ShieldCheck, Zap, Lock, Filter, FileText, CheckCircle, ChevronRight, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { IntelligentSpine } from '@/components/landing/IntelligentSpine';
@@ -23,6 +25,42 @@ const staggerContainer = {
 };
 
 export default function LandingPage() {
+  const router = useRouter();
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteError, setInviteError] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
+
+  // Support direct invite links like "/?invite=XXXX-XXXX-XXXX"
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const invite = params.get('invite');
+    if (invite) setInviteCode(invite);
+  }, []);
+
+  const handleInviteContinue = async () => {
+    setInviteLoading(true);
+    setInviteError('');
+    try {
+      const res = await fetch('/api/invites/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: inviteCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.valid) {
+        throw new Error('Invalid invite code');
+      }
+
+      const role = data.intendedRole === 'donor' ? 'donor' : 'requestor';
+      router.push(`/auth/signup?invite=${encodeURIComponent(inviteCode)}&role=${encodeURIComponent(role)}`);
+    } catch (e: any) {
+      setInviteError(e?.message || 'Invalid invite code');
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-primary)] font-sans selection:bg-[rgba(255,43,214,0.25)] selection:text-[var(--text-primary)]">
 
@@ -73,12 +111,22 @@ export default function LandingPage() {
                   <input
                     type="text"
                     placeholder="Enter code"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
                     className="flex-1 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.10)] px-4 py-3 text-lg outline-none focus:border-[rgba(255,43,214,0.65)] focus:ring-1 focus:ring-[rgba(255,43,214,0.55)] transition-all rounded-sm placeholder:text-[var(--text-tertiary)]"
                   />
-                  <Button variant="primary" className="px-8 rounded-sm">
+                  <Button
+                    variant="primary"
+                    className="px-8 rounded-sm"
+                    onClick={handleInviteContinue}
+                    isLoading={inviteLoading}
+                  >
                     Continue
                   </Button>
                 </div>
+                {inviteError ? (
+                  <div className="text-xs text-red-400 mt-1 text-left pl-1">{inviteError}</div>
+                ) : null}
                 <div className="flex justify-between items-center mt-2 px-1">
                   <span className="text-xs text-[var(--text-secondary)] italic">Access is limited.</span>
                   <Link href="#" className="text-xs font-medium text-[var(--text-secondary)] underline decoration-[var(--color-gold)] underline-offset-4 hover:text-[var(--text-primary)]">

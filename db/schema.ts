@@ -34,3 +34,19 @@ export const campaigns = sqliteTable('campaigns', {
     createdBy: text('created_by').references(() => users.id),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
+
+// Invite Codes (invite-gated signup)
+export const inviteCodes = sqliteTable('invite_codes', {
+    id: text('id').primaryKey(), // UUID
+    code: text('code').notNull().unique(), // e.g. XXXX-XXXX-XXXX
+    intendedRole: text('intended_role').notNull(), // 'donor' | 'requestor'
+    createdBy: text('created_by').notNull().references(() => users.id),
+    note: text('note'),
+    expiresAt: integer('expires_at', { mode: 'timestamp' }),
+    maxUses: integer('max_uses').notNull().default(1),
+    uses: integer('uses').notNull().default(0),
+    usedBy: text('used_by').references(() => users.id),
+    usedAt: integer('used_at', { mode: 'timestamp' }),
+    revokedAt: integer('revoked_at', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});

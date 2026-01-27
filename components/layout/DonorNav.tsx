@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
-import { Heart, CreditCard, PieChart, Lock, Mail, Compass } from 'lucide-react';
+import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound } from 'lucide-react';
 
 const NAV_ITEMS = [
     { label: 'Legacy Studio', icon: Compass, href: '/donor/legacy' },
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
     { label: 'Impact', icon: PieChart, href: '/donor/impact' },
     { label: 'Vault', icon: Lock, href: '/donor/vault' },
     { label: 'Inbox', icon: Mail, href: '/donor/inbox' },
+    { label: 'Invites', icon: KeyRound, href: '/donor/invites' },
 ];
 
 export function DonorNav() {
