@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" role="img" aria-label="Aron wordmark">
+  <defs>
+    <linearGradient id="aron-magenta" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff7ae6" />
+      <stop offset="0.45" stop-color="#ff2bd6" />
+      <stop offset="1" stop-color="#c016ff" />
+    </linearGradient>
+
+    <filter id="aron-glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="b" />
+      <feMerge>
+        <feMergeNode in="b" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Chabad-style menorah mark (inverted-A feel) above the "A" -->
+  <g fill="none" stroke="url(#aron-magenta)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" filter="url(#aron-glow)">
+    <!-- outer + inner branches -->
+    <path d="M34 34 Q50 14 66 34" opacity="0.85" />
+    <path d="M39 34 Q50 18 61 34" opacity="0.75" />
+    <path d="M44 34 Q50 22 56 34" opacity="0.65" />
+    <!-- center stem -->
+    <path d="M50 34 L50 16" opacity="0.95" />
+    <!-- candle ticks (7) -->
+    <path d="M34 34 L34 28" opacity="0.5" />
+    <path d="M39 34 L39 28" opacity="0.5" />
+    <path d="M44 34 L44 28" opacity="0.5" />
+    <path d="M50 16 L50 10" opacity="0.6" />
+    <path d="M56 34 L56 28" opacity="0.5" />
+    <path d="M61 34 L61 28" opacity="0.5" />
+    <path d="M66 34 L66 28" opacity="0.5" />
+  </g>
+
+  <!-- Wordmark -->
+  <text
+    x="20"
+    y="62"
+    fill="url(#aron-magenta)"
+    font-family="Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
+    font-weight="800"
+    font-size="56"
+    letter-spacing="-1.2"
+    filter="url(#aron-glow)"
+  >
+    Aron
+  </text>
+</svg>

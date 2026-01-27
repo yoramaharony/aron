@@ -32,7 +32,7 @@ export function RequesterNav() {
             <div className="p-6 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-3 text-[var(--text-primary)]">
                     <div className="w-8 h-8 md:w-10 md:h-10">
-                        <img src="/assets/yesod-logo.svg" alt="Yesod" className="w-full h-full object-contain" />
+                        <img src="/assets/aron-logo.svg" alt="Aron" className="w-full h-full object-contain" />
                     </div>
                     <span className="font-serif tracking-widest text-sm uppercase mt-1">Portal</span>
                 </div>

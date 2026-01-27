@@ -23,7 +23,7 @@ export function DonorNav() {
             <aside className="sidebar p-6">
                 <div className="p-8 pb-4">
                     <div className="flex items-center gap-3 mb-1">
-                        <img src="/assets/yesod-logo.svg" alt="Yesod" className="h-8" />
+                        <img src="/assets/aron-logo.svg" alt="Aron" className="h-8" />
                     </div>
                     <p className="text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase pl-1">
                         Channel Your Legacy

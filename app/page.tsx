@@ -30,7 +30,7 @@ export default function LandingPage() {
       <header className="p-6 md:px-12 md:py-8 flex justify-between items-end max-w-7xl mx-auto w-full z-10 relative border-b border-transparent">
         <div className="flex flex-col">
           <div className="mb-2">
-            <img src="/assets/yesod-logo.svg" alt="Yesod" className="h-12 w-auto object-contain" />
+            <img src="/assets/aron-logo.svg" alt="Aron" className="h-12 w-auto object-contain" />
           </div>
           <span className="text-[10px] font-medium tracking-[0.25em] text-[var(--text-secondary)] uppercase pl-1">
             Channel Your Legacy
@@ -47,16 +47,7 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* 1) HERO SECTION */}
         <section className="relative overflow-hidden">
-          <RotatingVideoBackground
-            sources={[
-              '/assets/videos/seed-to-forest.mp4',
-              '/assets/videos/impact-waves.mp4',
-              '/assets/videos/social-contract.mp4',
-              '/assets/videos/math-3d.mp4',
-              '/assets/videos/old.mp4',
-            ]}
-            className="pointer-events-none"
-          />
+          <RotatingVideoBackground className="pointer-events-none" />
 
           <div className="relative px-6 py-24 md:py-32 max-w-5xl mx-auto text-center z-10">
             <motion.div initial="initial" animate="animate" variants={staggerContainer} className="space-y-8">

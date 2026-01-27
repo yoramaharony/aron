@@ -3,9 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 type Props = {
-  sources: string[];
-  intervalMs?: number;
+  /**
+   * Optional list of video URLs. If omitted/empty, the component will fetch
+   * sources from `/api/hero-videos`.
+   */
+  sources?: string[];
   transitionMs?: number;
+  minHoldMs?: number;
+  maxHoldMs?: number;
   className?: string;
 };
 
@@ -15,23 +20,28 @@ type Props = {
  */
 export function RotatingVideoBackground({
   sources,
-  intervalMs = 14_000,
   transitionMs = 900,
+  minHoldMs = 6_000,
+  maxHoldMs = 16_000,
   className,
 }: Props) {
   const videoARef = useRef<HTMLVideoElement | null>(null);
   const videoBRef = useRef<HTMLVideoElement | null>(null);
-  const timerRef = useRef<number | null>(null);
+  const timerRef = useRef<number | null>(null); // setTimeout id
   const activeIndexRef = useRef(0);
   const frontIsARef = useRef(true);
+  const sourcesRef = useRef<string[]>([]);
 
-  const safeSources = useMemo(() => sources.filter(Boolean), [sources]);
+  const safeSources = useMemo(() => (sources ?? []).filter(Boolean), [sources]);
   const [frontIsA, setFrontIsA] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [dynamicSources, setDynamicSources] = useState<string[]>([]);
 
   const getNextIndex = (idx: number) =>
-    safeSources.length === 0 ? 0 : (idx + 1) % safeSources.length;
+    sourcesRef.current.length === 0 ? 0 : (idx + 1) % sourcesRef.current.length;
+
+  const clamp = (n: number, min: number, max: number) => Math.max(min, Math.min(max, n));
 
   useEffect(() => {
     const mq = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -41,16 +51,71 @@ export function RotatingVideoBackground({
     return () => mq?.removeEventListener?.('change', update);
   }, []);
 
+  // If sources weren't provided, discover from the server so adding/removing files just works.
   useEffect(() => {
-    if (safeSources.length <= 1) return;
+    if (safeSources.length > 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/hero-videos', { cache: 'no-store' });
+        const json = (await res.json()) as { sources?: string[] };
+        if (!cancelled && Array.isArray(json.sources)) setDynamicSources(json.sources);
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [safeSources.length]);
+
+  // Source of truth list (prop sources override dynamic).
+  useEffect(() => {
+    sourcesRef.current = safeSources.length > 0 ? safeSources : dynamicSources;
+  }, [dynamicSources, safeSources]);
+
+  useEffect(() => {
+    if (sourcesRef.current.length <= 1) return;
     if (reducedMotion) return;
 
-    // Keep refs in sync so setInterval doesn't rely on stale closures.
+    const clear = () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    };
+
+    // Keep refs in sync so timers don't rely on stale closures.
     activeIndexRef.current = activeIndex;
     frontIsARef.current = frontIsA;
 
-    if (timerRef.current) window.clearInterval(timerRef.current);
-    timerRef.current = window.setInterval(async () => {
+    const scheduleNext = (ms: number) => {
+      clear();
+      timerRef.current = window.setTimeout(() => void advance(), ms);
+    };
+
+    const loadAndPlay = async (el: HTMLVideoElement, src: string) => {
+      el.src = src;
+      el.load(); // key for reliable source swap
+      el.currentTime = 0;
+      el.muted = true;
+      el.playsInline = true;
+      el.loop = false; // we advance ourselves (prevents seeing the clip twice)
+      try {
+        await el.play();
+      } catch {
+        // Autoplay may be blocked; we still rotate.
+      }
+    };
+
+    const calcHoldMs = (durationSeconds: number | undefined) => {
+      const d = typeof durationSeconds === 'number' && isFinite(durationSeconds) ? durationSeconds : 10;
+      // Switch slightly before the end so the fade feels intentional.
+      return clamp(Math.floor((d - 0.8) * 1000), minHoldMs, maxHoldMs);
+    };
+
+    const advance = async () => {
+      const srcs = sourcesRef.current;
+      if (srcs.length <= 1) return;
+
       const currentIndex = activeIndexRef.current;
       const nextIndex = getNextIndex(currentIndex);
       const frontIsAValue = frontIsARef.current;
@@ -59,16 +124,7 @@ export function RotatingVideoBackground({
       const outgoing = frontIsAValue ? videoARef.current : videoBRef.current;
       if (!incoming || !outgoing) return;
 
-      // Force reload so Safari/Chrome reliably picks up the new source.
-      incoming.src = safeSources[nextIndex];
-      incoming.load();
-      incoming.currentTime = 0;
-
-      try {
-        await incoming.play();
-      } catch {
-        // Autoplay may be blocked in some environments; still allow the fade swap.
-      }
+      await loadAndPlay(incoming, srcs[nextIndex]);
 
       // Cross-fade by flipping which video is on top.
       frontIsARef.current = !frontIsAValue;
@@ -76,7 +132,7 @@ export function RotatingVideoBackground({
       setFrontIsA(frontIsARef.current);
       setActiveIndex(nextIndex);
 
-      // Pause the old stream after the fade to save CPU.
+      // Pause old stream after fade to save CPU.
       window.setTimeout(() => {
         try {
           outgoing.pause();
@@ -84,17 +140,26 @@ export function RotatingVideoBackground({
           // ignore
         }
       }, transitionMs + 50);
-    }, intervalMs);
+
+      // Schedule next rotation based on the new video's duration.
+      const hold = calcHoldMs(incoming.duration);
+      scheduleNext(hold);
+    };
+
+    // Kick off: schedule based on current front video duration.
+    const front = frontIsARef.current ? videoARef.current : videoBRef.current;
+    const hold = calcHoldMs(front?.duration);
+    scheduleNext(hold);
 
     return () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
-      timerRef.current = null;
+      clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeIndex, frontIsA, intervalMs, reducedMotion, safeSources, transitionMs]);
+  }, [activeIndex, frontIsA, maxHoldMs, minHoldMs, reducedMotion, transitionMs, dynamicSources, safeSources]);
 
-  const first = safeSources[0] ?? '';
-  const second = safeSources[getNextIndex(0)] ?? first;
+  const initialList = safeSources.length > 0 ? safeSources : dynamicSources;
+  const first = initialList[0] ?? '';
+  const second = initialList.length > 1 ? initialList[1] : first;
 
   return (
     <div className={`absolute inset-0 overflow-hidden ${className ?? ''}`}>
@@ -107,7 +172,7 @@ export function RotatingVideoBackground({
         autoPlay
         muted
         playsInline
-        loop
+        loop={reducedMotion}
         preload="auto"
       />
       <video
@@ -118,7 +183,7 @@ export function RotatingVideoBackground({
         autoPlay
         muted
         playsInline
-        loop
+        loop={reducedMotion}
         preload="auto"
       />
 
