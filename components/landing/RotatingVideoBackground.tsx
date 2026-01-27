@@ -22,6 +22,8 @@ export function RotatingVideoBackground({
   const videoARef = useRef<HTMLVideoElement | null>(null);
   const videoBRef = useRef<HTMLVideoElement | null>(null);
   const timerRef = useRef<number | null>(null);
+  const activeIndexRef = useRef(0);
+  const frontIsARef = useRef(true);
 
   const safeSources = useMemo(() => sources.filter(Boolean), [sources]);
   const [frontIsA, setFrontIsA] = useState(true);
@@ -43,41 +45,47 @@ export function RotatingVideoBackground({
     if (safeSources.length <= 1) return;
     if (reducedMotion) return;
 
-    const schedule = () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
-      timerRef.current = window.setInterval(async () => {
-        const nextIndex = getNextIndex(activeIndex);
-        const incoming = frontIsA ? videoBRef.current : videoARef.current;
-        const outgoing = frontIsA ? videoARef.current : videoBRef.current;
-        if (!incoming || !outgoing) return;
+    // Keep refs in sync so setInterval doesn't rely on stale closures.
+    activeIndexRef.current = activeIndex;
+    frontIsARef.current = frontIsA;
 
-        incoming.src = safeSources[nextIndex];
-        incoming.currentTime = 0;
-        incoming.muted = true;
-        incoming.playsInline = true;
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    timerRef.current = window.setInterval(async () => {
+      const currentIndex = activeIndexRef.current;
+      const nextIndex = getNextIndex(currentIndex);
+      const frontIsAValue = frontIsARef.current;
 
+      const incoming = frontIsAValue ? videoBRef.current : videoARef.current;
+      const outgoing = frontIsAValue ? videoARef.current : videoBRef.current;
+      if (!incoming || !outgoing) return;
+
+      // Force reload so Safari/Chrome reliably picks up the new source.
+      incoming.src = safeSources[nextIndex];
+      incoming.load();
+      incoming.currentTime = 0;
+
+      try {
+        await incoming.play();
+      } catch {
+        // Autoplay may be blocked in some environments; still allow the fade swap.
+      }
+
+      // Cross-fade by flipping which video is on top.
+      frontIsARef.current = !frontIsAValue;
+      activeIndexRef.current = nextIndex;
+      setFrontIsA(frontIsARef.current);
+      setActiveIndex(nextIndex);
+
+      // Pause the old stream after the fade to save CPU.
+      window.setTimeout(() => {
         try {
-          await incoming.play();
+          outgoing.pause();
         } catch {
-          // Autoplay may be blocked in some environments; still allow the fade swap.
+          // ignore
         }
+      }, transitionMs + 50);
+    }, intervalMs);
 
-        // Cross-fade by flipping which video is on top.
-        setFrontIsA((v) => !v);
-        setActiveIndex(nextIndex);
-
-        // Pause the old stream after the fade to save CPU.
-        window.setTimeout(() => {
-          try {
-            outgoing.pause();
-          } catch {
-            // ignore
-          }
-        }, transitionMs + 50);
-      }, intervalMs);
-    };
-
-    schedule();
     return () => {
       if (timerRef.current) window.clearInterval(timerRef.current);
       timerRef.current = null;
