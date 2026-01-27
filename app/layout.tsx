@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { RotatingVideoBackground } from '@/components/landing/RotatingVideoBackground';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -26,7 +27,13 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0"
         />
       </head>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        {/* Global rotating background video (shows through only where surfaces are transparent) */}
+        <div className="fixed inset-0 -z-10 pointer-events-none">
+          <RotatingVideoBackground />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }

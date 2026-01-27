@@ -24,7 +24,7 @@ const staggerContainer = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-primary)] font-sans selection:bg-[rgba(255,43,214,0.25)] selection:text-[var(--text-primary)]">
+    <div className="min-h-screen flex flex-col bg-transparent text-[var(--text-primary)] font-sans selection:bg-[rgba(255,43,214,0.25)] selection:text-[var(--text-primary)]">
 
       {/* HEADER */}
       <header className="p-6 md:px-12 md:py-8 flex justify-between items-end max-w-7xl mx-auto w-full z-10 relative border-b border-transparent">
@@ -47,8 +47,6 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* 1) HERO SECTION */}
         <section className="relative overflow-hidden min-h-screen flex items-center">
-          <RotatingVideoBackground className="pointer-events-none" />
-
           <div className="relative w-full px-6 py-24 md:py-32 max-w-5xl mx-auto text-center z-10">
             <motion.div initial="initial" animate="animate" variants={staggerContainer} className="space-y-8">
             <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium leading-[1.1] text-[var(--text-primary)]">

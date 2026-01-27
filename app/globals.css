@@ -4,7 +4,8 @@
 
 :root {
   /* Dark mode system theme (default) */
-  --bg-app: #07070a;
+  /* Slight translucency so the global background video can shine through in "pitch black" areas */
+  --bg-app: rgba(7, 7, 10, 0.82);
   --bg-surface: #0b0b12;
   --bg-card: #10101a;
   --bg-elevated: #151523;
@@ -60,7 +61,8 @@
 }
 
 body {
-  background-color: var(--bg-app);
+  /* Let the global video background show through where the app uses `--bg-app`. */
+  background-color: transparent;
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   -webkit-font-smoothing: antialiased;
