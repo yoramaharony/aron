@@ -161,6 +161,19 @@ export function RotatingVideoBackground({
   const first = initialList[0] ?? '';
   const second = initialList.length > 1 ? initialList[1] : first;
 
+  // Avoid rendering <video src=""> which can cause a reload warning in the console.
+  if (!first) {
+    return (
+      <div className={`absolute inset-0 overflow-hidden ${className ?? ''}`}>
+        {/* Fallback: keep the same luxe overlays while sources load */}
+        <div className="absolute inset-0 bg-black/32" />
+        <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(255,43,214,0.10),transparent_55%)] opacity-70 mix-blend-screen" />
+        <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.22),rgba(0,0,0,0.62))]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/22 via-black/42 to-[var(--bg-app)]" />
+      </div>
+    );
+  }
+
   return (
     <div className={`absolute inset-0 overflow-hidden ${className ?? ''}`}>
       {/* Video layers */}
