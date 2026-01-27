@@ -21,7 +21,7 @@ export function RequestorNav() {
             {/* Desktop Sidebar */}
             <aside className="sidebar p-6">
                 <div className="mb-8">
-                    <h1 className="text-2xl font-serif text-[var(--color-gold)]">Yesod</h1>
+                    <h1 className="text-2xl font-serif text-[var(--color-gold)]">Aron</h1>
                     <span className="text-xs text-[var(--text-secondary)] uppercase tracking-wider">Nonprofit Portal</span>
                 </div>
 

@@ -20,7 +20,7 @@ export function DecisionBrief({ data }: { data: DecisionData }) {
             <div className="flex items-center justify-between mb-4 border-b border-[var(--border-subtle)] pb-4">
                 <div className="flex items-center space-x-2">
                     <Bot className="w-5 h-5 text-[var(--accent-gold)]" />
-                    <h3 className="font-medium text-[var(--accent-gold)] uppercase tracking-wider text-xs">Yesod Decision Intelligence™</h3>
+                    <h3 className="font-medium text-[var(--accent-gold)] uppercase tracking-wider text-xs">Aron Decision Intelligence™</h3>
                 </div>
                 <div className="text-xs text-[var(--text-tertiary)]">
                     Confidence: <span className="text-[var(--text-primary)]">{data.confidence}%</span>

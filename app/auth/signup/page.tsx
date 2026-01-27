@@ -52,7 +52,7 @@ export default function SignupPage() {
                         <UserPlus size={28} />
                     </div>
                     <h1 className="text-3xl font-serif mb-3">Create Account</h1>
-                    <p className="text-secondary">Join the Yesod Private Network.</p>
+                    <p className="text-secondary">Join the Aron Private Network.</p>
                 </div>
 
                 <div className="flex gap-4 p-1 rounded-xl mb-8 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">

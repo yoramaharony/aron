@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Node.js: repo declares `20.x` in `package.json` (it may still run on newer Node, but 20 is safest)
+- Node.js: repo declares `22.x` in `package.json`
 
 ## Install & run
 

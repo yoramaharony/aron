@@ -1,4 +1,4 @@
-# Yesod Platform — Project Overview (Code-Derived)
+# Aron Platform — Project Overview (Code-Derived)
 
 This repo is a **Next.js App Router** app with a small server/API layer (Next route handlers) backed by **SQLite/libSQL** via **Drizzle ORM**.
 

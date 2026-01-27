@@ -24,13 +24,13 @@ const staggerContainer = {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-transparent text-[var(--text-primary)] font-sans selection:bg-[rgba(255,43,214,0.25)] selection:text-[var(--text-primary)]">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-primary)] font-sans selection:bg-[rgba(255,43,214,0.25)] selection:text-[var(--text-primary)]">
 
       {/* HEADER */}
       <header className="p-6 md:px-12 md:py-8 flex justify-between items-end max-w-7xl mx-auto w-full z-10 relative border-b border-transparent">
         <div className="flex flex-col">
           <div className="mb-2">
-            <img src="/assets/aron-logo.svg" alt="Aron" className="h-12 w-auto object-contain" />
+            <img src="/assets/aron-logo.svg" alt="Aron" className="h-[53px] w-auto object-contain" />
           </div>
           <span className="text-[10px] font-medium tracking-[0.25em] text-[var(--text-secondary)] uppercase pl-1">
             Channel Your Legacy
@@ -47,6 +47,7 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* 1) HERO SECTION */}
         <section className="relative overflow-hidden min-h-screen flex items-center">
+          <RotatingVideoBackground className="pointer-events-none" />
           <div className="relative w-full px-6 py-24 md:py-32 max-w-5xl mx-auto text-center z-10">
             <motion.div initial="initial" animate="animate" variants={staggerContainer} className="space-y-8">
             <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium leading-[1.1] text-[var(--text-primary)]">
@@ -55,7 +56,7 @@ export default function LandingPage() {
             </motion.h1>
 
             <motion.p variants={fadeInUp} className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed font-light">
-              Yesod is the invite-only operating system for high-conviction donors. Define your legacy, see your impact forecast, and deploy capital with governance—without building a team.
+              Aron is the invite-only operating system for high-conviction donors. Define your legacy, see your impact forecast, and deploy capital with governance—without building a team.
             </motion.p>
 
             <motion.div variants={fadeInUp} className="text-[var(--color-gold)] font-medium text-lg italic font-serif">
@@ -101,7 +102,7 @@ export default function LandingPage() {
               <span className="text-[var(--color-gold)] font-bold tracking-[0.2em] text-xs uppercase border border-[var(--color-gold)] px-3 py-1 rounded-full">The Leverage Engine</span>
               <h2 className="text-5xl md:text-6xl font-serif leading-tight">One tap — and your pledge becomes a catalyst.</h2>
               <p className="text-[var(--text-secondary)] text-lg leading-relaxed max-w-xl">
-                Most needs are bigger than any single donor. Yesod turns partial intent into full outcomes by structuring challenge grants, matching aligned donors, and triggering campaigns with clear terms.
+                Most needs are bigger than any single donor. Aron turns partial intent into full outcomes by structuring challenge grants, matching aligned donors, and triggering campaigns with clear terms.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
@@ -181,7 +182,7 @@ export default function LandingPage() {
               </div>
               <h3 className="font-bold text-lg mb-3 uppercase tracking-wide">End-to-End Ops</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed">
-                Yesod runs intake, diligence, agreements, disbursement coordination, reporting, and tax packs end to end.
+                Aron runs intake, diligence, agreements, disbursement coordination, reporting, and tax packs end to end.
               </p>
             </motion.div>
 
@@ -213,19 +214,16 @@ export default function LandingPage() {
               </div>
               <h3 className="font-bold text-lg mb-3 uppercase tracking-wide">Governance, enforced</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed">
-                Define what “proof” means—KPIs, evidence, cadence—and Yesod quietly enforces it. Discreet by invitation. Rigorous by default.
+                Define what “proof” means—KPIs, evidence, cadence—and Aron quietly enforces it. Discreet by invitation. Rigorous by default.
               </p>
             </motion.div>
           </div>
         </section>
 
         {/* 4) HOW IT WORKS - INTELLIGENT SPINE */}
-        {/* We keep the parallax component but update the text context around it? 
-            Or rely on its internal animation. Let's wrap it in a "Yesod Flow" section header 
-        */}
         <section id="how-it-works" className="py-24 bg-[var(--bg-surface)] border-y border-[var(--border-subtle)]">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-serif">The Yesod Flow</h2>
+            <h2 className="text-4xl font-serif">The Aron Flow</h2>
             <p className="text-[var(--text-secondary)] mt-2">From intent to outcome in 10 steps</p>
           </div>
           <IntelligentSpine />
@@ -237,7 +235,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-5xl font-serif mb-8">Private by Invitation.</h2>
             <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto mb-16 leading-relaxed">
-              Yesod is built for donors who value discretion, governance, and real outcomes. Membership is intentionally limited to protect privacy, maintain trust, and keep the network high-signal.
+              Aron is built for donors who value discretion, governance, and real outcomes. Membership is intentionally limited to protect privacy, maintain trust, and keep the network high-signal.
             </p>
 
             <div className="grid md:grid-cols-3 gap-8 mb-16 border-t border-b border-[var(--border-subtle)] py-12">
@@ -338,7 +336,7 @@ export default function LandingPage() {
           </p>
 
           <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.25em] max-w-lg mx-auto leading-loose">
-            Yesod is not a marketplace. It’s a private system for compounding good.
+            Aron is not a marketplace. It’s a private system for compounding good.
           </div>
 
           <div className="mt-24 pt-12 border-t border-[var(--border-subtle)] max-w-xs mx-auto">

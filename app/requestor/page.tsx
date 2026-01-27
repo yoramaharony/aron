@@ -55,7 +55,7 @@ export default function RequestWizard() {
             <div className="flex justify-between items-center mb-8">
                 <div>
                     <h1 className="text-3xl">New Funding Request</h1>
-                    <p className="text-secondary">Draft your opportunity for the Yesod Private Network.</p>
+                    <p className="text-secondary">Draft your opportunity for the Aron Private Network.</p>
                 </div>
                 <div className="text-sm font-mono text-tertiary">Step {step} of 4</div>
             </div>
@@ -133,7 +133,7 @@ export default function RequestWizard() {
                                         </div>
                                     </div>
                                     <div className="p-4 rounded bg-[var(--bg-surface)] text-sm text-secondary">
-                                        <p><strong>Note:</strong> Yesod verifies all budgets. Please ensure your attached budget file matches this figure.</p>
+                                        <p><strong>Note:</strong> Aron verifies all budgets. Please ensure your attached budget file matches this figure.</p>
                                     </div>
                                 </div>
                             </div>
@@ -210,7 +210,7 @@ export default function RequestWizard() {
                         {step === 4 && (
                             <div className="text-center py-8">
                                 <h2 className="text-2xl mb-4">Ready to Submit?</h2>
-                                <p className="text-secondary mb-6">Your request will be reviewed by the Yesod Concierge team before going live to the network.</p>
+                                <p className="text-secondary mb-6">Your request will be reviewed by the Aron Concierge team before going live to the network.</p>
 
                                 <Button
                                     onClick={handleSubmit}

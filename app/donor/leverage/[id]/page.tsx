@@ -108,7 +108,7 @@ export default function LeverageFlow({ params }: { params: { id: string } }) {
 
                         <div className="space-y-2">
                             <h2 className="text-2xl font-serif">Leverage Active</h2>
-                            <p className="text-[var(--text-secondary)]">Your challenge has been generated and sent to the Yesod Concierge for verification.</p>
+                            <p className="text-[var(--text-secondary)]">Your challenge has been generated and sent to the Aron Concierge for verification.</p>
                         </div>
 
                         <div className="bg-[var(--bg-surface)] p-6 rounded border border-[var(--border-subtle)] text-left space-y-2 font-mono text-sm opacity-80">
