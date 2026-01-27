@@ -58,14 +58,20 @@ export default function SignupPage() {
                 <div className="flex gap-4 p-1 rounded-xl mb-8 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
                     <button
                         type="button"
-                        className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all ${role === 'requestor' ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border border-[rgba(255,43,214,0.20)]' : 'text-secondary hover:text-primary hover:bg-[rgba(255,255,255,0.04)]'}`}
+                        className={`flex-1 py-3 text-sm font-medium rounded-lg border transition-colors transition-shadow focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] ${role === 'requestor'
+                            ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border-[rgba(255,43,214,0.20)]'
+                            : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
+                            }`}
                         onClick={() => setRole('requestor')}
                     >
                         Nonprofit
                     </button>
                     <button
                         type="button"
-                        className={`flex-1 py-3 text-sm font-medium rounded-lg transition-all ${role === 'donor' ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border border-[rgba(255,43,214,0.20)]' : 'text-secondary hover:text-primary hover:bg-[rgba(255,255,255,0.04)]'}`}
+                        className={`flex-1 py-3 text-sm font-medium rounded-lg border transition-colors transition-shadow focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] ${role === 'donor'
+                            ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border-[rgba(255,43,214,0.20)]'
+                            : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
+                            }`}
                         onClick={() => setRole('donor')}
                     >
                         Donor
