@@ -166,7 +166,7 @@ export function RotatingVideoBackground({
       {/* Video layers */}
       <video
         ref={videoARef}
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity ease-in-out ${frontIsA ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 h-full w-full object-cover brightness-110 contrast-105 saturate-110 transition-opacity ease-in-out ${frontIsA ? 'opacity-100' : 'opacity-0'}`}
         style={{ transitionDuration: `${transitionMs}ms` }}
         src={first}
         autoPlay
@@ -177,7 +177,7 @@ export function RotatingVideoBackground({
       />
       <video
         ref={videoBRef}
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity ease-in-out ${frontIsA ? 'opacity-0' : 'opacity-100'}`}
+        className={`absolute inset-0 h-full w-full object-cover brightness-110 contrast-105 saturate-110 transition-opacity ease-in-out ${frontIsA ? 'opacity-0' : 'opacity-100'}`}
         style={{ transitionDuration: `${transitionMs}ms` }}
         src={second}
         autoPlay
@@ -189,10 +189,11 @@ export function RotatingVideoBackground({
 
       {/* Darkening + high-end overlays (keeps text readable) */}
       {/* Reduce mask ~15% vs previous (55% → ~47%) */}
-      <div className="absolute inset-0 bg-black/45" />
+      {/* Reduce mask further for brighter video */}
+      <div className="absolute inset-0 bg-black/32" />
       <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(255,43,214,0.10),transparent_55%)] opacity-70 mix-blend-screen" />
-      <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.30),rgba(0,0,0,0.70))]" />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-[var(--bg-app)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.22),rgba(0,0,0,0.62))]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/22 via-black/42 to-[var(--bg-app)]" />
     </div>
   );
 }
