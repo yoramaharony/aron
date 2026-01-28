@@ -173,7 +173,14 @@ export function IntelligentSpine() {
             {/* TEXT SECTIONS (Overlay) */}
             <div className="absolute top-0 left-0 w-full">
                 {stepData.map((step, i) => (
-                    <div key={i} className={`h-[70vh] flex items-center ${i % 2 === 0 ? 'justify-start pl-8 md:pl-24' : 'justify-end pr-8 md:pr-24'} pointer-events-none`}>
+                    <div
+                        key={i}
+                        className={`h-[70vh] flex items-center ${
+                            i % 2 === 0
+                                ? 'justify-start pr-6 pl-[clamp(1.5rem,10vw,20rem)]'
+                                : 'justify-end pl-6 pr-[clamp(1.5rem,10vw,20rem)]'
+                        } pointer-events-none`}
+                    >
                         <div
                             ref={textRefs[i]}
                             className="p-8 rounded-xl border border-[rgba(255,255,255,0.10)] backdrop-blur max-w-md opacity-0 shadow-[0_18px_60px_-35px_rgba(0,0,0,0.85)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.14),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
