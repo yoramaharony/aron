@@ -141,9 +141,7 @@ export default function LandingPage() {
 
         {/* 2) THE LEVERAGE ENGINE (Signature Feature - Moved Up) */}
         <section className="px-6 py-24 overflow-hidden relative bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
-          <div className="absolute top-0 right-0 p-32 opacity-5 pointer-events-none">
-            <Zap size={400} />
-          </div>
+          {/* Removed oversized background icon behind the demo card (kept section clean). */}
 
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-20 items-center relative z-10">
             <div className="flex-1 space-y-8">
