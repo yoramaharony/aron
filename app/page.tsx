@@ -76,7 +76,19 @@ export default function LandingPage() {
         </div>
 
         <Link href="/auth/login">
-          <Button variant="ghost" className="text-sm font-medium hover:bg-[rgba(255,43,214,0.10)] hover:text-[var(--text-primary)] transition-colors px-6">
+          <Button
+            variant="ghost"
+            className="text-sm font-semibold px-6 rounded-sm text-[var(--text-primary)]
+              bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]
+              border border-[rgba(255,255,255,0.14)]
+              shadow-[0_18px_60px_-40px_rgba(0,0,0,0.75)]
+              hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.12),rgba(255,255,255,0.02))]
+              hover:border-[rgba(255,43,214,0.45)]
+              hover:shadow-[0_22px_70px_-42px_rgba(255,43,214,0.35)]
+              active:translate-y-[1px]
+              focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22),0_18px_60px_-40px_rgba(0,0,0,0.75)]
+              transition-[background,border-color,box-shadow,transform] duration-300"
+          >
             Member Login
           </Button>
         </Link>
