@@ -103,6 +103,24 @@ body {
   }
 }
 
+/* Gentle variant (slow + subtle) */
+.aron-logo-animated-soft {
+  animation: aronLogoGlowSoft 9s ease-in-out infinite;
+}
+@keyframes aronLogoGlowSoft {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 rgba(255, 43, 214, 0));
+    opacity: 0.96;
+  }
+  50% {
+    transform: scale(1.015);
+    filter: drop-shadow(0 0 10px rgba(255, 43, 214, 0.28));
+    opacity: 1;
+  }
+}
+
 /* Components */
 .btn {
   display: inline-flex;

@@ -68,7 +68,7 @@ export default function LandingPage() {
       <header className="p-6 md:px-12 md:py-8 flex justify-between items-end max-w-7xl mx-auto w-full z-10 relative border-b border-transparent">
         <div className="flex flex-col items-center">
           <div className="mb-2">
-            <img src="/assets/aron-logo-angle.svg" alt="Aron" className="aron-logo h-[53px] w-auto object-contain" />
+            <img src="/assets/aron-logo-angle.svg" alt="Aron" className="aron-logo aron-logo-animated-soft h-[53px] w-auto object-contain" />
           </div>
           <span className="text-[10px] font-medium tracking-[0.25em] text-[var(--text-secondary)] uppercase text-center">
             Channel Your Legacy

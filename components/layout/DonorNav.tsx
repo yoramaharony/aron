@@ -25,7 +25,7 @@ export function DonorNav() {
                 <div className="p-8 pb-4">
                     <div className="flex flex-col items-center">
                         <div className="flex items-center gap-3 mb-1">
-                            <img src="/assets/aron-logo-angle.svg" alt="Aron" className="aron-logo h-[35px]" />
+                            <img src="/assets/aron-logo-angle.svg" alt="Aron" className="aron-logo aron-logo-animated-soft h-[35px]" />
                         </div>
                         <p className="text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase text-center">
                             Channel Your Legacy
