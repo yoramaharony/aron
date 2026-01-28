@@ -68,7 +68,7 @@ export default function LandingPage() {
       <header className="p-6 md:px-12 md:py-8 flex justify-between items-end max-w-7xl mx-auto w-full z-10 relative border-b border-transparent">
         <div className="flex flex-col">
           <div className="mb-2">
-            <img src="/assets/aron-logo.svg" alt="Aron" className="h-[53px] w-auto object-contain" />
+            <img src="/assets/aron-logo.svg" alt="Aron" className="aron-logo aron-logo-animated h-[53px] w-auto object-contain" />
           </div>
           <span className="text-[10px] font-medium tracking-[0.25em] text-[var(--text-secondary)] uppercase pl-1">
             Channel Your Legacy
@@ -223,7 +223,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="bg-[var(--bg-paper)] p-8 rounded-sm border border-[var(--border-subtle)] hover:border-[var(--color-gold)]/30 transition-colors group"
+              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(255,43,214,0.35)] hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(255,43,214,0.40)]"
             >
               <div className="w-12 h-12 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mb-6 text-[var(--color-sage)] group-hover:bg-[var(--color-sage)] group-hover:text-white transition-colors">
                 <Layers size={24} />
@@ -239,7 +239,7 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="bg-[var(--bg-paper)] p-8 rounded-sm border border-[var(--border-subtle)] hover:border-[var(--color-gold)]/30 transition-colors group"
+              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(255,43,214,0.35)] hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(255,43,214,0.40)]"
             >
               <div className="w-12 h-12 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mb-6 text-[var(--color-sage)] group-hover:bg-[var(--color-sage)] group-hover:text-white transition-colors">
                 <Filter size={24} />
@@ -255,7 +255,7 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="bg-[var(--bg-paper)] p-8 rounded-sm border border-[var(--border-subtle)] hover:border-[var(--color-gold)]/30 transition-colors group"
+              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(255,43,214,0.35)] hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(255,43,214,0.40)]"
             >
               <div className="w-12 h-12 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mb-6 text-[var(--color-sage)] group-hover:bg-[var(--color-sage)] group-hover:text-white transition-colors">
                 <ShieldCheck size={24} />
