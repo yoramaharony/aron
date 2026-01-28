@@ -10,7 +10,7 @@ Legend:
 - **Done (Real)**: Signup/Login/Logout APIs (`/api/auth/*`)
 - **Done (Real)**: Session cookie (JWT) + role-based route protection for `/donor/*` and `/requestor/*`
 - **Pending**: Password reset / email verification
-- **Pending**: Invite code gating (currently UI-only inputs on landing)
+- **Done (Real)**: Invite code gating (landing validates via `/api/invites/validate`; signup redeems; donor UI at `/donor/invites`)
 
 ## Requestor (nonprofit) experience
 

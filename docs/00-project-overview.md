@@ -5,7 +5,7 @@ This repo is a **Next.js App Router** app with a small server/API layer (Next ro
 ## Product surfaces (routes)
 
 - **Landing / marketing**: `/`
-  - Invite code input is currently **UI-only** (no validation / gating logic).
+  - Invite code input is **wired**: validates via `/api/invites/validate` and routes to signup; signup redeems code.
   - “Member Login” routes to `/auth/login`.
   - “Grant Seekers” CTA routes to `/requester`.
 
