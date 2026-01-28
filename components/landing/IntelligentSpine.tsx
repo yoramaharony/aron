@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useLayoutEffect, useState } from 'react';
+import React, { useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
@@ -10,8 +10,6 @@ gsap.registerPlugin(ScrollTrigger);
 export function IntelligentSpine() {
     const containerRef = useRef<HTMLDivElement>(null);
     const svgRef = useRef<SVGSVGElement>(null);
-    const currentStepRef = useRef(0);
-    const [currentStep, setCurrentStep] = useState(0);
 
     // Text Refs - Updated for 10 Steps
     const textRef1 = useRef<HTMLDivElement>(null);
@@ -31,53 +29,43 @@ export function IntelligentSpine() {
     const stepData = [
         {
             title: "1. Define your legacy",
-            desc: "Turn intent into a Blueprint. Causes, geographies, time horizons.",
-            outputs: ["Blueprint draft", "Cause/geo scope", "Time horizon & risk posture"],
+            desc: "Turn intent into a Blueprint: causes, geographies, time horizons. We translate your values into crisp constraints that can actually govern decisions. Your giving becomes legible—and repeatable.",
         },
         {
             title: "2. Convert to strategy",
-            desc: "Budget, allocations, and strict governance rules.",
-            outputs: ["Allocation targets", "Guardrails", "Capital cadence"],
+            desc: "Convert the Blueprint into a plan: budgets, allocations, and governance. Define what’s allowed, what’s excluded, and what “great” looks like. Then Aron enforces it automatically.",
         },
         {
             title: "3. Intake & Diligence",
-            desc: "We absorb the chaos. Standardized intake, deep financials, risk flags.",
-            outputs: ["Intake packet", "Risk flags", "Financial validation"],
+            desc: "We absorb the chaos: standardized intake, deep financials, risk flags. No more scattered PDFs and endless calls—everything is normalized into one diligence view. You see signal, not narrative.",
         },
         {
             title: "4. Curated Feed",
-            desc: "Only aligned opportunities. Clear use of funds. No noise.",
-            outputs: ["Matched opportunities", "Fit score", "Disqualified noise removed"],
+            desc: "Only aligned opportunities make it through. Clear use of funds, clear outcomes, clear tradeoffs. The feed stays high-signal because the Blueprint filters everything else out.",
         },
         {
             title: "5. Decide in seconds",
-            desc: "Review simplified key facts. With one click, choose to Pass, Shortlist for later, or Leverage our network. Reversible decisions.",
-            outputs: ["Decision brief", "1-click actions", "Audit trail"],
+            desc: "Review the essentials, fast: key facts, risks, and the funding picture. In one click: Pass, Shortlist, or Leverage the network. Decisions are reversible—and always traceable.",
         },
         {
             title: "6. The Leverage Engine",
-            desc: "Turn $1 into $3. Challenge grants, matching groups, conditional terms.",
-            outputs: ["Challenge terms", "Matching logic", "Milestone rules"],
+            desc: "Turn $1 into $3 with structured leverage. Challenge grants, matching groups, conditional terms, and milestones—generated in seconds. You set the rules; the system coordinates the rest.",
         },
         {
             title: "7. The \"Ugly Work\"",
-            desc: "Agreements, disbursements, tax packs. We handle the machine.",
-            outputs: ["Agreements", "Disbursement ops", "Tax-ready packets"],
+            desc: "Agreements, disbursements, reporting schedules, tax packs—we run the machine. You get clean execution without building a back office. Everything stays organized and audit-ready.",
         },
         {
             title: "8. Verification",
-            desc: "Evidence required. No narrative fluff. Verified outcomes only.",
-            outputs: ["Evidence checklist", "3rd-party verification", "Outcome sign-off"],
+            desc: "Evidence required—no narrative fluff. Define what counts as proof (KPIs, artifacts, third-party checks). Funds follow verified progress, not promises.",
         },
         {
             title: "9. Impact Compounds",
-            desc: "Institutional memory. Playbooks that get smarter over time.",
-            outputs: ["Playbooks", "Pattern library", "Learned priors"],
+            desc: "Institutional memory turns into compounding advantage. Playbooks, templates, and priors get smarter with each cycle. Your foundation improves continuously—without extra headcount.",
         },
         {
             title: "10. Iterate",
-            desc: "Update your blueprint. Spin up new pillars. Your legacy evolves.",
-            outputs: ["Blueprint revision", "New pillars", "Portfolio refresh"],
+            desc: "Update the Blueprint as you learn. Spin up new pillars, retire what doesn’t work, and refine governance. Your legacy evolves—while the system stays consistent.",
         }
     ];
 
@@ -90,14 +78,6 @@ export function IntelligentSpine() {
                 start: 'top top',
                 end: 'bottom bottom',
                 scrub: 1,
-                onUpdate: (self) => {
-                    const stepCount = 10;
-                    const idx = Math.min(stepCount - 1, Math.max(0, Math.floor(self.progress * stepCount)));
-                    if (idx !== currentStepRef.current) {
-                        currentStepRef.current = idx;
-                        setCurrentStep(idx);
-                    }
-                },
             }
         });
 
@@ -160,9 +140,12 @@ export function IntelligentSpine() {
 
             {/* STICKY VISUAL STAGE */}
             <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
-                {/* Right-side "console" glow to eliminate dead space on wide screens */}
+                {/* Ambient glows to prevent "dead black" negative space on wide screens */}
                 <div className="absolute inset-y-0 right-0 w-1/2 pointer-events-none">
                     <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_30%_45%,rgba(255,43,214,0.20),transparent_60%),radial-gradient(700px_500px_at_60%_60%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
+                </div>
+                <div className="absolute inset-y-0 left-0 w-1/2 pointer-events-none">
+                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_70%_40%,rgba(255,43,214,0.22),transparent_62%),radial-gradient(700px_500px_at_40%_65%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
                 </div>
 
                 <svg ref={svgRef} viewBox="0 0 800 600" className="w-full h-full max-w-4xl opacity-90">
@@ -223,60 +206,6 @@ export function IntelligentSpine() {
                     </g>
 
                 </svg>
-
-                {/* Sticky right-side panel that updates per step */}
-                <div className="absolute inset-0 flex items-center justify-end pointer-events-none">
-                    <div className="pointer-events-none pr-[clamp(1.25rem,6vw,12rem)] pl-6 w-[min(520px,44vw)]">
-                        <div className="rounded-2xl border border-[rgba(255,255,255,0.10)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.12),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] backdrop-blur p-8 shadow-[0_18px_70px_-45px_rgba(0,0,0,0.85)]">
-                            <div className="flex items-center justify-between mb-5">
-                                <div className="text-[10px] tracking-[0.25em] uppercase text-[var(--text-tertiary)] font-bold">
-                                    Blueprint Console
-                                </div>
-                                <div className="text-[10px] tracking-[0.25em] uppercase text-[rgba(255,43,214,0.85)] font-bold">
-                                    Step {currentStep + 1}/10
-                                </div>
-                            </div>
-
-                            <div className="text-[var(--text-primary)] font-serif text-2xl leading-tight">
-                                {stepData[currentStep]?.title}
-                            </div>
-                            <div className="mt-3 text-[var(--text-secondary)] leading-relaxed">
-                                {stepData[currentStep]?.desc}
-                            </div>
-
-                            <div className="mt-6">
-                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] font-bold mb-3">
-                                    Outputs
-                                </div>
-                                <div className="grid gap-2">
-                                    {(stepData[currentStep]?.outputs ?? []).map((o) => (
-                                        <div
-                                            key={o}
-                                            className="rounded-lg border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--text-secondary)]"
-                                        >
-                                            <span className="text-[rgba(212,175,55,0.85)] mr-2">•</span>
-                                            {o}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="mt-6 h-px bg-[rgba(255,255,255,0.08)]" />
-                            <div className="mt-4 flex items-center gap-2">
-                                {stepData.map((_, i) => (
-                                    <div
-                                        key={i}
-                                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                                            i === currentStep
-                                                ? 'w-10 bg-[rgba(255,43,214,0.85)]'
-                                                : 'w-3 bg-[rgba(255,255,255,0.16)]'
-                                        }`}
-                                    />
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {/* TEXT SECTIONS (Overlay) */}
