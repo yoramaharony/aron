@@ -160,6 +160,11 @@ export function RotatingVideoBackground({
   const initialList = safeSources.length > 0 ? safeSources : dynamicSources;
   const first = initialList[0] ?? '';
   const second = initialList.length > 1 ? initialList[1] : first;
+  const currentSrc = initialList[activeIndex % initialList.length] ?? first;
+  const baseMask = 0.32;
+  // social-contract.mp4 is brighter than the rest; add an extra 30% darkening mask.
+  const extraMask = currentSrc.includes('social-contract') ? 0.3 : 0;
+  const maskOpacity = Math.min(0.95, baseMask + extraMask);
 
   // Avoid rendering <video src=""> which can cause a reload warning in the console.
   if (!first) {
@@ -203,7 +208,7 @@ export function RotatingVideoBackground({
       {/* Darkening + high-end overlays (keeps text readable) */}
       {/* Reduce mask ~15% vs previous (55% → ~47%) */}
       {/* Reduce mask further for brighter video */}
-      <div className="absolute inset-0 bg-black/32" />
+      <div className="absolute inset-0" style={{ backgroundColor: `rgba(0,0,0,${maskOpacity})` }} />
       <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(255,43,214,0.10),transparent_55%)] opacity-70 mix-blend-screen" />
       <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.22),rgba(0,0,0,0.62))]" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/22 via-black/42 to-[var(--bg-app)]" />
