@@ -125,17 +125,19 @@ export function IntelligentSpine() {
         tl.fromTo(textRef9.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1 }, 16)
             .to('#bloom-group', { opacity: 1, duration: 1 }, 16.5)
             .to('.sunburst-ray', { scale: 1.5, opacity: 1, stagger: 0.05, duration: 2 }, 17)
-            .to(textRef9.current, { opacity: 0, y: -50, duration: 1 }, 18);
+            // Give step 9 more dwell time near the end of the section
+            .to(textRef9.current, { opacity: 0, y: -50, duration: 1 }, 19);
 
         // --- STEP 10: Iterate (Loop) ---
-        tl.fromTo(textRef10.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1 }, 18)
-            .to(textRef10.current, { opacity: 0, y: -50, duration: 1 }, 20);
+        // Start step 10 a bit later and let it fully appear before the scroll section ends
+        tl.fromTo(textRef10.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1 }, 19)
+            .to(textRef10.current, { opacity: 0, y: -50, duration: 1 }, 22);
 
 
     }, { scope: containerRef });
 
     return (
-        <div ref={containerRef} className="relative h-[700vh] bg-[var(--bg-paper)]">
+        <div ref={containerRef} className="relative h-[800vh] bg-[var(--bg-paper)]">
             {/* Reduced height to accommodate faster pacing */}
 
             {/* STICKY VISUAL STAGE */}
@@ -215,7 +217,7 @@ export function IntelligentSpine() {
                 {stepData.map((step, i) => (
                     <div
                         key={i}
-                        className={`h-[70vh] flex items-center ${
+                        className={`h-[80vh] flex items-center ${
                             i % 2 === 0
                                 ? 'justify-start pr-6 pl-[clamp(1.5rem,10vw,20rem)]'
                                 : 'justify-end pl-6 pr-[clamp(1.5rem,10vw,20rem)]'
