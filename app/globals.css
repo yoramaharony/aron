@@ -83,6 +83,8 @@ body {
 /* Aron logo subtle "alive" animation (CSS-only). SVG itself is static. */
 .aron-logo {
   transform: translateZ(0);
+  transform-origin: 50% 50%;
+  will-change: transform, filter, opacity;
 }
 .aron-logo-animated {
   animation: aronLogoGlow 3.5s ease-in-out infinite;
@@ -90,11 +92,13 @@ body {
 @keyframes aronLogoGlow {
   0%,
   100% {
+    transform: scale(1);
     filter: drop-shadow(0 0 0 rgba(255, 43, 214, 0));
-    opacity: 0.98;
+    opacity: 0.92;
   }
   50% {
-    filter: drop-shadow(0 0 10px rgba(255, 43, 214, 0.35));
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 18px rgba(255, 43, 214, 0.60));
     opacity: 1;
   }
 }
