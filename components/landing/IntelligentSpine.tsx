@@ -142,10 +142,12 @@ export function IntelligentSpine() {
             <div className="sticky top-0 h-screen w-full flex items-center justify-center overflow-hidden">
                 {/* Ambient glows to prevent "dead black" negative space on wide screens */}
                 <div className="absolute inset-y-0 right-0 w-1/2 pointer-events-none">
-                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_30%_45%,rgba(255,43,214,0.20),transparent_60%),radial-gradient(700px_500px_at_60%_60%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
+                    {/* Right glow: pushed DOWN for asymmetry */}
+                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_30%_62%,rgba(255,43,214,0.20),transparent_60%),radial-gradient(700px_500px_at_60%_78%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
                 </div>
                 <div className="absolute inset-y-0 left-0 w-1/2 pointer-events-none">
-                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_70%_40%,rgba(255,43,214,0.22),transparent_62%),radial-gradient(700px_500px_at_40%_65%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
+                    {/* Left glow: pulled UP for asymmetry */}
+                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_70%_24%,rgba(255,43,214,0.22),transparent_62%),radial-gradient(700px_500px_at_40%_46%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
                 </div>
 
                 <svg ref={svgRef} viewBox="0 0 800 600" className="w-full h-full max-w-4xl opacity-90">
