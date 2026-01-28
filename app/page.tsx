@@ -129,7 +129,14 @@ export default function LandingPage() {
                   />
                   <Button
                     variant="primary"
-                    className="px-8 rounded-sm"
+                    className="px-8 rounded-sm font-semibold
+                      bg-[linear-gradient(135deg,rgba(255,43,214,0.95)_0%,rgba(192,22,255,0.88)_45%,rgba(212,175,55,0.85)_100%)]
+                      shadow-[0_20px_70px_-45px_rgba(255,43,214,0.70)]
+                      hover:shadow-[0_26px_80px_-45px_rgba(255,43,214,0.85)]
+                      hover:brightness-110
+                      active:translate-y-[1px]
+                      focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22),0_20px_70px_-45px_rgba(255,43,214,0.70)]
+                      transition-[box-shadow,filter,transform] duration-300"
                     onClick={handleInviteContinue}
                     isLoading={inviteLoading}
                   >
@@ -212,7 +219,18 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <Button variant="primary" className="w-full font-bold">
+                  <Button
+                    variant="primary"
+                    className="w-full font-bold rounded-lg
+                      bg-[linear-gradient(135deg,rgba(255,43,214,0.92)_0%,rgba(192,22,255,0.80)_45%,rgba(212,175,55,0.70)_100%)]
+                      border border-[rgba(255,255,255,0.14)]
+                      shadow-[0_22px_75px_-55px_rgba(255,43,214,0.85)]
+                      hover:shadow-[0_30px_90px_-55px_rgba(255,43,214,0.95)]
+                      hover:brightness-110
+                      active:translate-y-[1px]
+                      focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22),0_22px_75px_-55px_rgba(255,43,214,0.85)]
+                      transition-[box-shadow,filter,transform] duration-300"
+                  >
                     Create Catalytic Offer
                   </Button>
                 </div>
