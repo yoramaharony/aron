@@ -49,7 +49,9 @@ function LoginContent() {
             }
 
             // Redirect based on role
-            if (data.user.role === 'requestor') {
+            if (data.user.role === 'admin') {
+                router.push('/admin');
+            } else if (data.user.role === 'requestor') {
                 router.push('/requestor');
             } else {
                 router.push('/donor');
@@ -70,7 +72,11 @@ function LoginContent() {
                     </div>
                     <h1 className="text-3xl font-serif mb-3">Welcome Back</h1>
                     <p className="text-secondary">
-                        {visualRole === 'donor' ? 'Access your private vault.' : 'Manage your impact requests.'}
+                        {visualRole === 'admin'
+                            ? 'Concierge console access.'
+                            : visualRole === 'donor'
+                                ? 'Access your private vault.'
+                                : 'Manage your impact requests.'}
                     </p>
                 </div>
 

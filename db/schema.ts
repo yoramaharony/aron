@@ -7,7 +7,7 @@ export const users = sqliteTable('users', {
     name: text('name').notNull(),
     email: text('email').notNull().unique(),
     password: text('password').notNull(),
-    role: text('role').notNull(), // 'donor' | 'requestor'
+    role: text('role').notNull(), // 'donor' | 'requestor' | 'admin'
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 

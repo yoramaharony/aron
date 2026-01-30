@@ -9,6 +9,23 @@ const SECRET_KEY = new TextEncoder().encode(
 export async function middleware(request: NextRequest) {
     const session = request.cookies.get('session')?.value;
 
+    // Protect Admin Routes
+    if (request.nextUrl.pathname.startsWith('/admin')) {
+        if (!session) {
+            return NextResponse.redirect(new URL('/auth/login?role=admin', request.url));
+        }
+        try {
+            const { payload } = await jwtVerify(session, SECRET_KEY);
+            if (payload.role !== 'admin') {
+                if (payload.role === 'donor') return NextResponse.redirect(new URL('/donor', request.url));
+                if (payload.role === 'requestor') return NextResponse.redirect(new URL('/requestor', request.url));
+                return NextResponse.redirect(new URL('/auth/login?role=admin', request.url));
+            }
+        } catch (e) {
+            return NextResponse.redirect(new URL('/auth/login?role=admin', request.url));
+        }
+    }
+
     // Protect Donor Routes
     if (request.nextUrl.pathname.startsWith('/donor')) {
         if (!session) {
@@ -45,5 +62,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: ['/donor/:path*', '/requestor/:path*'],
+    matcher: ['/admin/:path*', '/donor/:path*', '/requestor/:path*'],
 };

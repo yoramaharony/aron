@@ -15,6 +15,11 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
         }
 
+        // Prevent creating admin users via public signup.
+        if (role !== 'donor' && role !== 'requestor') {
+            return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
+        }
+
         // Bootstrap: if there are zero users, allow creating the first donor without an invite.
         const countRow = await db.select({ count: sql<number>`count(*)` }).from(users).get();
         const userCount = Number(countRow?.count ?? 0);
