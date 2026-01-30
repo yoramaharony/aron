@@ -21,7 +21,7 @@ export default function DonorFeed() {
     const passedItems = MOCK_REQUESTS.filter(item => passed.has(item.id));
 
     return (
-        <div style={{ paddingTop: '2rem' }}>
+        <div>
             <header className="flex justify-between items-end mb-8">
                 <div>
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Today's Opportunities</h1>

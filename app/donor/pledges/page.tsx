@@ -46,7 +46,7 @@ export default function DonorPledges() {
     ];
 
     return (
-        <div style={{ paddingTop: '2rem' }} className="relative">
+        <div className="relative">
             <div className="flex justify-between items-end mb-8">
                 <div>
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">My Pledges</h1>

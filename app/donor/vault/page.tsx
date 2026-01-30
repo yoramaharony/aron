@@ -28,7 +28,7 @@ export default function DonorVault() {
     const allDocs = [...leverageDocsView, ...STATIC_DOCS];
 
     return (
-        <div style={{ paddingTop: '2rem' }}>
+        <div>
             <div className="flex justify-between items-end mb-8">
                 <div>
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Vault</h1>

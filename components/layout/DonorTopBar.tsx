@@ -34,7 +34,7 @@ export function DonorTopBar() {
         'md:-mx-8 md:-mt-8 md:px-8 md:py-1.5',
         'border-b border-[rgba(255,255,255,0.08)]',
         'bg-[rgba(10,10,14,0.62)] backdrop-blur',
-        'mb-4',
+        // spacing below is controlled by page content; avoid making the bar feel like "two rows"
       ].join(' ')}
     >
       <div className="w-full flex items-center justify-end">
@@ -42,7 +42,7 @@ export function DonorTopBar() {
           <button
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
-            className="w-8.5 h-8.5 rounded-full bg-[rgba(255,255,255,0.06)] text-[var(--text-primary)] flex items-center justify-center text-xs font-semibold border border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.10)] transition-colors shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
+            className="w-9 h-9 rounded-full bg-[rgba(255,255,255,0.06)] text-[var(--text-primary)] flex items-center justify-center text-xs font-semibold border border-[rgba(255,255,255,0.12)] hover:bg-[rgba(255,255,255,0.10)] transition-colors shadow-[0_12px_40px_-30px_rgba(0,0,0,0.85)]"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             aria-label="Account menu"

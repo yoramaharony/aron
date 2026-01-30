@@ -5,7 +5,7 @@ import { TrendingUp, Users, Globe, ArrowUpRight } from 'lucide-react';
 
 export default function ImpactPage() {
     return (
-        <div className="fade-in" style={{ paddingTop: '2rem' }}>
+        <div className="fade-in">
             <header className="mb-8">
                 <h1 className="text-3xl font-serif">Impact Report</h1>
                 <p className="text-secondary">Aggregate metrics across your philanthropic portfolio.</p>

@@ -84,7 +84,7 @@ export default function DonorInbox() {
     }, [filteredMessages, selectedId]);
 
     return (
-        <div style={{ paddingTop: '2rem' }}>
+        <div>
             <div className="flex justify-between items-end mb-8">
                 <div>
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Inbox</h1>
