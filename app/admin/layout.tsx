@@ -9,15 +9,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <Link href="/admin" className="flex items-center gap-3">
             <AronLogo imgClassName="aron-logo aron-logo-animated-soft h-[28px] w-auto object-contain" />
           </Link>
-
-          <nav className="flex items-center gap-2">
-            <Link
-              href="/admin/invites"
-              className="text-sm font-semibold px-3 py-2 rounded-lg border border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] hover:bg-[rgba(255,43,214,0.16)] transition-colors"
-            >
-              Invites
-            </Link>
-          </nav>
         </div>
       </header>
 
