@@ -1,8 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { useDonorUi } from '@/components/providers/DonorUiContext';
 
 export function DonorTopBar() {
+  const pathname = usePathname();
+  const { sidebarCollapsed, toggleSidebar } = useDonorUi();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -25,6 +30,18 @@ export function DonorTopBar() {
     }
   };
 
+  const title = (() => {
+    if (pathname === '/donor') return "Today's Opportunities";
+    if (pathname === '/donor/pledges') return 'My Pledges';
+    if (pathname === '/donor/impact') return 'Impact';
+    if (pathname === '/donor/vault') return 'Vault';
+    if (pathname === '/donor/inbox') return 'Inbox';
+    if (pathname === '/donor/legacy') return 'Concierge AI';
+    if (pathname === '/donor/invites') return 'Invites';
+    if (pathname?.startsWith('/donor/')) return 'Opportunity';
+    return 'Donor';
+  })();
+
   return (
     <div
       className={[
@@ -36,7 +53,30 @@ export function DonorTopBar() {
         'bg-[rgba(10,10,14,0.78)]',
       ].join(' ')}
     >
-      <div className="w-full flex items-center justify-end">
+      <div className="w-full flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+            aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen size={18} className="text-[var(--text-secondary)]" />
+            ) : (
+              <PanelLeftClose size={18} className="text-[var(--text-secondary)]" />
+            )}
+          </button>
+
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="w-2 h-2 rounded-full bg-[rgba(255,43,214,0.55)] shadow-[0_0_0_3px_rgba(255,43,214,0.14)]" />
+            <div className="text-sm md:text-base font-semibold text-[var(--text-primary)] truncate">
+              {title}
+            </div>
+          </div>
+        </div>
+
         <div className="relative" ref={menuRef}>
           <button
             type="button"

@@ -237,6 +237,14 @@ body {
   flex-direction: column;
 }
 
+.sidebar.sidebar-collapsed {
+  width: 88px;
+}
+
+.sidebar.sidebar-collapsed .aron-logo {
+  opacity: 0.98;
+}
+
 .main-content {
   flex: 1;
   background: var(--bg-surface);
