@@ -26,7 +26,17 @@ export function DonorTopBar() {
   };
 
   return (
-    <div className="hidden md:flex sticky top-0 z-40 -mt-2 pt-2 mb-6">
+    <div
+      className={[
+        // Main content has padding; pull the bar to the true edges so it feels "tight to the top".
+        'sticky top-0 z-50',
+        '-mx-4 -mt-4 px-4 py-3',
+        'md:-mx-8 md:-mt-8 md:px-8 md:py-4',
+        'border-b border-[rgba(255,255,255,0.08)]',
+        'bg-[rgba(10,10,14,0.62)] backdrop-blur',
+        'mb-4 md:mb-6',
+      ].join(' ')}
+    >
       <div className="w-full flex items-center justify-end">
         <div className="relative" ref={menuRef}>
           <button
