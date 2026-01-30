@@ -235,6 +235,9 @@ body {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02));
   display: flex;
   flex-direction: column;
+  /* Smooth "wall slides" collapse/expand */
+  transition: width 260ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  will-change: width;
 }
 
 .sidebar.sidebar-collapsed {
@@ -243,6 +246,43 @@ body {
 
 .sidebar.sidebar-collapsed .aron-logo {
   opacity: 0.98;
+}
+
+/* Smooth label/tagline collapse */
+.donor-sidebar-label {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1),
+    max-width 260ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  transform: translateX(0);
+  opacity: 1;
+  max-width: 220px;
+}
+
+.donor-sidebar-label-collapsed {
+  opacity: 0;
+  transform: translateX(-8px);
+  max-width: 0;
+}
+
+.donor-sidebar-tagline {
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1),
+    max-height 260ms cubic-bezier(0.2, 0.9, 0.2, 1);
+  transform: translateY(0);
+  opacity: 1;
+  max-height: 20px;
+  overflow: hidden;
+}
+
+.donor-sidebar-tagline-collapsed {
+  opacity: 0;
+  transform: translateY(-6px);
+  max-height: 0;
 }
 
 .main-content {

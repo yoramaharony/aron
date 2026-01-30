@@ -37,11 +37,14 @@ export function DonorNav() {
                                 )}
                             />
                         </div>
-                        {!sidebarCollapsed ? (
-                            <p className="text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase text-center">
-                                Channel Your Legacy
-                            </p>
-                        ) : null}
+                        <p
+                            className={clsx(
+                                'donor-sidebar-tagline text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase text-center',
+                                sidebarCollapsed && 'donor-sidebar-tagline-collapsed'
+                            )}
+                        >
+                            Channel Your Legacy
+                        </p>
                     </div>
                 </div>
 
@@ -62,7 +65,14 @@ export function DonorNav() {
                                 )}
                             >
                                 <item.icon size={20} className={isActive ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'} />
-                                {!sidebarCollapsed ? <span>{item.label}</span> : null}
+                                <span
+                                    className={clsx(
+                                        'donor-sidebar-label',
+                                        sidebarCollapsed && 'donor-sidebar-label-collapsed'
+                                    )}
+                                >
+                                    {item.label}
+                                </span>
                             </Link>
                         );
                     })}
