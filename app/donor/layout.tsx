@@ -1,4 +1,5 @@
 import { DonorNav } from '@/components/layout/DonorNav';
+import { DonorTopBar } from '@/components/layout/DonorTopBar';
 import MobileNav from '@/components/layout/MobileNav';
 import { LegacyProvider } from '@/components/providers/LegacyContext';
 import { LeverageProvider } from '@/components/providers/LeverageContext';
@@ -17,6 +18,7 @@ export default function DonorLayout({
                         <DonorNav />
                     </div>
                     <main className="main-content">
+                        <DonorTopBar />
                         {children}
                         <LeverageDrawer />
                     </main>
