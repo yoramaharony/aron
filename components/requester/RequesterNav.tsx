@@ -31,13 +31,13 @@ export function RequesterNav() {
         <nav className="w-64 bg-[var(--bg-paper)] text-[var(--text-primary)] flex flex-col h-screen border-r border-[var(--border-subtle)]">
             {/* Brand */}
             <div className="p-6 border-b border-[var(--border-subtle)]">
-                <div className="flex items-center gap-3 text-[var(--text-primary)]">
+                <div className="flex items-center gap-3 text-[var(--text-primary)] justify-start">
                     <div className="w-[35px] h-[35px] md:w-[44px] md:h-[44px]">
                         <AronLogo imgClassName="aron-logo aron-logo-animated-soft w-full h-full object-contain" />
                     </div>
                     <span className="font-serif tracking-widest text-sm uppercase mt-1">Portal</span>
                 </div>
-                <div className="mt-3 text-[10px] text-[var(--text-tertiary)] uppercase tracking-widest font-bold">Grantee Workspace</div>
+                <div className="mt-3 text-[10px] text-[var(--text-tertiary)] uppercase tracking-widest font-bold text-left">Grantee Workspace</div>
             </div>
 
             {/* Links */}
