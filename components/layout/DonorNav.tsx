@@ -29,7 +29,13 @@ export function DonorNav() {
                 <div className="pb-4">
                     <div className="flex flex-col items-center">
                         <div className="flex items-center gap-3 mb-1">
-                            <AronLogo imgClassName={clsx('aron-logo aron-logo-animated-soft w-auto object-contain', sidebarCollapsed ? 'h-[28px]' : 'h-[35px]')} />
+                            <AronLogo
+                                variant={sidebarCollapsed ? 'mark' : 'full'}
+                                imgClassName={clsx(
+                                    'aron-logo aron-logo-animated-soft w-auto object-contain',
+                                    sidebarCollapsed ? 'h-[34px]' : 'h-[35px]'
+                                )}
+                            />
                         </div>
                         {!sidebarCollapsed ? (
                             <p className="text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase text-center">
