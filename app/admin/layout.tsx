@@ -8,12 +8,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between gap-6">
           <Link href="/admin" className="flex items-center gap-3">
             <AronLogo imgClassName="aron-logo aron-logo-animated-soft h-[28px] w-auto object-contain" />
-            <div className="leading-tight">
-              <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
-                Concierge Console
-              </div>
-              <div className="text-sm font-semibold text-[var(--text-primary)]">Admin</div>
-            </div>
           </Link>
 
           <nav className="flex items-center gap-2">
