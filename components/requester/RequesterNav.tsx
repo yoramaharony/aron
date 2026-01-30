@@ -12,6 +12,7 @@ import {
     Settings,
     LogOut
 } from 'lucide-react';
+import { AronLogo } from '@/components/layout/AronLogo';
 
 const NAV_ITEMS = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/requester' },
@@ -32,7 +33,7 @@ export function RequesterNav() {
             <div className="p-6 border-b border-[var(--border-subtle)]">
                 <div className="flex items-center gap-3 text-[var(--text-primary)]">
                     <div className="w-[35px] h-[35px] md:w-[44px] md:h-[44px]">
-                        <img src="/assets/aron-logo-angle.svg" alt="Aron" className="aron-logo aron-logo-animated-soft w-full h-full object-contain" />
+                        <AronLogo imgClassName="aron-logo aron-logo-animated-soft w-full h-full object-contain" />
                     </div>
                     <span className="font-serif tracking-widest text-sm uppercase mt-1">Portal</span>
                 </div>

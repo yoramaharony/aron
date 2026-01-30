@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound } from 'lucide-react';
+import { AronLogo } from '@/components/layout/AronLogo';
 
 const NAV_ITEMS = [
     { label: 'Legacy Studio', icon: Compass, href: '/donor/legacy' },
@@ -25,7 +26,7 @@ export function DonorNav() {
                 <div className="p-8 pb-4">
                     <div className="flex flex-col items-center">
                         <div className="flex items-center gap-3 mb-1">
-                            <img src="/assets/aron-logo-angle.svg" alt="Aron" className="aron-logo aron-logo-animated-soft h-[35px]" />
+                            <AronLogo imgClassName="aron-logo aron-logo-animated-soft h-[35px] w-auto object-contain" />
                         </div>
                         <p className="text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase text-center">
                             Channel Your Legacy
