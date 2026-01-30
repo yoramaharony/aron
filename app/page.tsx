@@ -31,22 +31,14 @@ export default function LandingPage() {
   const [inviteError, setInviteError] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
 
-  // Support direct invite links like "/?invite=XXXX-XXXX-XXXX"
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const invite = params.get('invite');
-    if (invite) setInviteCode(invite);
-  }, []);
-
-  const handleInviteContinue = async () => {
+  const validateInviteAndContinue = async (code: string) => {
     setInviteLoading(true);
     setInviteError('');
     try {
       const res = await fetch('/api/invites/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: inviteCode }),
+        body: JSON.stringify({ code }),
       });
       const data = await res.json();
       if (!res.ok || !data?.valid) {
@@ -54,12 +46,28 @@ export default function LandingPage() {
       }
 
       const role = data.intendedRole === 'donor' ? 'donor' : 'requestor';
-      router.push(`/auth/signup?invite=${encodeURIComponent(inviteCode)}&role=${encodeURIComponent(role)}`);
+      router.push(`/auth/signup?invite=${encodeURIComponent(code)}&role=${encodeURIComponent(role)}`);
     } catch (e: any) {
       setInviteError(e?.message || 'Invalid invite code');
     } finally {
       setInviteLoading(false);
     }
+  };
+
+  // Support direct invite links like "/?invite=XXXX-XXXX-XXXX"
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const invite = params.get('invite');
+    if (invite) {
+      setInviteCode(invite);
+      // Auto-validate + continue for invite links so "Copy Link" works as expected.
+      validateInviteAndContinue(invite);
+    }
+  }, []);
+
+  const handleInviteContinue = async () => {
+    await validateInviteAndContinue(inviteCode);
   };
 
   return (
