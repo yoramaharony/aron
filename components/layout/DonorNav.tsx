@@ -57,17 +57,23 @@ export function DonorNav() {
                                 href={item.href}
                                 title={sidebarCollapsed ? item.label : undefined}
                                 className={clsx(
-                                    'flex items-center gap-3 p-3 rounded-lg transition-all duration-200',
-                                    sidebarCollapsed && 'justify-center',
+                                    'flex items-center p-3 rounded-lg transition-all duration-200',
+                                    sidebarCollapsed ? 'justify-center gap-0' : 'gap-3',
                                     isActive
                                         ? 'bg-[rgba(255,43,214,0.10)] text-[var(--color-gold)] font-medium shadow-[0_0_0_1px_rgba(255,43,214,0.25)]'
                                         : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
                                 )}
                             >
-                                <item.icon size={20} className={isActive ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'} />
+                                <item.icon
+                                    size={20}
+                                    className={clsx(
+                                        'shrink-0',
+                                        isActive ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'
+                                    )}
+                                />
                                 <span
                                     className={clsx(
-                                        'donor-sidebar-label',
+                                        'donor-sidebar-label min-w-0',
                                         sidebarCollapsed && 'donor-sidebar-label-collapsed'
                                     )}
                                 >

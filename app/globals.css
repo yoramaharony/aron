@@ -260,6 +260,7 @@ body {
   transform: translateX(0);
   opacity: 1;
   max-width: 220px;
+  min-width: 0;
 }
 
 .donor-sidebar-label-collapsed {
