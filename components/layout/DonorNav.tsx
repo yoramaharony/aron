@@ -32,7 +32,7 @@ export function DonorNav() {
                             <AronLogo
                                 variant={sidebarCollapsed ? 'mark' : 'full'}
                                 imgClassName={clsx(
-                                    'aron-logo aron-logo-animated-soft w-auto object-contain',
+                                    'aron-logo w-auto object-contain',
                                     sidebarCollapsed ? 'h-[34px]' : 'h-[35px]'
                                 )}
                             />
