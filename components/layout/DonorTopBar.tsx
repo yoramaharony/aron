@@ -28,13 +28,12 @@ export function DonorTopBar() {
   return (
     <div
       className={[
-        // Main content has padding; pull the bar to the true edges so it feels "tight to the top".
+        // Donor layout removes main padding; bar can be naturally flush without negative margins.
         'sticky top-0 z-50',
-        '-mx-4 -mt-4 px-4 py-1.5',
-        'md:-mx-8 md:-mt-8 md:px-8 md:py-1.5',
+        'px-4 py-2',
+        'md:px-8 md:py-2',
         'border-b border-[rgba(255,255,255,0.08)]',
-        'bg-[rgba(10,10,14,0.62)] backdrop-blur',
-        // spacing below is controlled by page content; avoid making the bar feel like "two rows"
+        'bg-[rgba(10,10,14,0.78)]',
       ].join(' ')}
     >
       <div className="w-full flex items-center justify-end">

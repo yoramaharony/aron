@@ -13,13 +13,15 @@ export default function DonorLayout({
     return (
         <LegacyProvider>
             <LeverageProvider>
-                <div className="app-shell">
+                <div className="app-shell donor-shell">
                     <div className="hidden md:block">
                         <DonorNav />
                     </div>
                     <main className="main-content">
                         <DonorTopBar />
-                        {children}
+                        <div className="donor-content-wrap">
+                            {children}
+                        </div>
                         <LeverageDrawer />
                     </main>
                     <MobileNav role="donor" />

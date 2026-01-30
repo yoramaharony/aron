@@ -244,6 +244,23 @@ body {
   overflow-y: auto;
 }
 
+/* Donor shell: top bar is flush; content gets padding via an inner wrapper. */
+.donor-shell .main-content {
+  padding: 0;
+}
+
+.donor-shell .donor-content-wrap {
+  padding: 1rem;
+  padding-bottom: 80px; /* space for mobile bottom nav */
+}
+
+@media (min-width: 768px) {
+  .donor-shell .donor-content-wrap {
+    padding: 2rem;
+    padding-bottom: 2rem;
+  }
+}
+
 /* Typography */
 .label {
   display: block;
