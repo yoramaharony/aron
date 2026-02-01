@@ -50,3 +50,60 @@ export const inviteCodes = sqliteTable('invite_codes', {
     revokedAt: integer('revoked_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
+
+// Donor-generated submission links (org uses this link to submit a brief request to a specific donor)
+export const submissionLinks = sqliteTable('submission_links', {
+    id: text('id').primaryKey(), // UUID
+    token: text('token').notNull().unique(), // long unguessable token used in /submit/<token>
+    donorId: text('donor_id').notNull().references(() => users.id),
+    createdBy: text('created_by').notNull().references(() => users.id), // usually same as donorId
+
+    // "Donor → org" relationship (MVP: soft-identify org via name/email)
+    orgName: text('org_name'),
+    orgEmail: text('org_email'),
+    note: text('note'),
+
+    // Controls
+    expiresAt: integer('expires_at', { mode: 'timestamp' }),
+    revokedAt: integer('revoked_at', { mode: 'timestamp' }),
+    maxSubmissions: integer('max_submissions').notNull().default(50),
+
+    // Usage / tracking
+    submissionsCount: integer('submissions_count').notNull().default(0),
+    visitsCount: integer('visits_count').notNull().default(0),
+    lastVisitedAt: integer('last_visited_at', { mode: 'timestamp' }),
+    lastSubmittedAt: integer('last_submitted_at', { mode: 'timestamp' }),
+
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Lightweight request submissions created via a donor submission link
+export const submissionEntries = sqliteTable('submission_entries', {
+    id: text('id').primaryKey(), // UUID
+    linkId: text('link_id').notNull().references(() => submissionLinks.id),
+    donorId: text('donor_id').notNull().references(() => users.id),
+
+    // Requester identity (MVP: soft)
+    contactName: text('contact_name'),
+    contactEmail: text('contact_email'),
+    orgName: text('org_name'),
+    orgEmail: text('org_email'),
+
+    // Lightweight content
+    title: text('title'),
+    summary: text('summary').notNull(),
+    amountRequested: integer('amount_requested'),
+    videoUrl: text('video_url'),
+
+    // Optional linkage to an authenticated requestor user (if they happened to be signed in)
+    requestorUserId: text('requestor_user_id').references(() => users.id),
+
+    // Basic workflow (later: request-more-info, pass, etc.)
+    status: text('status').notNull().default('new'),
+
+    // Audit metadata
+    userAgent: text('user_agent'),
+    ip: text('ip'),
+
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});

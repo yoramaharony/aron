@@ -38,6 +38,7 @@ export function DonorTopBar() {
     if (pathname === '/donor/inbox') return 'Inbox';
     if (pathname === '/donor/legacy') return 'Concierge AI';
     if (pathname === '/donor/invites') return 'Invites';
+    if (pathname === '/donor/submission-links') return 'Submission Links';
     if (pathname?.startsWith('/donor/')) return 'Opportunity';
     return 'Donor';
   })();

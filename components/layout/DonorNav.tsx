@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
-import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound } from 'lucide-react';
+import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound, Link2 } from 'lucide-react';
 import { AronLogo } from '@/components/layout/AronLogo';
 import { useDonorUi } from '@/components/providers/DonorUiContext';
 
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
     { label: 'Vault', icon: Lock, href: '/donor/vault' },
     { label: 'Inbox', icon: Mail, href: '/donor/inbox' },
     { label: 'Invites', icon: KeyRound, href: '/donor/invites' },
+    { label: 'Submission Links', icon: Link2, href: '/donor/submission-links' },
 ];
 
 export function DonorNav() {
