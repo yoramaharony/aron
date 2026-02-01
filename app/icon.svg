@@ -1,8 +1,12 @@
 <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- Aron favicon (mark) -->
-  <path d="M25 80 L25 45 Q25 25, 50 25 Q75 25, 75 45 L75 80" stroke="#ff2bd6" stroke-width="6" stroke-linecap="round" fill="none"/>
-  <line x1="25" y1="80" x2="75" y2="80" stroke="#ff2bd6" stroke-width="6" stroke-linecap="round"/>
-  <line x1="50" y1="80" x2="50" y2="30" stroke="#ff2bd6" stroke-width="6" stroke-linecap="round"/>
-  <path d="M40 40 L50 30 L60 40" stroke="#ff2bd6" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Use a solid background so the icon reads "full size" at 16x16 / 32x32 -->
+  <rect x="6" y="6" width="88" height="88" rx="20" fill="#07070a"/>
+
+  <!-- Scaled-up mark (reduced padding) -->
+  <path d="M18 84 L18 46 Q18 22, 50 22 Q82 22, 82 46 L82 84" stroke="#ff2bd6" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <line x1="18" y1="84" x2="82" y2="84" stroke="#ff2bd6" stroke-width="8" stroke-linecap="round"/>
+  <line x1="50" y1="84" x2="50" y2="28" stroke="#ff2bd6" stroke-width="8" stroke-linecap="round"/>
+  <path d="M40 38 L50 28 L60 38" stroke="#ff2bd6" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
 
