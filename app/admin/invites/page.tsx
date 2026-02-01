@@ -79,15 +79,12 @@ export default function AdminInvitesPage() {
     return `${window.location.origin}/?invite=${encodeURIComponent(createdCode)}`;
   }, [createdCode]);
 
-  const title = 'Admin / Concierge — Invites';
+  const title = 'Invites';
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <div className="flex items-end justify-between gap-6">
         <div>
-          <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
-            Concierge Console
-          </div>
           <h1 className="text-3xl font-semibold text-[var(--text-primary)] mt-2">
             {title}
           </h1>
