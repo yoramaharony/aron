@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { getSession, hashPassword } from '@/lib/auth';
-import { and, eq } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -24,7 +24,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'admin') return forbidden();
 
-  const id = params.id;
+  // Next 16 may provide params as an async value in some runtimes; handle both.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resolvedParams: any = await (params as any);
+  const id = resolvedParams?.id;
+  if (typeof id !== 'string' || !id) {
+    return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+  }
   const existing = await db.select().from(users).where(eq(users.id, id)).get();
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -86,7 +92,12 @@ export async function DELETE(_request: Request, { params }: { params: { id: stri
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'admin') return forbidden();
 
-  const id = params.id;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resolvedParams: any = await (params as any);
+  const id = resolvedParams?.id;
+  if (typeof id !== 'string' || !id) {
+    return NextResponse.json({ error: 'Missing id' }, { status: 400 });
+  }
   const existing = await db.select().from(users).where(eq(users.id, id)).get();
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
