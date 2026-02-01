@@ -3,18 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
-import { KeyRound, Users, Inbox, FileText, Settings, Shield } from 'lucide-react';
+import { KeyRound, Users, Building2 } from 'lucide-react';
 import { AronLogo } from '@/components/layout/AronLogo';
 import { useAdminUi } from '@/components/providers/AdminUiContext';
 
 const NAV_ITEMS = [
   { label: 'Invites', icon: KeyRound, href: '/admin/invites' },
-  // Future placeholders (UI only)
-  { label: 'Requests Queue', icon: Inbox, href: '/admin/requests' },
-  { label: 'Organizations', icon: Users, href: '/admin/orgs' },
-  { label: 'Documents', icon: FileText, href: '/admin/documents' },
-  { label: 'Security', icon: Shield, href: '/admin/security' },
-  { label: 'Settings', icon: Settings, href: '/admin/settings' },
+  { label: 'Donors', icon: Users, href: '/admin/donors' },
+  { label: 'Organizations', icon: Building2, href: '/admin/organizations' },
 ];
 
 export function AdminNav() {
@@ -46,7 +42,6 @@ export function AdminNav() {
       <nav className="flex flex-col gap-2 flex-1">
         {NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
-          const isFuture = item.href !== '/admin/invites';
           return (
             <Link
               key={item.href}
@@ -57,8 +52,7 @@ export function AdminNav() {
                 sidebarCollapsed ? 'justify-center gap-0' : 'gap-3',
                 isActive
                   ? 'bg-[rgba(255,43,214,0.10)] text-[var(--color-gold)] font-medium shadow-[0_0_0_1px_rgba(255,43,214,0.25)]'
-                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
-                isFuture && 'opacity-70'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
               )}
             >
               <item.icon

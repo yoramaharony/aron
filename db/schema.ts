@@ -8,6 +8,7 @@ export const users = sqliteTable('users', {
     email: text('email').notNull().unique(),
     password: text('password').notNull(),
     role: text('role').notNull(), // 'donor' | 'requestor' | 'admin'
+    disabledAt: integer('disabled_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 

@@ -33,11 +33,8 @@ export function AdminTopBar() {
 
   const title = (() => {
     if (pathname === '/admin' || pathname === '/admin/invites') return 'Invites';
-    if (pathname?.startsWith('/admin/requests')) return 'Requests Queue';
-    if (pathname?.startsWith('/admin/orgs')) return 'Organizations';
-    if (pathname?.startsWith('/admin/documents')) return 'Documents';
-    if (pathname?.startsWith('/admin/security')) return 'Security';
-    if (pathname?.startsWith('/admin/settings')) return 'Settings';
+    if (pathname?.startsWith('/admin/donors')) return 'Donors';
+    if (pathname?.startsWith('/admin/organizations')) return 'Organizations';
     return 'Admin';
   })();
 

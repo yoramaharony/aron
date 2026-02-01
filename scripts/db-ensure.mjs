@@ -9,6 +9,8 @@ async function main() {
   // Idempotent schema creation for local/dev environments.
   // (We avoid drizzle-kit migrations for now because the repo doesn't currently include a migrations folder.)
   const statements = [
+    // Add missing columns safely (ignore "duplicate column" errors).
+    `ALTER TABLE users ADD COLUMN disabled_at INTEGER;`,
     `
     CREATE TABLE IF NOT EXISTS invite_codes (
       id TEXT PRIMARY KEY NOT NULL,
@@ -73,7 +75,17 @@ async function main() {
   ];
 
   for (const sql of statements) {
-    await client.execute(sql);
+    try {
+      await client.execute(sql);
+    } catch (e) {
+      const msg = String(e?.message ?? '');
+      const isDuplicateColumn =
+        msg.toLowerCase().includes('duplicate column') ||
+        msg.toLowerCase().includes('already exists') ||
+        msg.toLowerCase().includes('already has a column');
+      if (isDuplicateColumn) continue;
+      throw e;
+    }
   }
 
   console.log('✅ DB ensured: invite_codes + submission_links + submission_entries tables exist');

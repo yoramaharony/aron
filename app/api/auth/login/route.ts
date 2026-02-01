@@ -19,6 +19,10 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
+        if (user.disabledAt) {
+            return NextResponse.json({ error: 'Account disabled' }, { status: 403 });
+        }
+
         await createSession(user.id, user.role);
 
         return NextResponse.json({ success: true, user: { id: user.id, name: user.name, email: user.email, role: user.role } });

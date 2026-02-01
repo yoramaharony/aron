@@ -14,8 +14,10 @@ Legend:
 
 ### Access model (invite-only / quality control)
 - `[x]` **Invite-only signup gating** (landing validates invite; signup redeems one-time code)
-- `[~]` **Donor-generated submission links** (unique per donor→org relationship; revocable; expirable)  
-  - Note: we currently have **donor-generated invite codes** for signup, not donor→org submission links.
+- `[x]` **Donor-generated submission links** (unique donor→org relationship; revocable; expirable; tracked)
+  - Donor UI: `/donor/submission-links`
+  - Public intake: `/submit/<token>` (brief text + optional video link)
+  - Tracking: opens + submissions + last activity; revoke/expiry/max-submissions enforced
 
 ### Donor experience (core)
 - `[~]` **AI concierge conversation** (help donor articulate “Impact Vision” — not preferences)
@@ -26,7 +28,7 @@ Legend:
 - `[ ]` **Donor-to-donor matching (Level 2)** surfaced as opt-in insight (Phase 1: light UI + toggle; no automation)
 
 ### Requester/org experience (progressive disclosure)
-- `[ ]` **Lightweight initial submission** (1–2 min video or short text) via donor-generated link
+- `[x]` **Lightweight initial submission** (brief text + optional video link) via donor-generated link
 - `[ ]` **LLM auto-extraction** from video/text (cause, geo, amount, urgency, etc.) — Phase 1 can be stubbed with deterministic extraction
 - `[ ]` **“Request more info”** path (only after donor signals interest) → unlocks detailed form
 - `[ ]` **Dynamic complexity by amount** (small vs medium vs large ask)
@@ -62,6 +64,10 @@ Legend:
 - Auth + roles: `/api/auth/*` + JWT session cookie + middleware protection
 - Invite gating (signup): donor generates one-time invite codes; landing validates; signup redeems  
   - Donor UI: `/donor/invites`
+- Donor-generated submission links + public intake:
+  - Donor UI: `/donor/submission-links`
+  - Public intake: `/submit/<token>`
+  - APIs: `POST /api/submission-links`, `GET /api/submission-links`, `GET /api/submission-links/public/<token>`, `POST /api/submissions`
 
 ### ✅ Implemented (Demo/UI-only)
 - “Concierge AI” chat + visual plan canvas (currently in `/donor/legacy`) — mock data
@@ -69,8 +75,7 @@ Legend:
 - Inbox split view interaction — mock + client state
 
 ### ❌ Missing vs refined MVP direction
-- Donor-generated **org submission links** (not just signup invites)
-- Lightweight video/text request submission + progressive disclosure
+- “Request more info” progressive disclosure (after donor signals interest)
 - Opportunity dashboard should be email-list-first (not swipe-first)
 - Request lifecycle states persisted in DB (and shown in UI)
 - KYC verification model (even a “concierge verified” flag)
