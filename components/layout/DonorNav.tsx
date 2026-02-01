@@ -40,9 +40,9 @@ export function DonorNav() {
                         </div>
                         <p
                             className={clsx(
-                                'donor-sidebar-tagline text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase',
+                                'sidebar-tagline text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase',
                                 sidebarCollapsed ? 'text-center' : 'text-left',
-                                sidebarCollapsed && 'donor-sidebar-tagline-collapsed'
+                                sidebarCollapsed && 'sidebar-tagline-collapsed'
                             )}
                         >
                             Channel Your Legacy
@@ -75,8 +75,8 @@ export function DonorNav() {
                                 />
                                 <span
                                     className={clsx(
-                                        'donor-sidebar-label min-w-0',
-                                        sidebarCollapsed && 'donor-sidebar-label-collapsed'
+                                        'sidebar-label min-w-0',
+                                        sidebarCollapsed && 'sidebar-label-collapsed'
                                     )}
                                 >
                                     {item.label}

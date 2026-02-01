@@ -248,8 +248,8 @@ body {
   opacity: 0.98;
 }
 
-/* Smooth label/tagline collapse */
-.donor-sidebar-label {
+/* Smooth label/tagline collapse (generic; used by donor + admin) */
+.sidebar-label {
   display: inline-block;
   white-space: nowrap;
   overflow: hidden;
@@ -263,13 +263,13 @@ body {
   min-width: 0;
 }
 
-.donor-sidebar-label-collapsed {
+.sidebar-label-collapsed {
   opacity: 0;
   transform: translateX(-8px);
   max-width: 0;
 }
 
-.donor-sidebar-tagline {
+.sidebar-tagline {
   transition:
     opacity 180ms ease,
     transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1),
@@ -280,7 +280,7 @@ body {
   overflow: hidden;
 }
 
-.donor-sidebar-tagline-collapsed {
+.sidebar-tagline-collapsed {
   opacity: 0;
   transform: translateY(-6px);
   max-height: 0;
@@ -307,6 +307,21 @@ body {
   .donor-shell .donor-content-wrap {
     padding: 2rem;
     padding-bottom: 2rem;
+  }
+}
+
+/* Admin shell: match donor chrome pattern */
+.admin-shell .main-content {
+  padding: 0;
+}
+
+.admin-shell .admin-content-wrap {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .admin-shell .admin-content-wrap {
+    padding: 2rem;
   }
 }
 
