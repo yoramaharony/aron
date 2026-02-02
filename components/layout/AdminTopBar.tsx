@@ -35,6 +35,7 @@ export function AdminTopBar() {
     if (pathname === '/admin' || pathname === '/admin/invites') return 'Invites';
     if (pathname?.startsWith('/admin/donors')) return 'Donors';
     if (pathname?.startsWith('/admin/organizations')) return 'Organizations';
+    if (pathname?.startsWith('/admin/happy-path')) return 'Happy Path';
     return 'Admin';
   })();
 

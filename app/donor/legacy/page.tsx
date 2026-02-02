@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { useLegacy } from '@/components/providers/LegacyContext';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Send, User, Bot, ChevronRight, BarChart3, Globe, ShieldCheck } from 'lucide-react';
@@ -26,13 +25,31 @@ export default function LegacyStudioPage() {
 // --- CHAT COMPONENTS ---
 
 function LegacyChat() {
-    const { generateMockPlan } = useLegacy();
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<{ role: 'user' | 'ai'; text: string }[]>([
-        { role: 'ai', text: "Welcome to Legacy Studio. I'm your private foundation architect. Tell me, what kind of impact do you want your legacy to have on the world?" }
-    ]);
+    const [messages, setMessages] = useState<{ role: 'donor' | 'assistant'; content: string }[]>([]);
     const [isTyping, setIsTyping] = useState(false);
+    const [error, setError] = useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        fetch('/api/concierge')
+            .then((r) => r.json())
+            .then((data) => {
+                const thread = Array.isArray(data?.messages) ? data.messages : [];
+                if (thread.length === 0) {
+                    setMessages([
+                        {
+                            role: 'assistant',
+                            content:
+                                "Welcome. I’m your concierge. Tell me what kind of impact you want to create—causes, geographies, and what “success” feels like.",
+                        },
+                    ]);
+                } else {
+                    setMessages(thread);
+                }
+            })
+            .catch(() => {});
+    }, []);
 
     // Auto-scroll
     useEffect(() => {
@@ -46,20 +63,26 @@ function LegacyChat() {
 
         const userMsg = input;
         setInput('');
-        setMessages(prev => [...prev, { role: 'user', text: userMsg }]);
+        setMessages(prev => [...prev, { role: 'donor', content: userMsg }]);
         setIsTyping(true);
+        setError('');
 
-        // Simulation delay
-        setTimeout(() => {
-            // Trigger the "Brain" update
-            generateMockPlan(userMsg);
-
+        try {
+            const res = await fetch('/api/concierge', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: userMsg }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Failed to send');
+            if (data?.message?.content) {
+                setMessages(prev => [...prev, { role: 'assistant', content: data.message.content }]);
+            }
+        } catch (e: any) {
+            setError(e?.message || 'Failed to send');
+        } finally {
             setIsTyping(false);
-            setMessages(prev => [...prev, {
-                role: 'ai',
-                text: "I've structured a draft plan based on your vision. I've identified key pillars, allocated a preliminary budget, and forecast the potential impact. How does this allocation look to you?"
-            }]);
-        }, 1500);
+        }
     };
 
     return (
@@ -87,24 +110,26 @@ function LegacyChat() {
                         key={idx}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                        className={`flex gap-4 ${msg.role === 'donor' ? 'flex-row-reverse' : ''}`}
                     >
                         <div
-                            className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${msg.role === 'ai'
+                            className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${msg.role === 'assistant'
                                 ? 'bg-[rgba(255,43,214,0.08)] border border-[rgba(255,43,214,0.35)] text-[var(--color-gold)]'
                                 : 'bg-[rgba(255,255,255,0.05)] border border-[var(--border-subtle)] text-[var(--text-secondary)]'
                                 }`}
                         >
-                            {msg.role === 'ai' ? <Bot size={16} /> : <User size={16} />}
+                            {msg.role === 'assistant' ? <Bot size={16} /> : <User size={16} />}
                         </div>
-                        <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'ai'
+                        <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'assistant'
                                 ? 'bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-[var(--text-secondary)] rounded-tl-none'
                                 : 'bg-[rgba(255,43,214,0.18)] border border-[rgba(255,43,214,0.30)] text-[var(--text-primary)] rounded-tr-none'
                             }`}>
-                            {msg.text}
+                            {msg.content}
                         </div>
                     </motion.div>
                 ))}
+
+                {error ? <div className="text-sm text-red-300">{error}</div> : null}
 
                 {isTyping && (
                     <div className="flex gap-4">

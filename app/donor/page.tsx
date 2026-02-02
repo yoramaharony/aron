@@ -1,57 +1,106 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { LayoutGrid, Layers, Zap, ChevronRight, Clock } from 'lucide-react';
-import Link from 'next/link';
-
-import { MOCK_REQUESTS } from '@/lib/mock-data';
-import { SwipeStack } from '@/components/ui/SwipeStack';
+import { Zap } from 'lucide-react';
 import { useLeverage } from '@/components/providers/LeverageContext';
 
-export default function DonorFeed() {
-    const [viewMode, setViewMode] = useState<'list' | 'swipe'>('swipe'); // Default to swipe
-    const [activeTab, setActiveTab] = useState<'discover' | 'shortlist' | 'passed'>('discover');
-    const { shortlist, passed, saveOpportunity, passOpportunity } = useLeverage();
+type OpportunityRow = {
+    key: string;
+    source: 'request' | 'submission';
+    title: string;
+    orgName: string;
+    location?: string;
+    category?: string;
+    summary: string;
+    amount?: number | null;
+    createdAt?: string | null;
+    state: string;
+};
 
-    // Filter Items
-    const discoverItems = MOCK_REQUESTS.filter(item => !shortlist.has(item.id) && !passed.has(item.id));
-    const shortlistItems = MOCK_REQUESTS.filter(item => shortlist.has(item.id));
-    const passedItems = MOCK_REQUESTS.filter(item => passed.has(item.id));
+export default function DonorFeed() {
+    const [activeTab, setActiveTab] = useState<'discover' | 'shortlist' | 'passed'>('discover');
+    const [rows, setRows] = useState<OpportunityRow[]>([]);
+    const [selectedKey, setSelectedKey] = useState<string | null>(null);
+    const [detail, setDetail] = useState<any>(null);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
+    const { openLeverageDrawer } = useLeverage();
+
+    const refresh = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const res = await fetch('/api/opportunities');
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || 'Failed to load opportunities');
+            setRows(data.opportunities ?? []);
+        } catch (e: any) {
+            setError(e?.message || 'Failed to load opportunities');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        refresh().catch(() => {});
+    }, []);
+
+    const filtered = useMemo(() => {
+        const stateToTab = (s: string) => {
+            if (s === 'passed') return 'passed';
+            if (s === 'shortlisted') return 'shortlist';
+            return 'discover';
+        };
+        return rows.filter((r) => stateToTab(r.state) === activeTab);
+    }, [rows, activeTab]);
+
+    const loadDetail = async (key: string) => {
+        setSelectedKey(key);
+        try {
+            const res = await fetch(`/api/opportunities/${encodeURIComponent(key)}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || 'Failed to load');
+            setDetail(data);
+        } catch {
+            setDetail(null);
+        }
+    };
+
+    const act = async (key: string, action: string) => {
+        try {
+            const res = await fetch(`/api/opportunities/${encodeURIComponent(key)}/actions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || 'Failed');
+            await refresh();
+            if (selectedKey === key) await loadDetail(key);
+        } catch (e: any) {
+            setError(e?.message || 'Action failed');
+        }
+    };
 
     return (
-        <div>
-            <header className="flex justify-between items-end mb-8">
+        <div className="space-y-6">
+            <header className="flex justify-between items-end gap-6">
                 <div>
-                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Today's Opportunities</h1>
-                    <p className="text-secondary">Curated for your Giving Profile</p>
+                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Opportunities</h1>
+                    <p className="text-secondary">Email-list-first dashboard. Actions persist.</p>
                 </div>
-
-                {activeTab === 'discover' && (
-                    <div className="flex gap-2">
-                        <Button
-                            variant={viewMode === 'list' ? 'primary' : 'outline'}
-                            size="sm"
-                            onClick={() => setViewMode('list')}
-                            title="List View"
-                        >
-                            <LayoutGrid size={16} />
-                        </Button>
-                        <Button
-                            variant={viewMode === 'swipe' ? 'primary' : 'outline'}
-                            size="sm"
-                            onClick={() => setViewMode('swipe')}
-                            title="Immersive View"
-                        >
-                            <Layers size={16} />
-                        </Button>
-                    </div>
-                )}
+                <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => refresh().catch(() => {})} disabled={loading}>
+                        Refresh
+                    </Button>
+                </div>
             </header>
 
             {/* TABS */}
-            <div className="flex gap-8 border-b border-[var(--border-subtle)] mb-8">
+            <div className="flex gap-8 border-b border-[var(--border-subtle)]">
                 <button
                     onClick={() => setActiveTab('discover')}
                     className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === 'discover'
@@ -60,9 +109,6 @@ export default function DonorFeed() {
                         }`}
                 >
                     Discover
-                    <span className="ml-2 text-xs bg-[rgba(255,255,255,0.06)] border border-[var(--border-subtle)] px-1.5 py-0.5 rounded-full text-[var(--text-tertiary)]">
-                        {discoverItems.length}
-                    </span>
                     {activeTab === 'discover' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-gold)]" />}
                 </button>
                 <button
@@ -73,9 +119,6 @@ export default function DonorFeed() {
                         }`}
                 >
                     Shortlist
-                    <span className="ml-2 text-xs bg-[rgba(255,255,255,0.06)] border border-[var(--border-subtle)] px-1.5 py-0.5 rounded-full text-[var(--text-tertiary)]">
-                        {shortlistItems.length}
-                    </span>
                     {activeTab === 'shortlist' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-gold)]" />}
                 </button>
                 <button
@@ -86,125 +129,140 @@ export default function DonorFeed() {
                         }`}
                 >
                     Passed
-                    <span className="ml-2 text-xs bg-[rgba(255,255,255,0.06)] border border-[var(--border-subtle)] px-1.5 py-0.5 rounded-full text-[var(--text-tertiary)]">
-                        {passedItems.length}
-                    </span>
                     {activeTab === 'passed' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-gold)]" />}
                 </button>
             </div>
 
-            {/* DISCOVER VIEW */}
-            {activeTab === 'discover' && (
-                <>
-                    {discoverItems.length === 0 ? (
-                        <div className="text-center py-20 bg-[rgba(255,255,255,0.02)] rounded-lg border border-dashed border-[var(--border-subtle)]">
-                            <h3 className="text-lg font-medium text-[var(--text-primary)] mb-1">You're all caught up!</h3>
-                            <p className="text-[var(--text-tertiary)] text-sm">Check back later for new opportunities.</p>
-                        </div>
-                    ) : (
-                        viewMode === 'list' ? (
-                            <div className="grid grid-cols-2 gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
-                                {discoverItems.map((opp) => (
-                                    <Link key={opp.id} href={`/donor/${opp.id}`}>
-                                        <Card className="hover:scale-[1.01] transition-transform duration-200 cursor-pointer h-full flex flex-col" noPadding>
-                                            {/* Image Placeholder */}
-                                            <div style={{ height: '240px', background: 'var(--bg-surface)', position: 'relative' }}>
-                                                <img src={opp.imageUrl} alt={opp.title} className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+            {error ? <div className="text-sm text-red-300">{error}</div> : null}
 
-                                                <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.55)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', color: 'white', border: '1px solid rgba(255,255,255,0.12)', backdropFilter: 'blur(6px)' }}>
-                                                    {opp.category}
-                                                </div>
-                                            </div>
-
-                                            <div className="p-6 flex flex-col flex-1">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <span className="text-gold text-xs font-bold uppercase tracking-wider">{opp.matchPotential}% Match</span>
-                                                    <span className="text-tertiary text-xs flex items-center gap-1"><Clock size={12} />{opp.deadline}</span>
-                                                </div>
-
-                                                <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">{opp.title}</h3>
-                                                <p className="text-secondary text-sm mb-4 line-clamp-2 flex-1">{opp.summary}</p>
-
-                                                <div className="pt-4 border-t border-[var(--border-subtle)] flex justify-between items-center mt-auto">
-                                                    <div>
-                                                        <span className="text-xl font-medium">${(opp.fundingGap / 1000).toFixed(0)}k</span>
-                                                        <span className="text-xs text-secondary ml-1">gap</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 text-sm font-medium text-gold">
-                                                        <Zap size={16} />
-                                                        Leverage
-                                                        <ChevronRight size={16} />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    </Link>
-                                ))}
-                            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* LEFT: list */}
+                <Card className="p-0 lg:col-span-1 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-[var(--border-subtle)] text-sm font-semibold text-[var(--text-primary)]">
+                        {activeTab === 'discover' ? 'Discover' : activeTab === 'shortlist' ? 'Shortlist' : 'Passed'}
+                    </div>
+                    <div className="divide-y divide-[var(--border-subtle)]">
+                        {loading ? (
+                            <div className="p-5 text-sm text-[var(--text-tertiary)]">Loading…</div>
+                        ) : filtered.length === 0 ? (
+                            <div className="p-5 text-sm text-[var(--text-tertiary)]">No items.</div>
                         ) : (
-                            <SwipeStack
-                                items={discoverItems}
-                                variant="detail"
-                            />
-                        )
-                    )}
-                </>
-            )}
+                            filtered.map((r) => (
+                                <button
+                                    key={r.key}
+                                    onClick={() => loadDetail(r.key)}
+                                    className={[
+                                        'w-full text-left p-5 transition-colors',
+                                        selectedKey === r.key ? 'bg-[rgba(255,43,214,0.10)]' : 'hover:bg-[rgba(255,255,255,0.04)]',
+                                    ].join(' ')}
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="text-[var(--text-primary)] font-semibold truncate">{r.title}</div>
+                                            <div className="text-xs text-[var(--text-tertiary)] truncate">{r.orgName}</div>
+                                        </div>
+                                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
+                                            {r.source === 'submission' ? 'submission' : 'curated'}
+                                        </span>
+                                    </div>
+                                    <div className="text-sm text-[var(--text-secondary)] mt-2 line-clamp-2">{r.summary}</div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </Card>
 
-            {/* SHORTLIST VIEW */}
-            {activeTab === 'shortlist' && (
-                <div className="grid grid-cols-2 gap-8" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))' }}>
-                    {shortlistItems.length === 0 ? (
-                        <div className="col-span-full text-center py-20 bg-[rgba(255,255,255,0.02)] rounded-lg text-[var(--text-tertiary)] border border-dashed border-[var(--border-subtle)]">
-                            No saved opportunities yet.
-                        </div>
-                    ) : shortlistItems.map((opp) => (
-                        <Link key={opp.id} href={`/donor/${opp.id}`}>
-                            <Card className="hover:scale-[1.01] transition-transform duration-200 cursor-pointer h-full flex flex-col border-[rgba(34,197,94,0.18)]" noPadding>
-                                <div style={{ height: '180px', position: 'relative' }}>
-                                    <img src={opp.imageUrl} alt={opp.title} className="w-full h-full object-cover" />
-                                    <div className="absolute top-4 right-4 bg-[rgba(34,197,94,0.16)] border border-[rgba(34,197,94,0.24)] rounded-full p-2 shadow-sm text-[var(--color-green)] backdrop-blur">
-                                        <Layers size={16} />
+                {/* RIGHT: detail */}
+                <Card className="p-6 lg:col-span-2">
+                    {!detail?.opportunity ? (
+                        <div className="text-sm text-[var(--text-tertiary)]">Select an opportunity to view details.</div>
+                    ) : (
+                        <div className="space-y-5">
+                            <div className="flex items-start justify-between gap-6">
+                                <div>
+                                    <div className="text-2xl font-semibold text-[var(--text-primary)]">
+                                        {detail.opportunity.title}
+                                    </div>
+                                    <div className="text-sm text-[var(--text-secondary)] mt-1">
+                                        {detail.opportunity.orgName}
+                                        {detail.opportunity.location ? ` • ${detail.opportunity.location}` : null}
+                                        {detail.opportunity.category ? ` • ${detail.opportunity.category}` : null}
                                     </div>
                                 </div>
-                                <div className="p-6">
-                                    <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2">{opp.title}</h3>
-                                    <p className="text-sm text-[var(--text-tertiary)]">{opp.orgName}</p>
+                                <div className="flex gap-2 shrink-0">
+                                    <Button variant="outline" onClick={() => act(detail.opportunity.key, 'pass')}>Pass</Button>
+                                    <Button variant="outline" onClick={() => act(detail.opportunity.key, 'save')}>Shortlist</Button>
+                                    <Button
+                                        variant="gold"
+                                        onClick={() => {
+                                            // Open drawer using the existing provider; feed it the minimal fields it needs.
+                                            openLeverageDrawer({
+                                                id: detail.opportunity.key,
+                                                title: detail.opportunity.title,
+                                                orgName: detail.opportunity.orgName,
+                                                location: detail.opportunity.location ?? '',
+                                                category: detail.opportunity.category ?? 'Opportunity',
+                                                fundingTotal: 0,
+                                                fundingRaised: 0,
+                                                fundingGap: Number(detail.opportunity.amountRequested ?? detail.opportunity.targetAmount ?? 100000),
+                                                deadline: new Date().toISOString().slice(0, 10),
+                                                kpis: [],
+                                                summary: detail.opportunity.summary,
+                                                riskScore: 'Low',
+                                                riskFactors: [],
+                                                matchPotential: 0,
+                                                aiRecommendation: '',
+                                                verified: false,
+                                                executionConfidence: 0,
+                                                overhead: 0,
+                                                lastVerified: '',
+                                                aiInsights: {
+                                                    matchReason: [],
+                                                    risks: [],
+                                                    leverageRecommendation: { anchorAmount: 50000, challengeGoal: 100000, deadline: new Date().toISOString().slice(0, 10), matchRatio: 1, verification: [] },
+                                                },
+                                                diligence: { financials: 'Pending', governance: 'Pending', budget: 'Pending', references: 'Pending', siteVisit: 'Pending' },
+                                            } as any);
+                                        }}
+                                    >
+                                        <span className="inline-flex items-center gap-2">
+                                            <Zap size={16} />
+                                            Leverage
+                                        </span>
+                                    </Button>
                                 </div>
-                            </Card>
-                        </Link>
-                    ))}
-                </div>
-            )}
+                            </div>
 
-            {/* PASSED VIEW */}
-            {activeTab === 'passed' && (
-                <div className="flex flex-col gap-4">
-                    {passedItems.length === 0 ? (
-                        <div className="text-center py-20 bg-[rgba(255,255,255,0.02)] rounded-lg text-[var(--text-tertiary)] border border-dashed border-[var(--border-subtle)]">
-                            No passed opportunities.
-                        </div>
-                    ) : passedItems.map((opp) => (
-                        <div key={opp.id} className="flex items-center gap-4 p-4 bg-[rgba(255,255,255,0.02)] border border-[var(--border-subtle)] rounded-lg opacity-70 hover:opacity-100 transition-opacity">
-                            <div className="w-16 h-16 bg-[rgba(255,255,255,0.06)] border border-[var(--border-subtle)] rounded overflow-hidden shrink-0">
-                                <img src={opp.imageUrl} alt="" className="w-full h-full object-cover grayscale" />
+                            <div className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{detail.opportunity.summary}</div>
+
+                            {detail.opportunity.videoUrl ? (
+                                <div className="text-sm">
+                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Video</div>
+                                    <a className="text-[var(--color-gold)] underline" href={detail.opportunity.videoUrl} target="_blank" rel="noreferrer">
+                                        Open video link
+                                    </a>
+                                </div>
+                            ) : null}
+
+                            <div className="border-t border-[var(--border-subtle)] pt-4">
+                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">History</div>
+                                {(detail.events?.length ?? 0) === 0 ? (
+                                    <div className="text-sm text-[var(--text-tertiary)]">No actions yet.</div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {detail.events.map((e: any) => (
+                                            <div key={e.id} className="text-sm text-[var(--text-secondary)]">
+                                                <span className="font-mono text-[var(--text-tertiary)]">{e.createdAt?.slice(0, 19)?.replace('T', ' ')}</span>{' '}
+                                                — {e.type}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                            <div className="flex-1">
-                                <h4 className="font-medium text-[var(--text-primary)]">{opp.title}</h4>
-                                <p className="text-sm text-[var(--text-tertiary)]">{opp.orgName}</p>
-                            </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => saveOpportunity(opp.id)} // Allow moving back to shortlist
-                            >
-                                Move to Shortlist
-                            </Button>
                         </div>
-                    ))}
-                </div>
-            )}
+                    )}
+                </Card>
+            </div>
         </div>
     );
 }

@@ -108,3 +108,57 @@ export const submissionEntries = sqliteTable('submission_entries', {
 
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
+
+// Donor profile + generated artifacts (Impact Vision / Vision Board)
+export const donorProfiles = sqliteTable('donor_profiles', {
+    donorId: text('donor_id').primaryKey().references(() => users.id),
+    visionJson: text('vision_json'), // serialized JSON string
+    boardJson: text('board_json'), // serialized JSON string
+    updatedAt: integer('updated_at', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Concierge conversation thread (per donor)
+export const conciergeMessages = sqliteTable('concierge_messages', {
+    id: text('id').primaryKey(), // UUID
+    donorId: text('donor_id').notNull().references(() => users.id),
+    role: text('role').notNull(), // 'donor' | 'assistant' | 'system'
+    content: text('content').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Donor-specific opportunity state (shortlist/passed/etc.)
+export const donorOpportunityState = sqliteTable('donor_opportunity_state', {
+    id: text('id').primaryKey(), // UUID
+    donorId: text('donor_id').notNull().references(() => users.id),
+    opportunityKey: text('opportunity_key').notNull(), // e.g. 'req_1' or 'sub_<uuid>'
+    state: text('state').notNull().default('new'),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Append-only event log for donor decisions/actions
+export const donorOpportunityEvents = sqliteTable('donor_opportunity_events', {
+    id: text('id').primaryKey(), // UUID
+    donorId: text('donor_id').notNull().references(() => users.id),
+    opportunityKey: text('opportunity_key').notNull(),
+    type: text('type').notNull(), // 'save' | 'pass' | 'request_info' | 'leverage_created' | ...
+    metaJson: text('meta_json'), // JSON string
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Leverage offers (persisted)
+export const leverageOffers = sqliteTable('leverage_offers', {
+    id: text('id').primaryKey(), // UUID
+    donorId: text('donor_id').notNull().references(() => users.id),
+    opportunityKey: text('opportunity_key').notNull(),
+    anchorAmount: integer('anchor_amount').notNull(),
+    matchMode: text('match_mode').notNull(), // 'match' | 'remainder'
+    challengeGoal: integer('challenge_goal').notNull(),
+    topUpCap: integer('top_up_cap').notNull(),
+    deadline: text('deadline').notNull(), // ISO date string (YYYY-MM-DD)
+    termsJson: text('terms_json'), // JSON string
+    status: text('status').notNull().default('created'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }),
+});

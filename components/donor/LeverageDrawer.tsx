@@ -85,6 +85,21 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
+        // Persist via API (best effort). Keep local ripple for now.
+        fetch('/api/leverage-offers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                opportunityKey: opportunity.id,
+                anchorAmount: offer.anchorAmount,
+                matchMode,
+                challengeGoal: offer.challengeGoal,
+                topUpCap: offer.topUpCap,
+                deadline: offer.deadline,
+                terms: offer.terms,
+            }),
+        }).catch(() => {});
+
         onCreate(offer);
         onClose();
     };

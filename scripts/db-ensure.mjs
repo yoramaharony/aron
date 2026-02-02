@@ -72,6 +72,75 @@ async function main() {
     `,
     `CREATE INDEX IF NOT EXISTS submission_entries_link_idx ON submission_entries(link_id);`,
     `CREATE INDEX IF NOT EXISTS submission_entries_donor_idx ON submission_entries(donor_id);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS donor_profiles (
+      donor_id TEXT PRIMARY KEY NOT NULL REFERENCES users(id),
+      vision_json TEXT,
+      board_json TEXT,
+      updated_at INTEGER,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS donor_profiles_donor_idx ON donor_profiles(donor_id);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS concierge_messages (
+      id TEXT PRIMARY KEY NOT NULL,
+      donor_id TEXT NOT NULL REFERENCES users(id),
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS concierge_messages_donor_idx ON concierge_messages(donor_id);`,
+    `CREATE INDEX IF NOT EXISTS concierge_messages_created_at_idx ON concierge_messages(created_at);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS donor_opportunity_state (
+      id TEXT PRIMARY KEY NOT NULL,
+      donor_id TEXT NOT NULL REFERENCES users(id),
+      opportunity_key TEXT NOT NULL,
+      state TEXT NOT NULL DEFAULT 'new',
+      updated_at INTEGER,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE UNIQUE INDEX IF NOT EXISTS donor_opportunity_state_unique_idx ON donor_opportunity_state(donor_id, opportunity_key);`,
+    `CREATE INDEX IF NOT EXISTS donor_opportunity_state_donor_idx ON donor_opportunity_state(donor_id);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS donor_opportunity_events (
+      id TEXT PRIMARY KEY NOT NULL,
+      donor_id TEXT NOT NULL REFERENCES users(id),
+      opportunity_key TEXT NOT NULL,
+      type TEXT NOT NULL,
+      meta_json TEXT,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS donor_opportunity_events_donor_idx ON donor_opportunity_events(donor_id);`,
+    `CREATE INDEX IF NOT EXISTS donor_opportunity_events_key_idx ON donor_opportunity_events(opportunity_key);`,
+    `CREATE INDEX IF NOT EXISTS donor_opportunity_events_created_at_idx ON donor_opportunity_events(created_at);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS leverage_offers (
+      id TEXT PRIMARY KEY NOT NULL,
+      donor_id TEXT NOT NULL REFERENCES users(id),
+      opportunity_key TEXT NOT NULL,
+      anchor_amount INTEGER NOT NULL,
+      match_mode TEXT NOT NULL,
+      challenge_goal INTEGER NOT NULL,
+      top_up_cap INTEGER NOT NULL,
+      deadline TEXT NOT NULL,
+      terms_json TEXT,
+      status TEXT NOT NULL DEFAULT 'created',
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP),
+      updated_at INTEGER
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS leverage_offers_donor_idx ON leverage_offers(donor_id);`,
+    `CREATE INDEX IF NOT EXISTS leverage_offers_key_idx ON leverage_offers(opportunity_key);`,
   ];
 
   for (const sql of statements) {
@@ -88,7 +157,7 @@ async function main() {
     }
   }
 
-  console.log('✅ DB ensured: invite_codes + submission_links + submission_entries tables exist');
+  console.log('✅ DB ensured: core tables exist (invites, submission_links, submission_entries, concierge, donor_state, leverage)');
 }
 
 main().catch((err) => {

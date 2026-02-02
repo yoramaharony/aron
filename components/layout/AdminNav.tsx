@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
-import { KeyRound, Users, Building2 } from 'lucide-react';
+import { KeyRound, Users, Building2, Sparkles } from 'lucide-react';
 import { AronLogo } from '@/components/layout/AronLogo';
 import { useAdminUi } from '@/components/providers/AdminUiContext';
 
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { label: 'Invites', icon: KeyRound, href: '/admin/invites' },
   { label: 'Donors', icon: Users, href: '/admin/donors' },
   { label: 'Organizations', icon: Building2, href: '/admin/organizations' },
+  { label: 'Happy Path', icon: Sparkles, href: '/admin/happy-path' },
 ];
 
 export function AdminNav() {
