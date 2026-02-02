@@ -46,7 +46,7 @@ Legend:
 - `[~]` Dark mode-first, futuristic magenta accents, premium motion
 - `[~]` Landing hero with rotating videos + polished CTA
 - `[~]` Donor shell UI polish across core routes
-- `[ ]` Terminology sweep: replace “Legacy” language with **Impact Vision / Vision Board** language throughout donor experience
+- `[x]` Terminology sweep: replace “Legacy” language with **Impact Vision / Vision Board** language throughout donor experience
 
 ---
 

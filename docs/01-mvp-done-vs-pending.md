@@ -25,9 +25,9 @@ Legend:
 - **Done (Mock/UI)**: Donor feed UI, detail pages, shortlist/passed interactions
 - **Done (Mock/UI)**: “Leverage” drawer + offer drafting (client context)
 - **Done (Mock/UI)**: Inbox + Vault docs generated as “ripple effect” (client context only)
-- **Done (Mock/UI)**: Legacy plan “AI” generator (client context only)
+- **Done (Mock/UI)**: Impact Vision “AI” generator (client context only)
 - **Pending**: Donor feed backed by real requests from DB (and filtering)
-- **Pending**: Persist leverage offers, inbox messages, vault docs, legacy plan to DB
+- **Pending**: Persist leverage offers, inbox messages, vault docs, Impact Vision to DB
 - **Pending**: Any real pledge/payment workflow
 
 ## Campaigns

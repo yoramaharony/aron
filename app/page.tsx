@@ -80,7 +80,7 @@ export default function LandingPage() {
             <AronLogo imgClassName="aron-logo aron-logo-animated-soft h-[53px] w-auto object-contain" />
           </div>
           <span className="text-[10px] font-medium tracking-[0.25em] text-[var(--text-secondary)] uppercase text-center">
-            Channel Your Legacy
+            Channel Your Impact
           </span>
         </div>
 
@@ -115,11 +115,11 @@ export default function LandingPage() {
             </motion.h1>
 
             <motion.p variants={fadeInUp} className="text-lg md:text-xl text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed font-light">
-              Aron is the invite-only operating system for high-conviction donors. Define your legacy, see your impact forecast, and deploy capital with governance—without building a team.
+              Aron is the invite-only operating system for high-conviction donors. Define your Impact Vision, see your impact forecast, and deploy capital with governance—without building a team.
             </motion.p>
 
             <motion.div variants={fadeInUp} className="text-[var(--color-gold)] font-medium text-lg italic font-serif">
-              Define your legacy → we turn it into a governed portfolio.
+              Define your Impact Vision → we turn it into a governed portfolio.
             </motion.div>
 
             {/* Invite Gate */}

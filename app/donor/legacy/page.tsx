@@ -154,7 +154,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Describe your legacy goals..."
+                        placeholder="Describe your impact vision..."
                         className="w-full pl-4 pr-12 py-4 bg-[rgba(255,255,255,0.03)] border border-[var(--border-strong)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
                     />
                     <button

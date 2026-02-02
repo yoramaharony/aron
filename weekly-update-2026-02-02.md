@@ -76,7 +76,7 @@ Week ending: **2026-02-02**
   - `/api/admin/demo-seed`
 - **Bug fixes & polish**
   - Fixed JSON parsing errors caused by invalid timestamp formatting in opportunities API.
-  - Fixed `useLegacy` runtime error on `/donor/legacy` by migrating canvas to concierge API data.
+  - Fixed `useLegacy` runtime error on `/donor/legacy` by migrating the Impact Vision canvas to concierge API data.
   - Fixed toggle knob overflow in collaboration insights.
   - Favicon readability improved (larger mark + white background).
 

@@ -45,7 +45,7 @@ export function DonorNav() {
                                 sidebarCollapsed && 'sidebar-tagline-collapsed'
                             )}
                         >
-                            Channel Your Legacy
+                            Channel Your Impact
                         </p>
                     </div>
                 </div>

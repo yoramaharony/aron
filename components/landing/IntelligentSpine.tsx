@@ -28,7 +28,7 @@ export function IntelligentSpine() {
 
     const stepData = [
         {
-            title: "1. Define your legacy",
+            title: "1. Define your Impact Vision",
             desc: "Turn intent into a Blueprint: causes, geographies, time horizons. We translate your values into crisp constraints that can actually govern decisions. Your giving becomes legible—and repeatable.",
         },
         {
@@ -65,7 +65,7 @@ export function IntelligentSpine() {
         },
         {
             title: "10. Iterate",
-            desc: "Update the Blueprint as you learn. Spin up new pillars, retire what doesn’t work, and refine governance. Your legacy evolves—while the system stays consistent.",
+            desc: "Update the Blueprint as you learn. Spin up new pillars, retire what doesn’t work, and refine governance. Your Impact Vision evolves—while the system stays consistent.",
         }
     ];
 
@@ -84,7 +84,7 @@ export function IntelligentSpine() {
         // Define animation chunks (10 steps over the scroll duration)
         // Each step takes roughly 1 "unit" of scroll time
 
-        // --- STEP 1: Define Your Legacy ---
+        // --- STEP 1: Define Your Impact Vision ---
         tl.fromTo(textRef1.current, { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1 }, 0)
             .to('#chaos-group', { opacity: 0, duration: 2 }, 0.5) // clear chaos
             .to(textRef1.current, { opacity: 0, y: -50, duration: 1 }, 2);
