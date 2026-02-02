@@ -225,9 +225,9 @@ export default function ImpactPage() {
                                 >
                                     <span
                                         className={[
-                                            'absolute top-1 left-1 h-7 w-7 rounded-full transition-transform',
+                                            'absolute top-1 h-7 w-7 rounded-full transition-all',
                                             'bg-[var(--text-primary)] shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]',
-                                            collabOptIn ? 'translate-x-[20px]' : 'translate-x-0',
+                                            collabOptIn ? 'right-1 left-auto' : 'left-1 right-auto',
                                         ].join(' ')}
                                     />
                                 </button>
