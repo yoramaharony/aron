@@ -8,7 +8,7 @@ import { AronLogo } from '@/components/layout/AronLogo';
 import { useDonorUi } from '@/components/providers/DonorUiContext';
 
 const NAV_ITEMS = [
-    { label: 'Legacy Studio', icon: Compass, href: '/donor/legacy' },
+    { label: 'Impact Vision', icon: Compass, href: '/donor/legacy' },
     { label: 'Opportunities', icon: Heart, href: '/donor' },
     { label: 'Pledges', icon: CreditCard, href: '/donor/pledges' },
     { label: 'Impact', icon: PieChart, href: '/donor/impact' },

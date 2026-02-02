@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Send, User, Bot, ChevronRight, BarChart3, Globe, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function LegacyStudioPage() {
+export default function ImpactVisionStudioPage() {
     const [refreshKey, setRefreshKey] = useState(0);
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-app)]">
@@ -213,7 +213,7 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                     <BarChart3 size={32} className="text-[var(--text-tertiary)]" />
                 </div>
                 <h3 className="text-xl font-semibold text-[var(--text-primary)]">Canvas Empty</h3>
-                <p className="text-[var(--text-secondary)] max-w-sm mt-2">Start a conversation with the Concierge to begin structuring your legacy plan.</p>
+                <p className="text-[var(--text-secondary)] max-w-sm mt-2">Start a conversation with the Concierge to begin structuring your Impact Vision.</p>
             </div>
         );
     }

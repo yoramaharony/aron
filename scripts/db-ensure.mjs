@@ -24,6 +24,19 @@ async function main() {
     `ALTER TABLE submission_entries ADD COLUMN more_info_submitted_at INTEGER;`,
     `ALTER TABLE submission_entries ADD COLUMN details_json TEXT;`,
     `
+    CREATE TABLE IF NOT EXISTS org_kyc (
+      id TEXT PRIMARY KEY NOT NULL,
+      org_email TEXT NOT NULL UNIQUE,
+      org_name TEXT,
+      verified_at INTEGER,
+      verified_by TEXT REFERENCES users(id),
+      note TEXT,
+      updated_at INTEGER,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS org_kyc_org_email_idx ON org_kyc(org_email);`,
+    `
     CREATE TABLE IF NOT EXISTS invite_codes (
       id TEXT PRIMARY KEY NOT NULL,
       code TEXT NOT NULL UNIQUE,

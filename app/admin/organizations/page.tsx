@@ -34,11 +34,20 @@ export default function AdminOrganizationsPage() {
   const [softOrgs, setSoftOrgs] = useState<SoftOrg[]>([]);
   const [qSoft, setQSoft] = useState('');
 
+  const [kycByEmail, setKycByEmail] = useState<Record<string, { verified: boolean }>>({});
+
   const refreshAccounts = async () => {
     const res = await fetch(`/api/admin/users?role=requestor&q=${encodeURIComponent(qAccounts.trim())}`);
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || 'Failed to load organizations');
     setAccounts(data.users ?? []);
+
+    const emails = (data.users ?? []).map((u: any) => u.email).filter(Boolean).join(',');
+    if (emails) {
+      const r2 = await fetch(`/api/admin/org-kyc?emails=${encodeURIComponent(emails)}`);
+      const d2 = await r2.json().catch(() => ({}));
+      if (r2.ok) setKycByEmail(d2.byEmail ?? {});
+    }
   };
 
   const refreshSoft = async () => {
@@ -46,6 +55,35 @@ export default function AdminOrganizationsPage() {
     const data = await res.json();
     if (!res.ok) throw new Error(data?.error || 'Failed to load soft orgs');
     setSoftOrgs(data.orgs ?? []);
+
+    const emails = (data.orgs ?? []).map((o: any) => o.orgEmail).filter(Boolean).join(',');
+    if (emails) {
+      const r2 = await fetch(`/api/admin/org-kyc?emails=${encodeURIComponent(emails)}`);
+      const d2 = await r2.json().catch(() => ({}));
+      if (r2.ok) setKycByEmail(d2.byEmail ?? {});
+    }
+  };
+
+  const toggleKyc = async (orgEmail: string, orgName?: string | null) => {
+    const email = orgEmail.trim().toLowerCase();
+    const current = Boolean(kycByEmail?.[email]?.verified);
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/admin/org-kyc', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orgEmail: email, orgName: orgName ?? null, verified: !current }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed');
+      if (tab === 'accounts') await refreshAccounts();
+      else await refreshSoft();
+    } catch (e: any) {
+      setError(String(e?.message || 'Failed'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -191,6 +229,7 @@ export default function AdminOrganizationsPage() {
                 <tr className="border-b border-[var(--border-subtle)]">
                   <th className="text-left py-3 pr-3 font-semibold">Organization</th>
                   <th className="text-left py-3 pr-3 font-semibold">Email</th>
+                  <th className="text-left py-3 pr-3 font-semibold">KYC</th>
                   <th className="text-left py-3 pr-3 font-semibold">Status</th>
                   <th className="text-right py-3 font-semibold">Actions</th>
                 </tr>
@@ -198,7 +237,7 @@ export default function AdminOrganizationsPage() {
               <tbody>
                 {accounts.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-6 text-[var(--text-tertiary)]">
+                    <td colSpan={5} className="py-6 text-[var(--text-tertiary)]">
                       No organization accounts found.
                     </td>
                   </tr>
@@ -207,6 +246,17 @@ export default function AdminOrganizationsPage() {
                     <tr key={u.id} className="border-b border-[var(--border-subtle)]">
                       <td className="py-3 pr-3 text-[var(--text-primary)] font-medium">{u.name}</td>
                       <td className="py-3 pr-3 text-[var(--text-secondary)] font-mono">{u.email}</td>
+                      <td className="py-3 pr-3">
+                        {kycByEmail?.[u.email?.toLowerCase()]?.verified ? (
+                          <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.12)] text-green-200">
+                            verified
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
+                            unverified
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3 pr-3">
                         {u.disabledAt ? (
                           <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.10)] text-red-200">
@@ -220,6 +270,9 @@ export default function AdminOrganizationsPage() {
                       </td>
                       <td className="py-3 text-right">
                         <div className="inline-flex gap-2">
+                          <Button variant="outline" size="sm" onClick={() => toggleKyc(u.email, u.name)} disabled={loading}>
+                            {kycByEmail?.[u.email?.toLowerCase()]?.verified ? 'Unverify' : 'Verify'}
+                          </Button>
                           <Button variant="outline" size="sm" onClick={() => resetPassword(u)} disabled={loading}>
                             Reset PW
                           </Button>
@@ -255,6 +308,7 @@ export default function AdminOrganizationsPage() {
                 <tr className="border-b border-[var(--border-subtle)]">
                   <th className="text-left py-3 pr-3 font-semibold">Organization</th>
                   <th className="text-left py-3 pr-3 font-semibold">Email</th>
+                  <th className="text-left py-3 pr-3 font-semibold">KYC</th>
                   <th className="text-left py-3 pr-3 font-semibold">Signals</th>
                   <th className="text-right py-3 font-semibold">Actions</th>
                 </tr>
@@ -262,7 +316,7 @@ export default function AdminOrganizationsPage() {
               <tbody>
                 {softFiltered.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="py-6 text-[var(--text-tertiary)]">
+                    <td colSpan={5} className="py-6 text-[var(--text-tertiary)]">
                       No soft orgs found.
                     </td>
                   </tr>
@@ -271,13 +325,31 @@ export default function AdminOrganizationsPage() {
                     <tr key={o.key} className="border-b border-[var(--border-subtle)]">
                       <td className="py-3 pr-3 text-[var(--text-primary)] font-medium">{o.orgName}</td>
                       <td className="py-3 pr-3 text-[var(--text-secondary)] font-mono">{o.orgEmail ?? '—'}</td>
+                      <td className="py-3 pr-3">
+                        {o.orgEmail && kycByEmail?.[o.orgEmail?.toLowerCase()]?.verified ? (
+                          <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.12)] text-green-200">
+                            verified
+                          </span>
+                        ) : (
+                          <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
+                            unverified
+                          </span>
+                        )}
+                      </td>
                       <td className="py-3 pr-3 text-[var(--text-tertiary)]">
                         submissions: {o.submissionsCount} • links: {o.linksCount} • donors: {o.donorsCount}
                       </td>
                       <td className="py-3 text-right">
-                        <Button variant="outline" size="sm" onClick={() => convertSoftOrg(o)} disabled={loading}>
-                          Convert to Account
-                        </Button>
+                        <div className="inline-flex gap-2">
+                          {o.orgEmail ? (
+                            <Button variant="outline" size="sm" onClick={() => toggleKyc(o.orgEmail!, o.orgName)} disabled={loading}>
+                              {kycByEmail?.[o.orgEmail?.toLowerCase()]?.verified ? 'Unverify' : 'Verify'}
+                            </Button>
+                          ) : null}
+                          <Button variant="outline" size="sm" onClick={() => convertSoftOrg(o)} disabled={loading}>
+                            Convert to Account
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))

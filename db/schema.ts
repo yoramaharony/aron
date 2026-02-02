@@ -122,6 +122,18 @@ export const submissionEntries = sqliteTable('submission_entries', {
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
+// Org KYC/verification (MVP-lite): keyed by orgEmail when available
+export const orgKyc = sqliteTable('org_kyc', {
+    id: text('id').primaryKey(), // UUID
+    orgEmail: text('org_email').notNull().unique(),
+    orgName: text('org_name'),
+    verifiedAt: integer('verified_at', { mode: 'timestamp' }),
+    verifiedBy: text('verified_by').references(() => users.id),
+    note: text('note'),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Donor profile + generated artifacts (Impact Vision / Vision Board)
 export const donorProfiles = sqliteTable('donor_profiles', {
     donorId: text('donor_id').primaryKey().references(() => users.id),

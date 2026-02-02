@@ -8,7 +8,7 @@ import { useLeverage } from '@/components/providers/LeverageContext';
 
 type OpportunityRow = {
     key: string;
-    source: 'request' | 'submission';
+    source: 'request' | 'submission' | 'charidy';
     title: string;
     orgName: string;
     location?: string;
@@ -26,6 +26,7 @@ export default function DonorFeed() {
     const [detail, setDetail] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [detailTab, setDetailTab] = useState<'promise' | 'diligence'>('promise');
 
     const { openLeverageDrawer } = useLeverage();
 
@@ -57,8 +58,29 @@ export default function DonorFeed() {
         return rows.filter((r) => stateToTab(r.state) === activeTab);
     }, [rows, activeTab]);
 
+    const completenessLabel = (details: any) => {
+        if (!details) return 'Basic';
+        const fields = [
+            details.orgWebsite,
+            details.mission,
+            details.program,
+            details.geo,
+            details.beneficiaries,
+            details.budget,
+            details.amountRequested,
+            details.timeline,
+            details.governance,
+            details.leadership,
+            details.proofLinks,
+        ].filter((v) => typeof v === 'string' && v.trim().length > 0);
+        if (fields.length >= 9) return 'Comprehensive';
+        if (fields.length >= 5) return 'Detailed';
+        return 'Basic';
+    };
+
     const loadDetail = async (key: string) => {
         setSelectedKey(key);
+        setDetailTab('promise');
         try {
             const res = await fetch(`/api/opportunities/${encodeURIComponent(key)}`);
             const data = await res.json();
@@ -190,6 +212,13 @@ export default function DonorFeed() {
                                         {detail.opportunity.location ? ` • ${detail.opportunity.location}` : null}
                                         {detail.opportunity.category ? ` • ${detail.opportunity.category}` : null}
                                     </div>
+                                    {detail.opportunity.details ? (
+                                        <div className="mt-2">
+                                            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
+                                                {completenessLabel(detail.opportunity.details)}
+                                            </span>
+                                        </div>
+                                    ) : null}
                                 </div>
                                 <div className="flex gap-2 shrink-0">
                                     {detail.opportunity.source === 'submission' ? (
@@ -254,6 +283,88 @@ export default function DonorFeed() {
                             </div>
 
                             <div className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{detail.opportunity.summary}</div>
+
+                            {/* Promise vs Due Diligence */}
+                            <div className="border-t border-[var(--border-subtle)] pt-4">
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setDetailTab('promise')}
+                                        className={[
+                                            'px-3 py-2 rounded-lg text-sm font-semibold border transition-colors',
+                                            detailTab === 'promise'
+                                                ? 'bg-[rgba(255,43,214,0.14)] border-[rgba(255,43,214,0.28)] text-[var(--text-primary)]'
+                                                : 'bg-[rgba(255,255,255,0.03)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                                        ].join(' ')}
+                                    >
+                                        Promise
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setDetailTab('diligence')}
+                                        className={[
+                                            'px-3 py-2 rounded-lg text-sm font-semibold border transition-colors',
+                                            detailTab === 'diligence'
+                                                ? 'bg-[rgba(255,43,214,0.14)] border-[rgba(255,43,214,0.28)] text-[var(--text-primary)]'
+                                                : 'bg-[rgba(255,255,255,0.03)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
+                                        ].join(' ')}
+                                    >
+                                        Due diligence
+                                    </button>
+                                </div>
+
+                                {detailTab === 'promise' ? (
+                                    <div className="mt-4 space-y-4">
+                                        {detail.opportunity.outcomes ? (
+                                            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-5">
+                                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                                                    Outcomes
+                                                </div>
+                                                <ul className="text-sm text-[var(--text-secondary)] list-disc pl-5 space-y-1">
+                                                    {detail.opportunity.outcomes.map((o: string, i: number) => (
+                                                        <li key={i}>{o}</li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+                                        ) : null}
+
+                                        {detail.opportunity.whyNow ? (
+                                            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-5">
+                                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                                                    Why now
+                                                </div>
+                                                <div className="text-sm text-[var(--text-secondary)]">{detail.opportunity.whyNow}</div>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                ) : (
+                                    <div className="mt-4 space-y-4">
+                                        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-5">
+                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                                                Verification & governance
+                                            </div>
+                                            <div className="text-sm text-[var(--text-secondary)]">
+                                                {detail.opportunity.details ? (
+                                                    <div className="space-y-2">
+                                                        {detail.opportunity.details.governance ? <div>Governance: {detail.opportunity.details.governance}</div> : null}
+                                                        {detail.opportunity.details.leadership ? <div>Leadership: {detail.opportunity.details.leadership}</div> : null}
+                                                        {detail.opportunity.details.proofLinks ? (
+                                                            <div>
+                                                                Proof links: {detail.opportunity.details.proofLinks}
+                                                            </div>
+                                                        ) : null}
+                                                    </div>
+                                                ) : (
+                                                    <div>More diligence will appear here after “Request more info”.</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="text-xs text-[var(--text-tertiary)]">
+                                            Note: overhead/financials are intentionally placed in Due diligence (not in Promise).
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
 
                             {(detail.opportunity.extractedCause ||
                                 detail.opportunity.extractedGeo ||

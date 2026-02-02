@@ -4,10 +4,11 @@ import { donorOpportunityState, requests, submissionEntries } from '@/db/schema'
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
 import { toIsoTime } from '@/lib/time';
+import { CHARIDY_CURATED } from '@/lib/charidy-curated';
 
 type OpportunityRow = {
   key: string;
-  source: 'request' | 'submission';
+  source: 'request' | 'submission' | 'charidy';
   title: string;
   orgName: string;
   location?: string;
@@ -79,6 +80,22 @@ export async function GET() {
       summary: r.summary,
       amount: r.targetAmount ? Number(r.targetAmount) - Number(r.currentAmount ?? 0) : null,
       createdAt: toIsoTime(r.createdAt),
+      state: stateByKey.get(key) ?? 'new',
+    });
+  }
+
+  for (const c of CHARIDY_CURATED) {
+    const key = c.key;
+    rows.push({
+      key,
+      source: 'charidy',
+      title: c.title,
+      orgName: c.orgName,
+      location: c.location,
+      category: c.category,
+      summary: c.summary,
+      amount: c.fundingGap,
+      createdAt: null,
       state: stateByKey.get(key) ?? 'new',
     });
   }

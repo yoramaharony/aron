@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 type State =
   | { status: 'loading' }
   | { status: 'invalid'; message: string }
-  | { status: 'valid'; orgName?: string | null; orgEmail?: string | null; title?: string | null; existing?: any; submittedAt?: any };
+  | { status: 'valid'; orgName?: string | null; orgEmail?: string | null; title?: string | null; amountRequested?: number | null; existing?: any; submittedAt?: any };
 
 export default function MoreInfoPage() {
   const params = useParams();
@@ -32,6 +32,15 @@ export default function MoreInfoPage() {
     leadership: '',
     proofLinks: '',
   });
+
+  const complexity = (() => {
+    if (state.status !== 'valid') return 'basic' as const;
+    const amt = typeof state.amountRequested === 'number' ? state.amountRequested : null;
+    if (!amt) return 'basic' as const;
+    if (amt <= 25000) return 'basic' as const;
+    if (amt <= 100000) return 'detailed' as const;
+    return 'comprehensive' as const;
+  })();
 
   useEffect(() => {
     let cancelled = false;
@@ -65,6 +74,7 @@ export default function MoreInfoPage() {
           orgName: data.orgName ?? null,
           orgEmail: data.orgEmail ?? null,
           title: data.title ?? null,
+          amountRequested: typeof data.amountRequested === 'number' ? data.amountRequested : null,
           existing,
           submittedAt: data.submittedAt ?? null,
         });
@@ -132,6 +142,7 @@ export default function MoreInfoPage() {
                   <div><span className="text-[var(--text-tertiary)]">Organization:</span> {state.orgName ?? '—'}</div>
                   <div><span className="text-[var(--text-tertiary)]">Email:</span> {state.orgEmail ?? '—'}</div>
                   <div><span className="text-[var(--text-tertiary)]">Submission:</span> {state.title ?? '—'}</div>
+                  <div><span className="text-[var(--text-tertiary)]">Complexity:</span> {complexity === 'basic' ? 'Basic' : complexity === 'detailed' ? 'Detailed' : 'Comprehensive'}</div>
                 </div>
               </div>
 
@@ -164,26 +175,32 @@ export default function MoreInfoPage() {
                 <textarea className="input-field min-h-[110px] resize-y" value={form.program} onChange={(e) => setForm((p) => ({ ...p, program: e.target.value }))} />
               </div>
 
-              <div>
-                <label className="label">Beneficiaries + outcomes (how you’ll measure)</label>
-                <textarea className="input-field min-h-[100px] resize-y" value={form.beneficiaries} onChange={(e) => setForm((p) => ({ ...p, beneficiaries: e.target.value }))} />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {complexity !== 'basic' ? (
                 <div>
-                  <label className="label">Timeline</label>
-                  <textarea className="input-field min-h-[90px] resize-y" value={form.timeline} onChange={(e) => setForm((p) => ({ ...p, timeline: e.target.value }))} placeholder="e.g. start in 14 days, complete in 6 months" />
+                  <label className="label">Beneficiaries + outcomes (how you’ll measure)</label>
+                  <textarea className="input-field min-h-[100px] resize-y" value={form.beneficiaries} onChange={(e) => setForm((p) => ({ ...p, beneficiaries: e.target.value }))} />
                 </div>
-                <div>
-                  <label className="label">Governance (board / oversight)</label>
-                  <textarea className="input-field min-h-[90px] resize-y" value={form.governance} onChange={(e) => setForm((p) => ({ ...p, governance: e.target.value }))} />
-                </div>
-              </div>
+              ) : null}
 
-              <div>
-                <label className="label">Leadership (key people)</label>
-                <textarea className="input-field min-h-[90px] resize-y" value={form.leadership} onChange={(e) => setForm((p) => ({ ...p, leadership: e.target.value }))} />
-              </div>
+              {complexity !== 'basic' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">Timeline</label>
+                    <textarea className="input-field min-h-[90px] resize-y" value={form.timeline} onChange={(e) => setForm((p) => ({ ...p, timeline: e.target.value }))} placeholder="e.g. start in 14 days, complete in 6 months" />
+                  </div>
+                  <div>
+                    <label className="label">Governance (board / oversight)</label>
+                    <textarea className="input-field min-h-[90px] resize-y" value={form.governance} onChange={(e) => setForm((p) => ({ ...p, governance: e.target.value }))} />
+                  </div>
+                </div>
+              ) : null}
+
+              {complexity === 'comprehensive' ? (
+                <div>
+                  <label className="label">Leadership (key people)</label>
+                  <textarea className="input-field min-h-[90px] resize-y" value={form.leadership} onChange={(e) => setForm((p) => ({ ...p, leadership: e.target.value }))} />
+                </div>
+              ) : null}
 
               <div>
                 <label className="label">Proof links (optional)</label>

@@ -4,6 +4,7 @@ import { donorOpportunityEvents, donorOpportunityState, leverageOffers, requests
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
 import { toIsoTime } from '@/lib/time';
+import { CHARIDY_CURATED } from '@/lib/charidy-curated';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -20,8 +21,25 @@ export async function GET(_request: Request, { params }: { params: { key: string
   if (!key) return NextResponse.json({ error: 'Missing key' }, { status: 400 });
 
   let opportunity: any = null;
-  let source: 'request' | 'submission' = 'request';
+  let source: 'request' | 'submission' | 'charidy' = 'request';
 
+  const curated = CHARIDY_CURATED.find((c) => c.key === key);
+  if (curated) {
+    source = 'charidy';
+    opportunity = {
+      key,
+      source,
+      title: curated.title,
+      orgName: curated.orgName,
+      summary: curated.summary,
+      category: curated.category,
+      location: curated.location,
+      fundingGap: curated.fundingGap,
+      outcomes: curated.outcomes,
+      whyNow: curated.whyNow,
+      createdAt: null,
+    };
+  } else
   if (key.startsWith('sub_')) {
     source = 'submission';
     const id = key.slice('sub_'.length);

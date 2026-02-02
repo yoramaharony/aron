@@ -18,6 +18,7 @@ export async function GET(_request: Request, { params }: { params: { token: stri
     orgName: row.orgName ?? null,
     orgEmail: row.orgEmail ?? null,
     title: row.title ?? null,
+    amountRequested: row.amountRequested ?? row.extractedAmount ?? null,
     submittedAt: row.moreInfoSubmittedAt ?? null,
     existing: row.detailsJson ? JSON.parse(row.detailsJson) : null,
   });
