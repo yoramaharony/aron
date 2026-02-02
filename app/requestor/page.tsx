@@ -45,7 +45,9 @@ export default function RequestWizard() {
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data?.error || 'Upload failed');
             setUploadProgress(100);
-            return (data?.files ?? []) as UploadedFile[];
+            const out = (data?.files ?? []) as UploadedFile[];
+            if (!out.length) throw new Error('Upload returned no files');
+            return out;
         } finally {
             window.clearInterval(interval);
             window.setTimeout(() => {

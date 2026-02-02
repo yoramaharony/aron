@@ -38,14 +38,24 @@ export async function POST(request: Request) {
     const stored: Array<{ name: string; size: number; type: string; url: string }> = [];
 
     for (const v of files) {
-      if (!(v instanceof File)) continue;
+      // Next.js/undici may provide File-like objects; don't rely on instanceof checks.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const f: any = v as any;
+      const hasShape =
+        f &&
+        typeof f.name === 'string' &&
+        typeof f.size === 'number' &&
+        typeof f.arrayBuffer === 'function';
+      if (!hasShape) {
+        return NextResponse.json({ error: 'Invalid file payload' }, { status: 400 });
+      }
 
-      const name = sanitizeFilename(v.name);
+      const name = sanitizeFilename(String(f.name));
       const ext = path.extname(name).toLowerCase();
       if (!ALLOWED_EXT.includes(ext)) {
         return NextResponse.json({ error: 'Only PDF or Excel files are allowed' }, { status: 400 });
       }
-      if (v.size > MAX_BYTES) {
+      if (Number(f.size) > MAX_BYTES) {
         return NextResponse.json({ error: 'File too large (max 10MB)' }, { status: 413 });
       }
 
@@ -53,15 +63,19 @@ export async function POST(request: Request) {
       const filename = `${Date.now()}_${id}_${name}`;
       const diskPath = path.join(uploadsDir, filename);
 
-      const bytes = Buffer.from(await v.arrayBuffer());
+      const bytes = Buffer.from(await f.arrayBuffer());
       await writeFile(diskPath, bytes);
 
       stored.push({
-        name: v.name,
-        size: v.size,
-        type: v.type || '',
+        name: String(f.name),
+        size: Number(f.size),
+        type: typeof f.type === 'string' ? f.type : '',
         url: `/uploads/tmp/${encodeURIComponent(filename)}`,
       });
+    }
+
+    if (stored.length === 0) {
+      return NextResponse.json({ error: 'No valid files received' }, { status: 400 });
     }
 
     return NextResponse.json({ files: stored });
