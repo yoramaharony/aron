@@ -47,9 +47,16 @@ export async function POST(request: Request) {
   const intendedRole = body?.intendedRole ?? 'requestor';
   const note = typeof body?.note === 'string' ? body.note : null;
   const expiresInDays = typeof body?.expiresInDays === 'number' ? body.expiresInDays : 14;
+  const maxUses = typeof body?.maxUses === 'number' ? body.maxUses : 1;
 
   if (intendedRole !== 'requestor' && intendedRole !== 'donor') {
     return badRequest('Invalid intendedRole');
+  }
+  if (!Number.isFinite(expiresInDays) || expiresInDays < 0 || expiresInDays > 3650) {
+    return badRequest('Invalid expiresInDays');
+  }
+  if (!Number.isFinite(maxUses) || maxUses < 1 || maxUses > 1000) {
+    return badRequest('Invalid maxUses');
   }
 
   const expiresAt =
@@ -68,7 +75,7 @@ export async function POST(request: Request) {
         createdBy: session.userId,
         note,
         expiresAt,
-        maxUses: 1,
+        maxUses,
         uses: 0,
       });
 
@@ -76,6 +83,7 @@ export async function POST(request: Request) {
         code,
         intendedRole,
         expiresAt,
+        maxUses,
       });
     } catch (e: any) {
       // Unique constraint collision; retry.

@@ -22,6 +22,11 @@ export default function DonorInvitesPage() {
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [rows, setRows] = useState<InviteRow[]>([]);
 
+  const [intendedRole, setIntendedRole] = useState<'requestor' | 'donor'>('requestor');
+  const [expiresInDays, setExpiresInDays] = useState<number>(30);
+  const [maxUses, setMaxUses] = useState<number>(1);
+  const [note, setNote] = useState<string>('');
+
   const refresh = async () => {
     const res = await fetch('/api/invites');
     const data = await res.json();
@@ -32,7 +37,7 @@ export default function DonorInvitesPage() {
     refresh().catch(() => {});
   }, []);
 
-  const createOneTimeRequestorInvite = async () => {
+  const createInvite = async () => {
     setLoading(true);
     setError('');
     setCreatedCode(null);
@@ -40,7 +45,12 @@ export default function DonorInvitesPage() {
       const res = await fetch('/api/invites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ intendedRole: 'requestor', expiresInDays: 14 }),
+        body: JSON.stringify({
+          intendedRole,
+          expiresInDays,
+          maxUses,
+          note: note.trim() ? note.trim() : null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create invite');
@@ -64,26 +74,106 @@ export default function DonorInvitesPage() {
   const inviteUrl = createdCode ? `${window.location.origin}/?invite=${encodeURIComponent(createdCode)}` : '';
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-3xl font-serif text-[var(--text-primary)]">Invites</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-1">
-          Generate a one-time invite code for a nonprofit requestor.
-        </p>
+    <div className="space-y-6">
+      <div className="flex items-end justify-between gap-6">
+        <div>
+          <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Invites</h1>
+          <p className="text-sm text-[var(--text-secondary)] mt-1">
+            Generate invite codes. Codes are enforced at landing + signup.
+          </p>
+        </div>
       </div>
 
-      <Card className="p-6 space-y-4">
+      <Card className="p-6 space-y-5">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <div className="text-sm font-medium text-[var(--text-primary)]">One-time Requestor Invite</div>
-            <div className="text-xs text-[var(--text-tertiary)]">Expires in 14 days • Single use</div>
+            <div className="text-sm font-medium text-[var(--text-primary)]">Create Invite</div>
+            <div className="text-xs text-[var(--text-tertiary)]">
+              Donor endpoint: <span className="font-mono">/api/invites</span>
+            </div>
           </div>
-          <Button variant="gold" onClick={createOneTimeRequestorInvite} isLoading={loading}>
+          <Button variant="gold" onClick={createInvite} isLoading={loading}>
             Generate Code
           </Button>
         </div>
 
         {error ? <div className="text-sm text-red-400">{error}</div> : null}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+              Intended Role
+            </div>
+            <div className="flex gap-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-1">
+              <button
+                type="button"
+                onClick={() => setIntendedRole('donor')}
+                className={[
+                  'flex-1 py-2 text-sm font-semibold rounded-lg border transition-colors transition-shadow',
+                  intendedRole === 'donor'
+                    ? 'bg-[rgba(255,43,214,0.14)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.30)] border-[rgba(255,43,214,0.25)]'
+                    : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
+                ].join(' ')}
+              >
+                Donor
+              </button>
+              <button
+                type="button"
+                onClick={() => setIntendedRole('requestor')}
+                className={[
+                  'flex-1 py-2 text-sm font-semibold rounded-lg border transition-colors transition-shadow',
+                  intendedRole === 'requestor'
+                    ? 'bg-[rgba(255,43,214,0.14)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.30)] border-[rgba(255,43,214,0.25)]'
+                    : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
+                ].join(' ')}
+              >
+                Nonprofit
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+                Expires (days)
+              </div>
+              <input
+                type="number"
+                min={0}
+                max={3650}
+                value={expiresInDays}
+                onChange={(e) => setExpiresInDays(Number(e.target.value))}
+                className="input-field"
+              />
+              <div className="text-xs text-[var(--text-tertiary)]">0 = no expiry</div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+                Max uses
+              </div>
+              <input
+                type="number"
+                min={1}
+                max={1000}
+                value={maxUses}
+                onChange={(e) => setMaxUses(Number(e.target.value))}
+                className="input-field"
+              />
+              <div className="text-xs text-[var(--text-tertiary)]">Usually 1 (one-time)</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">Note (optional)</div>
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="input-field"
+            placeholder='e.g. "Donor: Yehuda (pilot)"'
+          />
+        </div>
 
         {createdCode ? (
           <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4">
@@ -104,13 +194,20 @@ export default function DonorInvitesPage() {
       </Card>
 
       <Card className="p-6">
-        <div className="text-sm font-medium text-[var(--text-primary)] mb-4">Recent Invites</div>
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="text-sm font-medium text-[var(--text-primary)]">Recent Invites (last 25)</div>
+          <Button variant="outline" onClick={() => refresh().catch(() => {})}>
+            Refresh
+          </Button>
+        </div>
+
         <div className="space-y-2">
           {rows.length === 0 ? (
             <div className="text-sm text-[var(--text-tertiary)]">No invites yet.</div>
           ) : (
             rows.map((r) => {
               const used = (r.uses ?? 0) >= (r.maxUses ?? 1);
+              const expiresText = r.expiresAt ? `expires: ${new Date(r.expiresAt).toLocaleDateString()}` : 'no expiry';
               return (
                 <div
                   key={r.code}
@@ -119,12 +216,18 @@ export default function DonorInvitesPage() {
                   <div className="min-w-0">
                     <div className="font-mono text-sm tracking-wider text-[var(--text-primary)]">{r.code}</div>
                     <div className="text-xs text-[var(--text-tertiary)]">
-                      {r.intendedRole} • {used ? 'used' : 'unused'}
+                      {r.intendedRole} • uses: {r.uses ?? 0}/{r.maxUses ?? 1} • {expiresText}
+                      {r.note ? ` • ${r.note}` : ''}
                     </div>
                   </div>
-                  <Button variant="outline" onClick={() => copy(`${window.location.origin}/?invite=${encodeURIComponent(r.code)}`)}>
-                    Copy Link
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => copy(r.code)}>
+                      Copy Code
+                    </Button>
+                    <Button variant="outline" onClick={() => copy(`${window.location.origin}/?invite=${encodeURIComponent(r.code)}`)}>
+                      Copy Link
+                    </Button>
+                  </div>
                 </div>
               );
             })
