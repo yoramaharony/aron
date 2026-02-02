@@ -14,6 +14,7 @@ type VisionBoard = {
 export default function ImpactPage() {
     const [board, setBoard] = useState<VisionBoard | null>(null);
     const [loading, setLoading] = useState(true);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         fetch('/api/concierge')
@@ -104,6 +105,29 @@ export default function ImpactPage() {
                             </div>
                             <div className="text-sm text-[var(--text-secondary)]">
                                 Go back to Concierge AI and answer the 12‑month outcome question to strengthen matching.
+                            </div>
+                            <div className="mt-4 rounded-xl border border-[rgba(255,43,214,0.22)] bg-[rgba(255,43,214,0.08)] p-4">
+                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">Happy path example</div>
+                                <div className="mt-2 text-sm text-[var(--text-primary)] font-mono">
+                                    In 12 months I want 5,000 households protected with measurable outcomes. Budget $250k/year. Israel + Miami.
+                                </div>
+                                <button
+                                    type="button"
+                                    className="mt-3 text-xs font-semibold text-[var(--color-gold)] hover:underline"
+                                    onClick={async () => {
+                                        try {
+                                            await navigator.clipboard.writeText(
+                                                'In 12 months I want 5,000 households protected with measurable outcomes. Budget $250k/year. Israel + Miami.'
+                                            );
+                                            setCopied(true);
+                                            window.setTimeout(() => setCopied(false), 1200);
+                                        } catch {
+                                            // ignore
+                                        }
+                                    }}
+                                >
+                                    {copied ? 'Copied' : 'Copy to clipboard'}
+                                </button>
                             </div>
                         </Card>
                     </div>
