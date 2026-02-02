@@ -96,6 +96,13 @@ export const submissionEntries = sqliteTable('submission_entries', {
     amountRequested: integer('amount_requested'),
     videoUrl: text('video_url'),
 
+    // Deterministic extraction (Phase 1 "LLM auto-extraction" stub)
+    extractedJson: text('extracted_json'),
+    extractedCause: text('extracted_cause'),
+    extractedGeo: text('extracted_geo'), // comma-separated
+    extractedUrgency: text('extracted_urgency'),
+    extractedAmount: integer('extracted_amount'),
+
     // Optional linkage to an authenticated requestor user (if they happened to be signed in)
     requestorUserId: text('requestor_user_id').references(() => users.id),
 

@@ -5,6 +5,7 @@ import { getSession, hashPassword } from '@/lib/auth';
 import { eq, sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { generateSubmissionToken } from '@/lib/submission-links';
+import { extractSubmissionSignals } from '@/lib/extract-submission';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -82,6 +83,14 @@ export async function POST() {
   }
 
   const entryId = uuidv4();
+  const extracted = extractSubmissionSignals({
+    title: 'Bridge funding for emergency kits',
+    summary: 'We need bridge funding for 5,000 emergency kits. We can start distribution within 14 days. Short video available.',
+    orgName: 'Demo Organization',
+    orgEmail,
+    videoUrl: demoVideoUrl,
+    amountRequested: 150000,
+  });
   await db.insert(submissionEntries).values({
     id: entryId,
     linkId,
@@ -94,6 +103,11 @@ export async function POST() {
     summary: 'We need bridge funding for 5,000 emergency kits. We can start distribution within 14 days. Short video available.',
     amountRequested: 150000,
     videoUrl: demoVideoUrl,
+    extractedJson: JSON.stringify(extracted),
+    extractedCause: extracted.cause ?? null,
+    extractedGeo: extracted.geo?.length ? extracted.geo.join(', ') : null,
+    extractedUrgency: extracted.urgency ?? null,
+    extractedAmount: typeof extracted.amount === 'number' ? extracted.amount : null,
     requestorUserId: orgId,
   });
 

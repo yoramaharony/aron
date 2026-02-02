@@ -38,6 +38,11 @@ export async function GET(_request: Request, { params }: { params: { key: string
       videoUrl: row.videoUrl ?? null,
       contactName: row.contactName ?? null,
       contactEmail: row.contactEmail ?? null,
+      extracted: row.extractedJson ? JSON.parse(row.extractedJson) : null,
+      extractedCause: row.extractedCause ?? null,
+      extractedGeo: row.extractedGeo ?? null,
+      extractedUrgency: row.extractedUrgency ?? null,
+      extractedAmount: row.extractedAmount ?? null,
       createdAt: toIsoTime(row.createdAt),
     };
   } else {

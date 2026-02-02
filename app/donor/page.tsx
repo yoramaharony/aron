@@ -235,6 +235,37 @@ export default function DonorFeed() {
 
                             <div className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{detail.opportunity.summary}</div>
 
+                            {(detail.opportunity.extractedCause ||
+                                detail.opportunity.extractedGeo ||
+                                detail.opportunity.extractedUrgency ||
+                                detail.opportunity.extractedAmount) ? (
+                                <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-5">
+                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
+                                        Auto-extraction (demo)
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="text-[var(--text-tertiary)]">Cause</div>
+                                            <div className="text-[var(--text-primary)] text-right">{detail.opportunity.extractedCause ?? '—'}</div>
+                                        </div>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="text-[var(--text-tertiary)]">Geo</div>
+                                            <div className="text-[var(--text-primary)] text-right">{detail.opportunity.extractedGeo ?? '—'}</div>
+                                        </div>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="text-[var(--text-tertiary)]">Amount</div>
+                                            <div className="text-[var(--text-primary)] text-right">
+                                                {detail.opportunity.extractedAmount ? `$${Number(detail.opportunity.extractedAmount).toLocaleString()}` : '—'}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="text-[var(--text-tertiary)]">Urgency</div>
+                                            <div className="text-[var(--text-primary)] text-right">{detail.opportunity.extractedUrgency ?? '—'}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : null}
+
                             {detail.opportunity.videoUrl ? (
                                 <div className="text-sm">
                                     <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Video</div>

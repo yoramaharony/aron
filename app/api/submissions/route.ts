@@ -4,6 +4,7 @@ import { submissionEntries, submissionLinks } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { extractSubmissionSignals } from '@/lib/extract-submission';
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -44,6 +45,14 @@ export async function POST(request: Request) {
     null;
 
   const submissionId = uuidv4();
+  const extracted = extractSubmissionSignals({
+    title: title || null,
+    summary,
+    orgName: orgName || link.orgName || null,
+    orgEmail: orgEmail || link.orgEmail || null,
+    videoUrl: videoUrl || null,
+    amountRequested,
+  });
 
   // Best-effort "atomic" update in sqlite/libsql
   await db.batch([
@@ -59,6 +68,11 @@ export async function POST(request: Request) {
       summary,
       amountRequested,
       videoUrl: videoUrl || null,
+      extractedJson: JSON.stringify(extracted),
+      extractedCause: extracted.cause ?? null,
+      extractedGeo: extracted.geo?.length ? extracted.geo.join(', ') : null,
+      extractedUrgency: extracted.urgency ?? null,
+      extractedAmount: typeof extracted.amount === 'number' ? extracted.amount : null,
       requestorUserId,
       status: 'new',
       userAgent: ua,

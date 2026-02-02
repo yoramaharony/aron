@@ -14,6 +14,11 @@ async function main() {
     `ALTER TABLE donor_profiles ADD COLUMN share_token TEXT;`,
     `ALTER TABLE donor_profiles ADD COLUMN donor_to_donor_opt_in INTEGER;`,
     `ALTER TABLE donor_profiles ADD COLUMN collab_settings_json TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_json TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_cause TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_geo TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_urgency TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_amount INTEGER;`,
     `
     CREATE TABLE IF NOT EXISTS invite_codes (
       id TEXT PRIMARY KEY NOT NULL,
@@ -66,6 +71,11 @@ async function main() {
       summary TEXT NOT NULL,
       amount_requested INTEGER,
       video_url TEXT,
+      extracted_json TEXT,
+      extracted_cause TEXT,
+      extracted_geo TEXT,
+      extracted_urgency TEXT,
+      extracted_amount INTEGER,
       requestor_user_id TEXT REFERENCES users(id),
       status TEXT NOT NULL DEFAULT 'new',
       user_agent TEXT,
