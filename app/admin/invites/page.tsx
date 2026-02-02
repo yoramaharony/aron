@@ -24,7 +24,6 @@ export default function AdminInvitesPage() {
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [rows, setRows] = useState<InviteRow[]>([]);
 
-  const [intendedRole, setIntendedRole] = useState<'donor' | 'requestor'>('donor');
   const [expiresInDays, setExpiresInDays] = useState<number>(30);
   const [maxUses, setMaxUses] = useState<number>(1);
   const [note, setNote] = useState<string>('');
@@ -49,7 +48,8 @@ export default function AdminInvitesPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          intendedRole,
+          // Product rule: admin creates donors; nonprofits are invited by donors
+          intendedRole: 'donor',
           expiresInDays,
           maxUses,
           note: note.trim() ? note.trim() : null,
@@ -89,7 +89,7 @@ export default function AdminInvitesPage() {
             {title}
           </h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Generate invite codes for donors or nonprofits. Codes are enforced at landing + signup.
+            Generate invite codes for donors. Nonprofits must be invited by donors they will submit to.
           </p>
         </div>
         <div className="hidden md:block text-right">
@@ -116,35 +116,13 @@ export default function AdminInvitesPage() {
         {error ? <div className="text-sm text-red-400">{error}</div> : null}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-              Intended Role
+          <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
+            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">Invite Type</div>
+            <div className="mt-2 text-sm text-[var(--text-secondary)]">
+              <span className="font-semibold text-[var(--text-primary)]">Donor</span>
             </div>
-            <div className="flex gap-2 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-subtle)] p-1">
-              <button
-                type="button"
-                onClick={() => setIntendedRole('donor')}
-                className={[
-                  'flex-1 py-2 text-sm font-semibold rounded-lg border transition-colors transition-shadow',
-                  intendedRole === 'donor'
-                    ? 'bg-[rgba(255,43,214,0.14)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.30)] border-[rgba(255,43,214,0.25)]'
-                    : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
-                ].join(' ')}
-              >
-                Donor
-              </button>
-              <button
-                type="button"
-                onClick={() => setIntendedRole('requestor')}
-                className={[
-                  'flex-1 py-2 text-sm font-semibold rounded-lg border transition-colors transition-shadow',
-                  intendedRole === 'requestor'
-                    ? 'bg-[rgba(255,43,214,0.14)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.30)] border-[rgba(255,43,214,0.25)]'
-                    : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
-                ].join(' ')}
-              >
-                Nonprofit
-              </button>
+            <div className="mt-1 text-xs text-[var(--text-tertiary)]">
+              Admin creates donors; donors then invite nonprofits (requestors).
             </div>
           </div>
 
@@ -238,7 +216,9 @@ export default function AdminInvitesPage() {
           {rows.length === 0 ? (
             <div className="text-sm text-[var(--text-tertiary)]">No invites yet.</div>
           ) : (
-            rows.map((r) => {
+            rows
+              .filter((r) => r.intendedRole === 'donor')
+              .map((r) => {
               const isUsed = (r.uses ?? 0) >= (r.maxUses ?? 1);
               const stateLabel = r.revokedAt
                 ? 'revoked'
@@ -268,9 +248,7 @@ export default function AdminInvitesPage() {
                       >
                         {stateLabel}
                       </span>
-                      <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-widest">
-                        {r.intendedRole}
-                      </span>
+                      <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-widest">donor</span>
                     </div>
 
                     {r.note ? (

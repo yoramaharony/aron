@@ -49,8 +49,9 @@ export async function POST(request: Request) {
   const expiresInDays = typeof body?.expiresInDays === 'number' ? body.expiresInDays : 14;
   const maxUses = typeof body?.maxUses === 'number' ? body.maxUses : 1;
 
-  if (intendedRole !== 'requestor' && intendedRole !== 'donor') {
-    return badRequest('Invalid intendedRole');
+  // Product rule: donors can only invite nonprofits (requestors)
+  if (intendedRole !== 'requestor') {
+    return badRequest('Donor invites can only target nonprofits (requestors)');
   }
   if (!Number.isFinite(expiresInDays) || expiresInDays < 0 || expiresInDays > 3650) {
     return badRequest('Invalid expiresInDays');

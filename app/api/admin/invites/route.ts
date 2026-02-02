@@ -49,8 +49,9 @@ export async function POST(request: Request) {
   const note = typeof body?.note === 'string' ? body.note : null;
   const maxUses = typeof body?.maxUses === 'number' ? body.maxUses : 1;
 
-  if (intendedRole !== 'requestor' && intendedRole !== 'donor') {
-    return NextResponse.json({ error: 'Invalid intendedRole' }, { status: 400 });
+  // Product rule: admin can only create donor invites. Nonprofits are invited by donors they submit to.
+  if (intendedRole !== 'donor') {
+    return NextResponse.json({ error: 'Admin invites can only target donors' }, { status: 400 });
   }
   if (!Number.isFinite(expiresInDays) || expiresInDays < 0 || expiresInDays > 3650) {
     return NextResponse.json({ error: 'Invalid expiresInDays' }, { status: 400 });
