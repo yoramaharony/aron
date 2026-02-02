@@ -325,6 +325,23 @@ body {
   }
 }
 
+/* Requestor shell: match donor/admin chrome pattern */
+.requestor-shell .main-content {
+  padding: 0;
+}
+
+.requestor-shell .requestor-content-wrap {
+  padding: 1rem;
+  padding-bottom: 80px; /* space for mobile bottom nav */
+}
+
+@media (min-width: 768px) {
+  .requestor-shell .requestor-content-wrap {
+    padding: 2rem;
+    padding-bottom: 2rem;
+  }
+}
+
 /* Typography */
 .label {
   display: block;
