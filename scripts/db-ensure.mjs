@@ -11,6 +11,7 @@ async function main() {
   const statements = [
     // Add missing columns safely (ignore "duplicate column" errors).
     `ALTER TABLE users ADD COLUMN disabled_at INTEGER;`,
+    `ALTER TABLE donor_profiles ADD COLUMN share_token TEXT;`,
     `
     CREATE TABLE IF NOT EXISTS invite_codes (
       id TEXT PRIMARY KEY NOT NULL,
@@ -78,11 +79,13 @@ async function main() {
       donor_id TEXT PRIMARY KEY NOT NULL REFERENCES users(id),
       vision_json TEXT,
       board_json TEXT,
+      share_token TEXT,
       updated_at INTEGER,
       created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
     );
     `,
     `CREATE INDEX IF NOT EXISTS donor_profiles_donor_idx ON donor_profiles(donor_id);`,
+    `CREATE INDEX IF NOT EXISTS donor_profiles_share_token_idx ON donor_profiles(share_token);`,
 
     `
     CREATE TABLE IF NOT EXISTS concierge_messages (

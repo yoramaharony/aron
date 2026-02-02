@@ -114,6 +114,7 @@ export const donorProfiles = sqliteTable('donor_profiles', {
     donorId: text('donor_id').primaryKey().references(() => users.id),
     visionJson: text('vision_json'), // serialized JSON string
     boardJson: text('board_json'), // serialized JSON string
+    shareToken: text('share_token'),
     updatedAt: integer('updated_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });

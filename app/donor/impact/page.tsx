@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Globe, ShieldCheck, Sparkles, Target } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
 
 type VisionBoard = {
   headline: string;
@@ -15,6 +16,9 @@ export default function ImpactPage() {
     const [board, setBoard] = useState<VisionBoard | null>(null);
     const [loading, setLoading] = useState(true);
     const [copied, setCopied] = useState(false);
+    const [shareCopied, setShareCopied] = useState(false);
+    const [summaryCopied, setSummaryCopied] = useState(false);
+    const [shareUrl, setShareUrl] = useState<string | null>(null);
 
     useEffect(() => {
         fetch('/api/concierge')
@@ -26,9 +30,75 @@ export default function ImpactPage() {
 
     return (
         <div className="fade-in">
-            <header className="mb-8">
-                <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Impact Vision Board</h1>
-                <p className="text-secondary">A living snapshot of your giving intent, derived from your Concierge conversation.</p>
+            <header className="mb-8 flex items-end justify-between gap-6">
+                <div>
+                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Impact Vision Board</h1>
+                    <p className="text-secondary">A living snapshot of your giving intent, derived from your Concierge conversation.</p>
+                </div>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={async () => {
+                            if (!board) return;
+                            const summary = [
+                                'Impact Vision',
+                                ...(board.pillars ?? []).map((p) => `- ${p.title}: ${p.description}`),
+                                '',
+                                'Focus:',
+                                ...(board.focus ?? []).map((f) => `- ${f.label}: ${f.value}`),
+                                '',
+                                'Signals:',
+                                ...(board.signals ?? []).map((s) => `- ${s.label}: ${s.value}`),
+                            ].join('\n');
+                            try {
+                                await navigator.clipboard.writeText(summary);
+                                setSummaryCopied(true);
+                                window.setTimeout(() => setSummaryCopied(false), 1200);
+                            } catch {
+                                // ignore
+                            }
+                        }}
+                    >
+                        {summaryCopied ? 'Summary copied' : 'Copy summary'}
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        onClick={async () => {
+                            try {
+                                const res = await fetch('/api/impact/share');
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data?.error || 'Failed to create share link');
+                                setShareUrl(data.shareUrl);
+                                await navigator.clipboard.writeText(data.shareUrl);
+                                setShareCopied(true);
+                                window.setTimeout(() => setShareCopied(false), 1200);
+                            } catch {
+                                // ignore
+                            }
+                        }}
+                    >
+                        {shareCopied ? 'Link copied' : 'Copy share link'}
+                    </Button>
+
+                    <Button
+                        variant="gold"
+                        onClick={async () => {
+                            try {
+                                const res = await fetch('/api/impact/share');
+                                const data = await res.json();
+                                if (!res.ok) throw new Error(data?.error || 'Failed to create share link');
+                                const url = `${data.shareUrl}?print=1`;
+                                setShareUrl(data.shareUrl);
+                                window.open(url, '_blank', 'noopener,noreferrer');
+                            } catch {
+                                // ignore
+                            }
+                        }}
+                    >
+                        Print / PDF
+                    </Button>
+                </div>
             </header>
 
             {loading ? (
@@ -129,6 +199,12 @@ export default function ImpactPage() {
                                     {copied ? 'Copied' : 'Copy to clipboard'}
                                 </button>
                             </div>
+
+                            {shareUrl ? (
+                                <div className="mt-4 text-xs text-[var(--text-tertiary)] font-mono break-all">
+                                    Share link: {shareUrl}
+                                </div>
+                            ) : null}
                         </Card>
                     </div>
                 </div>
