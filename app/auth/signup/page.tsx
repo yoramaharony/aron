@@ -10,6 +10,7 @@ import { UserPlus } from 'lucide-react';
 export default function SignupPage() {
     const router = useRouter();
     const [role, setRole] = useState<'donor' | 'requestor'>('requestor');
+    const [roleLock, setRoleLock] = useState<'donor' | 'requestor' | null>(null);
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
     const [inviteCode, setInviteCode] = useState('');
     const [error, setError] = useState('');
@@ -21,7 +22,29 @@ export default function SignupPage() {
         const invite = params.get('invite');
         const intendedRole = params.get('role');
         if (invite) setInviteCode(invite);
-        if (intendedRole === 'donor' || intendedRole === 'requestor') setRole(intendedRole);
+        if (intendedRole === 'donor' || intendedRole === 'requestor') {
+            setRole(intendedRole);
+            setRoleLock(intendedRole); // lock UI to link intent (invite-specific links)
+        }
+
+        // If invite exists, use it as the source of truth for locking role.
+        if (invite) {
+            fetch('/api/invites/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: invite }),
+            })
+                .then((r) => r.json().then((j) => ({ ok: r.ok, j })))
+                .then(({ ok, j }) => {
+                    if (!ok) return;
+                    const r = j?.intendedRole;
+                    if (r === 'donor' || r === 'requestor') {
+                        setRole(r);
+                        setRoleLock(r);
+                    }
+                })
+                .catch(() => {});
+        }
     }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -61,32 +84,47 @@ export default function SignupPage() {
                     <div className="mx-auto w-14 h-14 bg-[rgba(255,43,214,0.10)] rounded-2xl flex items-center justify-center mb-6 text-gold shadow-[0_0_0_1px_rgba(255,43,214,0.20)]">
                         <UserPlus size={28} />
                     </div>
-                    <h1 className="text-3xl font-serif mb-3">Create Account</h1>
+                    <h1 className="text-3xl font-semibold mb-3">Create Account</h1>
                     <p className="text-secondary">Join the Aron Private Network.</p>
                 </div>
 
                 <div className="flex gap-4 p-1 rounded-xl mb-8 bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
                     <button
                         type="button"
+                        aria-disabled={!!roleLock && roleLock !== 'requestor'}
                         className={`flex-1 py-3 text-sm font-medium rounded-lg border transition-colors transition-shadow focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] ${role === 'requestor'
                             ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border-[rgba(255,43,214,0.20)]'
                             : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
-                            }`}
-                        onClick={() => setRole('requestor')}
+                            } ${roleLock && roleLock !== 'requestor' ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                        onClick={() => {
+                            if (roleLock && roleLock !== 'requestor') return;
+                            setRole('requestor');
+                        }}
                     >
                         Nonprofit
                     </button>
                     <button
                         type="button"
+                        aria-disabled={!!roleLock && roleLock !== 'donor'}
                         className={`flex-1 py-3 text-sm font-medium rounded-lg border transition-colors transition-shadow focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] ${role === 'donor'
                             ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border-[rgba(255,43,214,0.20)]'
                             : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
-                            }`}
-                        onClick={() => setRole('donor')}
+                            } ${roleLock && roleLock !== 'donor' ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
+                        onClick={() => {
+                            if (roleLock && roleLock !== 'donor') return;
+                            setRole('donor');
+                        }}
                     >
                         Donor
                     </button>
                 </div>
+
+                {roleLock ? (
+                    <div className="mb-5 -mt-3 text-center text-xs text-[var(--text-tertiary)]">
+                        This signup link is for a <span className="text-[var(--text-secondary)] font-semibold">{roleLock === 'requestor' ? 'Nonprofit' : 'Donor'}</span>{' '}
+                        account.
+                    </div>
+                ) : null}
 
                 {error && (
                     <div className="mb-4 p-3 bg-red-900/10 border border-red-500/20 text-red-500 rounded text-sm text-center">
