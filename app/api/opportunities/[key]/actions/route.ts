@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, submissionEntries } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -38,6 +38,7 @@ export async function POST(request: Request, { params }: { params: { key: string
 
   const donorId = session.userId;
   const state = actionToState[action];
+  let moreInfoUrl: string | null = null;
 
   // Upsert state row (via unique index donor+key)
   const existing = await db
@@ -71,6 +72,23 @@ export async function POST(request: Request, { params }: { params: { key: string
     metaJson: body?.meta ? JSON.stringify(body.meta) : null,
   });
 
-  return NextResponse.json({ success: true, state });
+  // Progressive disclosure: on request_info for submissions, mint token + link
+  if (action === 'request_info' && key.startsWith('sub_')) {
+    const submissionId = key.slice('sub_'.length);
+    const sub = await db.select().from(submissionEntries).where(eq(submissionEntries.id, submissionId)).get();
+    if (sub && String(sub.donorId) === String(donorId)) {
+      const token = sub.moreInfoToken || uuidv4();
+      if (!sub.moreInfoToken) {
+        await db
+          .update(submissionEntries)
+          .set({ moreInfoToken: token, moreInfoRequestedAt: new Date(), status: 'more_info_requested' })
+          .where(eq(submissionEntries.id, submissionId));
+      }
+      const origin = new URL(request.url).origin;
+      moreInfoUrl = `${origin}/more-info/${token}`;
+    }
+  }
+
+  return NextResponse.json({ success: true, state, moreInfoUrl });
 }
 

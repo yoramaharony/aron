@@ -43,6 +43,9 @@ export async function GET(_request: Request, { params }: { params: { key: string
       extractedGeo: row.extractedGeo ?? null,
       extractedUrgency: row.extractedUrgency ?? null,
       extractedAmount: row.extractedAmount ?? null,
+      moreInfoRequestedAt: row.moreInfoRequestedAt ?? null,
+      moreInfoSubmittedAt: row.moreInfoSubmittedAt ?? null,
+      details: row.detailsJson ? JSON.parse(row.detailsJson) : null,
       createdAt: toIsoTime(row.createdAt),
     };
   } else {

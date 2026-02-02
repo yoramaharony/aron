@@ -19,6 +19,10 @@ async function main() {
     `ALTER TABLE submission_entries ADD COLUMN extracted_geo TEXT;`,
     `ALTER TABLE submission_entries ADD COLUMN extracted_urgency TEXT;`,
     `ALTER TABLE submission_entries ADD COLUMN extracted_amount INTEGER;`,
+    `ALTER TABLE submission_entries ADD COLUMN more_info_token TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN more_info_requested_at INTEGER;`,
+    `ALTER TABLE submission_entries ADD COLUMN more_info_submitted_at INTEGER;`,
+    `ALTER TABLE submission_entries ADD COLUMN details_json TEXT;`,
     `
     CREATE TABLE IF NOT EXISTS invite_codes (
       id TEXT PRIMARY KEY NOT NULL,
@@ -76,6 +80,10 @@ async function main() {
       extracted_geo TEXT,
       extracted_urgency TEXT,
       extracted_amount INTEGER,
+      more_info_token TEXT,
+      more_info_requested_at INTEGER,
+      more_info_submitted_at INTEGER,
+      details_json TEXT,
       requestor_user_id TEXT REFERENCES users(id),
       status TEXT NOT NULL DEFAULT 'new',
       user_agent TEXT,
@@ -85,6 +93,7 @@ async function main() {
     `,
     `CREATE INDEX IF NOT EXISTS submission_entries_link_idx ON submission_entries(link_id);`,
     `CREATE INDEX IF NOT EXISTS submission_entries_donor_idx ON submission_entries(donor_id);`,
+    `CREATE INDEX IF NOT EXISTS submission_entries_more_info_token_idx ON submission_entries(more_info_token);`,
 
     `
     CREATE TABLE IF NOT EXISTS donor_profiles (

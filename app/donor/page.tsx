@@ -80,8 +80,10 @@ export default function DonorFeed() {
             if (!res.ok) throw new Error(data?.error || 'Failed');
             await refresh();
             if (selectedKey === key) await loadDetail(key);
+            return data;
         } catch (e: any) {
             setError(e?.message || 'Action failed');
+            return null;
         }
     };
 
@@ -190,6 +192,24 @@ export default function DonorFeed() {
                                     </div>
                                 </div>
                                 <div className="flex gap-2 shrink-0">
+                                    {detail.opportunity.source === 'submission' ? (
+                                        <Button
+                                            variant="outline"
+                                            onClick={async () => {
+                                                const r = await act(detail.opportunity.key, 'request_info');
+                                                if (r?.moreInfoUrl) {
+                                                    try {
+                                                        await navigator.clipboard.writeText(r.moreInfoUrl);
+                                                    } catch {
+                                                        // ignore
+                                                    }
+                                                    setError(`Request sent. Link copied: ${r.moreInfoUrl}`);
+                                                }
+                                            }}
+                                        >
+                                            Request more info
+                                        </Button>
+                                    ) : null}
                                     <Button variant="outline" onClick={() => act(detail.opportunity.key, 'pass')}>Pass</Button>
                                     <Button variant="outline" onClick={() => act(detail.opportunity.key, 'save')}>Shortlist</Button>
                                     <Button
@@ -262,6 +282,40 @@ export default function DonorFeed() {
                                             <div className="text-[var(--text-tertiary)]">Urgency</div>
                                             <div className="text-[var(--text-primary)] text-right">{detail.opportunity.extractedUrgency ?? '—'}</div>
                                         </div>
+                                    </div>
+                                </div>
+                            ) : null}
+
+                            {detail.opportunity.details ? (
+                                <div className="rounded-2xl border border-[rgba(255,43,214,0.18)] bg-[rgba(255,43,214,0.06)] p-5">
+                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
+                                        More info received
+                                    </div>
+                                    <div className="text-sm text-[var(--text-secondary)] space-y-2">
+                                        {detail.opportunity.details.mission ? (
+                                            <div><span className="text-[var(--text-tertiary)]">Mission:</span> {detail.opportunity.details.mission}</div>
+                                        ) : null}
+                                        {detail.opportunity.details.program ? (
+                                            <div><span className="text-[var(--text-tertiary)]">Program:</span> {detail.opportunity.details.program}</div>
+                                        ) : null}
+                                        {detail.opportunity.details.budget ? (
+                                            <div><span className="text-[var(--text-tertiary)]">Budget:</span> {detail.opportunity.details.budget}</div>
+                                        ) : null}
+                                        {detail.opportunity.details.amountRequested ? (
+                                            <div><span className="text-[var(--text-tertiary)]">Ask:</span> {detail.opportunity.details.amountRequested}</div>
+                                        ) : null}
+                                        {detail.opportunity.details.proofLinks ? (
+                                            <div><span className="text-[var(--text-tertiary)]">Proof links:</span> {detail.opportunity.details.proofLinks}</div>
+                                        ) : null}
+                                    </div>
+                                </div>
+                            ) : detail.opportunity.moreInfoRequestedAt ? (
+                                <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-5">
+                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                                        More info requested
+                                    </div>
+                                    <div className="text-sm text-[var(--text-secondary)]">
+                                        Waiting for the organization to submit the detailed form.
                                     </div>
                                 </div>
                             ) : null}

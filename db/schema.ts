@@ -103,6 +103,12 @@ export const submissionEntries = sqliteTable('submission_entries', {
     extractedUrgency: text('extracted_urgency'),
     extractedAmount: integer('extracted_amount'),
 
+    // Progressive disclosure: request more info (donor → org)
+    moreInfoToken: text('more_info_token'),
+    moreInfoRequestedAt: integer('more_info_requested_at', { mode: 'timestamp' }),
+    moreInfoSubmittedAt: integer('more_info_submitted_at', { mode: 'timestamp' }),
+    detailsJson: text('details_json'),
+
     // Optional linkage to an authenticated requestor user (if they happened to be signed in)
     requestorUserId: text('requestor_user_id').references(() => users.id),
 

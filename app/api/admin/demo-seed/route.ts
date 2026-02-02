@@ -83,6 +83,7 @@ export async function POST() {
   }
 
   const entryId = uuidv4();
+  const moreInfoToken = uuidv4();
   const extracted = extractSubmissionSignals({
     title: 'Bridge funding for emergency kits',
     summary: 'We need bridge funding for 5,000 emergency kits. We can start distribution within 14 days. Short video available.',
@@ -108,6 +109,8 @@ export async function POST() {
     extractedGeo: extracted.geo?.length ? extracted.geo.join(', ') : null,
     extractedUrgency: extracted.urgency ?? null,
     extractedAmount: typeof extracted.amount === 'number' ? extracted.amount : null,
+    moreInfoToken,
+    moreInfoRequestedAt: new Date(),
     requestorUserId: orgId,
   });
 
@@ -136,6 +139,7 @@ export async function POST() {
     donorDashboard: `/donor`,
     concierge: `/donor/legacy`,
     visionBoard: `/donor/impact`,
+    moreInfoUrl: `/more-info/${moreInfoToken}`,
   });
 }
 
