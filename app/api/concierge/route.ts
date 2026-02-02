@@ -62,10 +62,12 @@ export async function POST(request: Request) {
     .orderBy(desc(conciergeMessages.createdAt))
     .limit(25);
 
-  const vision = extractVision(recent.map((r) => ({ role: r.role, content: r.content })).reverse());
-  const board = buildBoard(vision);
+  const existingProfile = await db.select().from(donorProfiles).where(eq(donorProfiles.donorId, donorId)).get();
+  const prevVision = existingProfile?.visionJson ? JSON.parse(existingProfile.visionJson) : null;
 
-  const assistantReply = composeAssistantReply(vision, content);
+  const vision = extractVision(recent.map((r) => ({ role: r.role, content: r.content })).reverse());
+  const { reply: assistantReply } = composeAssistantReply(vision, content, { prevVision });
+  const board = buildBoard(vision);
 
   const assistantMsgId = uuidv4();
   await db.insert(conciergeMessages).values({
@@ -76,9 +78,8 @@ export async function POST(request: Request) {
   });
 
   // Upsert donor profile artifacts
-  const existing = await db.select().from(donorProfiles).where(eq(donorProfiles.donorId, donorId)).get();
   const now = new Date();
-  if (!existing) {
+  if (!existingProfile) {
     await db.insert(donorProfiles).values({
       donorId,
       visionJson: JSON.stringify(vision),
