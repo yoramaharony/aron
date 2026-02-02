@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { AronLogo } from '@/components/layout/AronLogo';
 
 type ValidateState =
   | { status: 'loading' }
@@ -96,8 +97,13 @@ export default function SubmitToDonorPage() {
     <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)] flex items-center justify-center p-6">
       <div className="w-full max-w-2xl">
         <div className="mb-6">
-          <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
-            Aron • Private Link
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <AronLogo imgClassName="aron-logo aron-logo-animated-soft h-[28px] md:h-[32px] w-auto object-contain" />
+              <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
+                Private Link
+              </div>
+            </div>
           </div>
           <h1 className="text-3xl md:text-4xl font-semibold mt-3">Submit a brief request</h1>
           <p className="text-[var(--text-secondary)] mt-2">
