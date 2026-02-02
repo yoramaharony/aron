@@ -20,7 +20,7 @@ Legend:
   - Tracking: opens + submissions + last activity; revoke/expiry/max-submissions enforced
 
 ### Donor experience (core)
-- `[~]` **AI concierge conversation** (help donor articulate “Impact Vision” — not preferences)
+- `[x]` **AI concierge conversation** (help donor articulate “Impact Vision” — not preferences)
 - `[~]` **Vision / Impact Board** output (visual, shareable inside app)
 - `[~]` **Opportunity dashboard** (email/inbox-style list view + right-pane detail + hover actions)
 - `[~]` **Opportunity actions + history** (New → Requested Info → Scheduled → Shortlisted → Passed → Leverage Flagged → Funded)
