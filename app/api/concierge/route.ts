@@ -4,7 +4,7 @@ import { conciergeMessages, donorProfiles } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { buildBoard, extractVision } from '@/lib/vision-extract';
+import { buildBoard, composeAssistantReply, extractVision } from '@/lib/vision-extract';
 
 export async function GET() {
   const session = await getSession();
@@ -65,12 +65,7 @@ export async function POST(request: Request) {
   const vision = extractVision(recent.map((r) => ({ role: r.role, content: r.content })).reverse());
   const board = buildBoard(vision);
 
-  const assistantReply =
-    `I’m hearing a draft Impact Vision around: ${vision.pillars.join(', ')}.\n` +
-    `Geo focus: ${vision.geoFocus.join(', ')}.\n` +
-    `${vision.givingBudget ? `Budget signal: ${vision.givingBudget}. ` : ''}` +
-    `${vision.timeHorizon ? `Horizon: ${vision.timeHorizon}. ` : ''}` +
-    `\n\nOne question: what is the single outcome you’d be proud to see in 12 months?`;
+  const assistantReply = composeAssistantReply(vision, content);
 
   const assistantMsgId = uuidv4();
   await db.insert(conciergeMessages).values({

@@ -7,16 +7,17 @@ import { Send, User, Bot, ChevronRight, BarChart3, Globe, ShieldCheck } from 'lu
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function LegacyStudioPage() {
+    const [refreshKey, setRefreshKey] = useState(0);
     return (
         <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-app)]">
             {/* LEFT: Chat Interface (40%) */}
             <div className="w-[40%] border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col shadow-xl z-10">
-                <LegacyChat />
+                <LegacyChat onUpdated={() => setRefreshKey((v) => v + 1)} />
             </div>
 
             {/* RIGHT: Dynamic Canvas (60%) */}
             <div className="w-[60%] bg-[var(--bg-surface)] p-8 overflow-y-auto">
-                <LegacyCanvas />
+                <LegacyCanvas refreshKey={refreshKey} />
             </div>
         </div>
     );
@@ -24,7 +25,7 @@ export default function LegacyStudioPage() {
 
 // --- CHAT COMPONENTS ---
 
-function LegacyChat() {
+function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<{ role: 'donor' | 'assistant'; content: string }[]>([]);
     const [isTyping, setIsTyping] = useState(false);
@@ -78,6 +79,7 @@ function LegacyChat() {
             if (data?.message?.content) {
                 setMessages(prev => [...prev, { role: 'assistant', content: data.message.content }]);
             }
+            onUpdated();
         } catch (e: any) {
             setError(e?.message || 'Failed to send');
         } finally {
@@ -180,7 +182,7 @@ function LegacyChat() {
 
 // --- CANVAS COMPONENTS ---
 
-function LegacyCanvas() {
+function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
     const [board, setBoard] = useState<any>(null);
     const [vision, setVision] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -194,7 +196,7 @@ function LegacyCanvas() {
             })
             .catch(() => {})
             .finally(() => setLoading(false));
-    }, []);
+    }, [refreshKey]);
 
     if (loading) {
         return (

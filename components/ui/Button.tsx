@@ -21,6 +21,10 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
+  // Safety: avoid leaking non-DOM props into the real <button>.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { asChild, ...buttonProps } = props as any;
+
   return (
     <button
       className={clsx(
@@ -33,7 +37,7 @@ export function Button({
         className
       )}
       disabled={disabled || isLoading}
-      {...props}
+      {...buttonProps}
     >
       {isLoading && <Loader2 className="animate-spin" size={16} />}
       {!isLoading && leftIcon && <span>{leftIcon}</span>}
