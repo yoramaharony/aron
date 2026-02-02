@@ -60,6 +60,43 @@ Week ending: **2026-02-02**
 
 ---
 
+## Additional Updates (shipped after the first draft)
+
+### Access model refinements
+- **Invite roles enforced (product rule)**:
+  - Admin can generate **donor** invites only.
+  - Donors can generate **nonprofit/requestor** invites only.
+  - Both UI + API enforce this (no bypass).
+- **Signup role-lock for invite links**:
+  - `/auth/signup?invite=...&role=requestor` now locks the toggle so a requestor can’t self-select “Donor”.
+
+### Donor Experience polish
+- **Opportunity history is now human-readable**:
+  - Events render as “Requested more info”, “Drafted leverage offer”, etc. (no underscores).
+  - Consecutive duplicates are collapsed.
+  - Event timestamps are reliably present (explicitly set on insert).
+
+### Requestor (nonprofit) portal upgrade
+- **Requestor shell UI now matches donor/admin**:
+  - Collapsible sidebar + top bar title + avatar/sign-out.
+  - Consistent logo usage (shared `AronLogo`) + cleaned up requestor pages to fit the new chrome.
+- **Evidence & documents uploads activated (MVP-local)**:
+  - New `POST /api/uploads` (requestor-only) supports PDF/XLS/XLSX up to 10MB.
+  - Stores files locally under `public/uploads/tmp/` (gitignored) and shows the uploaded file(s) in the wizard UI.
+  - Hardened for file-like payloads (no fragile `instanceof File` checks).
+
+### Public intake hardening
+- **Fixed `/submit/<token>` validation**:
+  - Public token validation endpoint now safely resolves Next.js route params (prevents false “Invalid link”).
+
+### Branding / terminology sweep
+- **“Legacy” terminology replaced with “Impact Vision / Impact” in user-facing copy**:
+  - Landing page taglines + hero copy updated.
+  - Donor sidebar tagline updated.
+  - Concierge input placeholder updated.
+
+---
+
 ## Technical / Platform Changes
 - **DB schema expanded (idempotent)** via `scripts/db-ensure.mjs` (no migrations folder yet):
   - `donor_profiles` now stores vision/board JSON, share token, opt-in settings.
