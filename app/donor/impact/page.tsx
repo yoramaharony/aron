@@ -12,6 +12,13 @@ type VisionBoard = {
   signals: { label: string; value: string }[];
 };
 
+type Insight = {
+  id: string;
+  title: string;
+  reason: string;
+  privacy: string;
+};
+
 export default function ImpactPage() {
     const [board, setBoard] = useState<VisionBoard | null>(null);
     const [loading, setLoading] = useState(true);
@@ -19,6 +26,9 @@ export default function ImpactPage() {
     const [shareCopied, setShareCopied] = useState(false);
     const [summaryCopied, setSummaryCopied] = useState(false);
     const [shareUrl, setShareUrl] = useState<string | null>(null);
+    const [collabOptIn, setCollabOptIn] = useState<boolean>(false);
+    const [collabLoading, setCollabLoading] = useState(true);
+    const [insights, setInsights] = useState<Insight[]>([]);
 
     useEffect(() => {
         fetch('/api/concierge')
@@ -26,6 +36,18 @@ export default function ImpactPage() {
             .then((data) => setBoard(data?.board ?? null))
             .catch(() => {})
             .finally(() => setLoading(false));
+    }, []);
+
+    useEffect(() => {
+        Promise.all([
+            fetch('/api/donor/collaboration-settings').then((r) => r.json()).catch(() => null),
+            fetch('/api/donor/collaboration-insights').then((r) => r.json()).catch(() => null),
+        ])
+            .then(([settings, ins]) => {
+                if (settings && typeof settings.optIn === 'boolean') setCollabOptIn(settings.optIn);
+                if (ins && Array.isArray(ins.insights)) setInsights(ins.insights);
+            })
+            .finally(() => setCollabLoading(false));
     }, []);
 
     return (
@@ -163,6 +185,74 @@ export default function ImpactPage() {
                                         <div className="text-sm text-[var(--text-primary)] text-right">{s.value}</div>
                                     </div>
                                 ))}
+                            </div>
+                        </Card>
+
+                        <Card className="p-6">
+                            <div className="flex items-center justify-between gap-4">
+                                <div>
+                                    <div className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">
+                                        Collaboration insights
+                                    </div>
+                                    <div className="text-xs text-[var(--text-tertiary)] mt-1">
+                                        Opt-in only. No one is notified. Donors shown as “Donor (private)”.
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    className={[
+                                        'h-9 w-[56px] rounded-full border transition-colors relative',
+                                        collabOptIn
+                                            ? 'bg-[rgba(255,43,214,0.22)] border-[rgba(255,43,214,0.35)]'
+                                            : 'bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.14)]',
+                                    ].join(' ')}
+                                    onClick={async () => {
+                                        const next = !collabOptIn;
+                                        setCollabOptIn(next);
+                                        try {
+                                            await fetch('/api/donor/collaboration-settings', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ optIn: next }),
+                                            });
+                                            const ins = await fetch('/api/donor/collaboration-insights').then((r) => r.json()).catch(() => null);
+                                            if (ins && Array.isArray(ins.insights)) setInsights(ins.insights);
+                                        } catch {
+                                            // ignore
+                                        }
+                                    }}
+                                    aria-label={collabOptIn ? 'Disable collaboration insights' : 'Enable collaboration insights'}
+                                >
+                                    <span
+                                        className={[
+                                            'absolute top-1 left-1 h-7 w-7 rounded-full transition-transform',
+                                            'bg-[var(--text-primary)] shadow-[0_10px_30px_-18px_rgba(0,0,0,0.9)]',
+                                            collabOptIn ? 'translate-x-[20px]' : 'translate-x-0',
+                                        ].join(' ')}
+                                    />
+                                </button>
+                            </div>
+
+                            <div className="mt-4 space-y-3">
+                                {collabLoading ? (
+                                    <div className="text-sm text-[var(--text-tertiary)]">Loading…</div>
+                                ) : !collabOptIn ? (
+                                    <div className="text-sm text-[var(--text-secondary)]">
+                                        Enable to see suggested co-funding synergies based on your Impact Vision.
+                                    </div>
+                                ) : insights.length === 0 ? (
+                                    <div className="text-sm text-[var(--text-secondary)]">
+                                        No insights yet. Add more detail to your Impact Vision to strengthen matching.
+                                    </div>
+                                ) : (
+                                    insights.map((i) => (
+                                        <div key={i.id} className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
+                                            <div className="text-sm font-semibold text-[var(--text-primary)]">{i.title}</div>
+                                            <div className="text-sm text-[var(--text-secondary)] mt-1">{i.reason}</div>
+                                            <div className="text-xs text-[var(--text-tertiary)] mt-2">{i.privacy}</div>
+                                        </div>
+                                    ))
+                                )}
                             </div>
                         </Card>
 

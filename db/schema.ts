@@ -115,6 +115,8 @@ export const donorProfiles = sqliteTable('donor_profiles', {
     visionJson: text('vision_json'), // serialized JSON string
     boardJson: text('board_json'), // serialized JSON string
     shareToken: text('share_token'),
+    donorToDonorOptIn: integer('donor_to_donor_opt_in'), // 1/0 (nullable for backward compatibility)
+    collabSettingsJson: text('collab_settings_json'),
     updatedAt: integer('updated_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });

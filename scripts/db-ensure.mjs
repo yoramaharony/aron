@@ -12,6 +12,8 @@ async function main() {
     // Add missing columns safely (ignore "duplicate column" errors).
     `ALTER TABLE users ADD COLUMN disabled_at INTEGER;`,
     `ALTER TABLE donor_profiles ADD COLUMN share_token TEXT;`,
+    `ALTER TABLE donor_profiles ADD COLUMN donor_to_donor_opt_in INTEGER;`,
+    `ALTER TABLE donor_profiles ADD COLUMN collab_settings_json TEXT;`,
     `
     CREATE TABLE IF NOT EXISTS invite_codes (
       id TEXT PRIMARY KEY NOT NULL,
@@ -80,6 +82,8 @@ async function main() {
       vision_json TEXT,
       board_json TEXT,
       share_token TEXT,
+      donor_to_donor_opt_in INTEGER,
+      collab_settings_json TEXT,
       updated_at INTEGER,
       created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
     );
