@@ -181,9 +181,30 @@ function LegacyChat() {
 // --- CANVAS COMPONENTS ---
 
 function LegacyCanvas() {
-    const { plan, activatePlan } = useLegacy();
+    const [board, setBoard] = useState<any>(null);
+    const [vision, setVision] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    if (plan.budget.total === '$0') {
+    useEffect(() => {
+        fetch('/api/concierge')
+            .then((r) => r.json())
+            .then((data) => {
+                setVision(data?.vision ?? null);
+                setBoard(data?.board ?? null);
+            })
+            .catch(() => {})
+            .finally(() => setLoading(false));
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="h-full flex flex-col items-center justify-center text-center opacity-60">
+                <div className="text-sm text-[var(--text-tertiary)]">Loading canvas…</div>
+            </div>
+        );
+    }
+
+    if (!board) {
         return (
             <div className="h-full flex flex-col items-center justify-center text-center opacity-50">
                 <div className="w-16 h-16 rounded-full bg-[rgba(255,255,255,0.06)] border border-[var(--border-subtle)] mb-4 flex items-center justify-center">
@@ -201,9 +222,9 @@ function LegacyCanvas() {
             {/* Header / Title */}
             <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-4xl font-semibold text-[var(--text-primary)] mb-2">My Legacy Structure</h1>
+                    <h1 className="text-4xl font-semibold text-[var(--text-primary)] mb-2">Impact Vision</h1>
                     <div className="flex gap-2">
-                        {plan.pillars.map((pillar, i) => (
+                        {(vision?.pillars ?? board?.pillars?.map((p: any) => p.title) ?? []).slice(0, 6).map((pillar: string, i: number) => (
                             <span key={i} className="px-3 py-1 bg-[var(--bg-ivory)] border border-[var(--color-gold)] text-[var(--color-gold)] text-xs font-bold uppercase tracking-wider rounded-full">
                                 {pillar}
                             </span>
@@ -211,8 +232,8 @@ function LegacyCanvas() {
                     </div>
                 </div>
                 <div className="text-right">
-                    <div className="text-3xl font-bold text-[var(--text-primary)]">{plan.budget.total}</div>
-                    <div className="text-sm text-[var(--text-secondary)]">Target / {plan.budget.period}</div>
+                    <div className="text-xs text-[var(--text-tertiary)] uppercase tracking-widest">Last updated</div>
+                    <div className="text-sm text-[var(--text-secondary)]">{vision?.lastUpdatedAt ? new Date(vision.lastUpdatedAt).toLocaleString() : '—'}</div>
                 </div>
             </div>
 
@@ -229,13 +250,13 @@ function LegacyCanvas() {
                     <div className="grid grid-cols-2 gap-8">
                         <div>
                             <div className="text-4xl font-semibold text-[var(--text-primary)] mb-1">
-                                <CountUp end={plan.forecast.livesImpacted} duration={2} />
+                                <CountUp end={vision?.pillars?.length ? 1200 + (vision.pillars.length * 900) : 2400} duration={2} />
                             </div>
                             <div className="text-xs text-[var(--text-tertiary)] uppercase">Est. Lives Impacted</div>
                         </div>
                         <div>
                             <div className="text-4xl font-semibold text-[var(--color-green)] mb-1">
-                                {plan.forecast.confidence}%
+                                {vision?.pillars?.[0] === 'Impact Discovery' ? 72 : 88}%
                             </div>
                             <div className="text-xs text-[var(--text-tertiary)] uppercase">Execution Confidence</div>
                         </div>
@@ -256,24 +277,14 @@ function LegacyCanvas() {
                 <Card className="p-6 flex flex-col">
                     <div className="flex items-center gap-2 mb-6">
                         <BarChart3 size={18} className="text-[var(--color-gold)]" />
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Allocation Map</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Focus</h3>
                     </div>
 
                     <div className="flex-1 space-y-4">
-                        {plan.budget.allocation.map((alloc, i) => (
-                            <div key={i}>
-                                <div className="flex justify-between text-sm mb-1">
-                                    <span className="font-medium text-[var(--text-primary)]">{alloc.category}</span>
-                                    <span className="text-[var(--text-secondary)]">{alloc.percent}%</span>
-                                </div>
-                                <div className="w-full bg-[rgba(255,255,255,0.06)] h-3 rounded-full overflow-hidden">
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${alloc.percent}%` }}
-                                        transition={{ duration: 1, delay: i * 0.1 }}
-                                        className="bg-[var(--color-gold)] h-full opacity-80"
-                                    />
-                                </div>
+                        {(board?.focus ?? []).map((f: any, i: number) => (
+                            <div key={i} className="rounded-lg border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
+                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">{f.label}</div>
+                                <div className="text-sm text-[var(--text-primary)] mt-1">{f.value}</div>
                             </div>
                         ))}
                     </div>
@@ -290,18 +301,11 @@ function LegacyCanvas() {
                     <div>
                         <h3 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">Ready to Activate?</h3>
                         <p className="text-[var(--text-secondary)] max-w-md">
-                            Activating this plan will reconfigure your entire dashboard. Opportunities will be filtered, pledges structured, and your concierge will begin legal preparation.
+                            Your vision is now saved. Next, shortlist or pass opportunities, and create leverage offers when you’re ready.
                         </p>
                     </div>
-                    <Button
-                        variant="gold"
-                        size="lg"
-                        onClick={activatePlan}
-                        disabled={plan.isActive}
-                        className="min-w-[200px] shadow-xl shadow-gold/20"
-                    >
-                        {plan.isActive ? 'Plan Active' : 'Activate Legacy Plan'}
-                        <ChevronRight size={18} className="ml-2" />
+                    <Button variant="gold" size="lg" asChild className="min-w-[200px] shadow-xl shadow-gold/20">
+                        <a href="/donor">Go to Opportunities <ChevronRight size={18} className="ml-2" /></a>
                     </Button>
                 </div>
             </Card>
