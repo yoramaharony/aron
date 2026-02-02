@@ -19,6 +19,9 @@ test-results/
 /.next/
 /out/
 
+# local MVP uploads (stored under public for easy serving in dev)
+/public/uploads/
+
 # production
 /build
 

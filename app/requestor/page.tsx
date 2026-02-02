@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -21,7 +21,39 @@ export default function RequestWizard() {
     });
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [fileAttached, setFileAttached] = useState(false);
+
+    type UploadedFile = { name: string; url: string; size: number; type: string };
+    const [budgetFile, setBudgetFile] = useState<UploadedFile | null>(null);
+    const [additionalFiles, setAdditionalFiles] = useState<UploadedFile[]>([]);
+    const [uploadError, setUploadError] = useState('');
+    const budgetInputRef = useRef<HTMLInputElement | null>(null);
+    const additionalInputRef = useRef<HTMLInputElement | null>(null);
+
+    const uploadToServer = async (files: FileList) => {
+        setUploadError('');
+        setUploading(true);
+        setUploadProgress(10);
+
+        const interval = window.setInterval(() => {
+            setUploadProgress((p) => (p >= 90 ? 90 : p + 10));
+        }, 180);
+
+        try {
+            const fd = new FormData();
+            Array.from(files).forEach((f) => fd.append('files', f));
+            const res = await fetch('/api/uploads', { method: 'POST', body: fd });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Upload failed');
+            setUploadProgress(100);
+            return (data?.files ?? []) as UploadedFile[];
+        } finally {
+            window.clearInterval(interval);
+            window.setTimeout(() => {
+                setUploading(false);
+                setUploadProgress(0);
+            }, 250);
+        }
+    };
 
     const handleSubmit = async () => {
         setLoading(true);
@@ -34,7 +66,11 @@ export default function RequestWizard() {
                     category: formData.category,
                     location: formData.location || 'Remote',
                     summary: formData.summary,
-                    targetAmount: Number(formData.target)
+                    targetAmount: Number(formData.target),
+                    evidence: {
+                        budget: budgetFile,
+                        files: additionalFiles,
+                    },
                 }),
             });
 
@@ -147,17 +183,7 @@ export default function RequestWizard() {
                                     className="p-8 border-dashed rounded-lg flex flex-col items-center justify-center gap-4 mb-6 transition-all hover:bg-[var(--bg-surface)]"
                                     style={{ border: '2px dashed var(--border-subtle)', cursor: 'pointer' }}
                                     onClick={() => {
-                                        setUploading(true);
-                                        let progress = 0;
-                                        const interval = setInterval(() => {
-                                            progress += 10;
-                                            setUploadProgress(progress);
-                                            if (progress >= 100) {
-                                                clearInterval(interval);
-                                                setUploading(false);
-                                                setFileAttached(true);
-                                            }
-                                        }, 200);
+                                        budgetInputRef.current?.click();
                                     }}
                                 >
                                     {uploading ? (
@@ -173,13 +199,22 @@ export default function RequestWizard() {
                                                 />
                                             </div>
                                         </div>
-                                    ) : fileAttached ? (
-                                        <div className="flex flex-col items-center text-green-600">
-                                            <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center mb-2">
+                                    ) : budgetFile ? (
+                                        <div className="flex flex-col items-center text-[rgba(34,197,94,0.92)]">
+                                            <div className="w-10 h-10 rounded-full bg-[rgba(34,197,94,0.12)] flex items-center justify-center mb-2 border border-[rgba(34,197,94,0.22)]">
                                                 <Check size={20} />
                                             </div>
-                                            <div className="font-medium">Budget_2026.pdf</div>
+                                            <div className="font-medium text-[var(--text-primary)]">{budgetFile.name}</div>
                                             <div className="text-xs text-secondary">Click to replace</div>
+                                            <a
+                                                className="mt-2 text-xs text-[var(--color-gold)] hover:underline"
+                                                href={budgetFile.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                Open uploaded file
+                                            </a>
                                         </div>
                                     ) : (
                                         <>
@@ -196,14 +231,85 @@ export default function RequestWizard() {
 
                                 <div>
                                     <label className="label">Additional Files</label>
-                                    <div className="flex justify-between items-center p-3 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
-                                        <div className="flex items-center gap-2">
-                                            <FileText size={16} className="text-secondary" />
-                                            <span className="text-sm">501(c)(3) Determination.pdf</span>
+                                    <div className="space-y-2">
+                                        {additionalFiles.length === 0 ? (
+                                            <div className="text-xs text-[var(--text-tertiary)]">
+                                                Optional: add 501(c)(3) letter, audit, or supporting documents.
+                                            </div>
+                                        ) : null}
+
+                                        {additionalFiles.map((f) => (
+                                            <div
+                                                key={f.url}
+                                                className="flex justify-between items-center p-3 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)]"
+                                            >
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <FileText size={16} className="text-secondary shrink-0" />
+                                                    <a className="text-sm truncate text-[var(--text-primary)] hover:underline" href={f.url} target="_blank" rel="noreferrer">
+                                                        {f.name}
+                                                    </a>
+                                                </div>
+                                                <Check size={16} className="text-[rgba(34,197,94,0.92)] shrink-0" />
+                                            </div>
+                                        ))}
+
+                                        <div className="flex items-center justify-between gap-3 pt-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => additionalInputRef.current?.click()}
+                                                disabled={uploading}
+                                            >
+                                                Add files
+                                            </Button>
+                                            <div className="text-[10px] text-[var(--text-tertiary)]">
+                                                PDF / Excel • max 10MB each
+                                            </div>
                                         </div>
-                                        <Check size={16} className="text-green-500" />
                                     </div>
                                 </div>
+
+                                {uploadError ? (
+                                    <div className="mt-4 text-sm text-red-400">{uploadError}</div>
+                                ) : null}
+
+                                {/* Hidden file inputs */}
+                                <input
+                                    ref={budgetInputRef}
+                                    type="file"
+                                    accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                        const files = e.target.files;
+                                        e.target.value = '';
+                                        if (!files || files.length === 0) return;
+                                        try {
+                                            const uploaded = await uploadToServer(files);
+                                            if (uploaded[0]) setBudgetFile(uploaded[0]);
+                                        } catch (err: any) {
+                                            setUploadError(err?.message || 'Upload failed');
+                                        }
+                                    }}
+                                />
+                                <input
+                                    ref={additionalInputRef}
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                        const files = e.target.files;
+                                        e.target.value = '';
+                                        if (!files || files.length === 0) return;
+                                        try {
+                                            const uploaded = await uploadToServer(files);
+                                            setAdditionalFiles((prev) => [...uploaded, ...prev]);
+                                        } catch (err: any) {
+                                            setUploadError(err?.message || 'Upload failed');
+                                        }
+                                    }}
+                                />
                             </div>
                         )}
 
