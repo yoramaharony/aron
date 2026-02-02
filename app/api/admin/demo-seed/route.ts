@@ -65,6 +65,22 @@ export async function POST() {
   });
 
   // Create a demo submission entry (so donor sees a real inbound request)
+  const demoVideoUrl =
+    'https://us06web.zoom.us/rec/component-page?eagerLoadZvaPages=sidemenu.billing.plan_management&accessLevel=meeting&action=viewdetailpage&sharelevel=meeting&useWhichPasswd=meeting&requestFrom=pwdCheck&clusterId=us06&componentName=need-password&meetingId=QRH1BktKpBgg_-v7eX2drb4YTzcMXQxSqfPFwG9H0mXBfaclalI6K566Khun711V.1kwuhLrFEMJhpZWl&originRequestUrl=https%3A%2F%2Fus06web.zoom.us%2Frec%2Fshare%2FUdhC9IEPLBhGMOJmya1goqGu7-UgsUuVwy2BFDBBQWzFDRqKwQ92byW4j_9R2LgL.2M8jQlvIh5L_XavM%3FstartTime%3D1768907539000%2520Passcode%3A%2520R*%26z6gdU';
+
+  // Best-effort update: if a prior demo submission exists, update its video url.
+  const existingDemoSubmission = await db
+    .select()
+    .from(submissionEntries)
+    .where(eq(submissionEntries.donorId, donorId))
+    .limit(50);
+  const existingMatch = existingDemoSubmission.find(
+    (s) => s.title === 'Bridge funding for emergency kits' && (s.orgEmail ?? '') === orgEmail
+  );
+  if (existingMatch) {
+    await db.update(submissionEntries).set({ videoUrl: demoVideoUrl }).where(eq(submissionEntries.id, existingMatch.id));
+  }
+
   const entryId = uuidv4();
   await db.insert(submissionEntries).values({
     id: entryId,
@@ -77,7 +93,7 @@ export async function POST() {
     title: 'Bridge funding for emergency kits',
     summary: 'We need bridge funding for 5,000 emergency kits. We can start distribution within 14 days. Short video available.',
     amountRequested: 150000,
-    videoUrl: 'https://example.com/demo-video',
+    videoUrl: demoVideoUrl,
     requestorUserId: orgId,
   });
 
