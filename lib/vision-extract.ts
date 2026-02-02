@@ -5,13 +5,24 @@ export type ImpactVision = {
   givingBudget?: string;
   outcome12m?: string;
   constraints?: string[];
+  updateCadence?: 'Monthly' | 'Quarterly' | 'Annual';
+  verificationLevel?: 'Concierge-reviewed (MVP)' | '3rd-party verified' | 'Audited financials';
   stage?: 'discover' | 'clarify' | 'confirm' | 'activated';
   lastQuestionKey?: QuestionKey;
   notes: string[];
   lastUpdatedAt: string;
 };
 
-export type QuestionKey = 'outcome12m' | 'budget' | 'horizon' | 'geo' | 'constraints' | 'confirm' | 'activated';
+export type QuestionKey =
+  | 'outcome12m'
+  | 'budget'
+  | 'horizon'
+  | 'geo'
+  | 'constraints'
+  | 'update_cadence'
+  | 'verification_level'
+  | 'confirm'
+  | 'activated';
 
 export type VisionBoard = {
   headline: string;
@@ -85,6 +96,42 @@ export function extractVision(messages: { role: string; content: string }[]): Im
   const donorNotes = messages.filter((m) => m.role === 'donor').slice(-3).map((m) => m.content.trim());
   notes.push(...donorNotes);
 
+  // Update cadence detector (prefer last mention)
+  let updateCadence: ImpactVision['updateCadence'] = undefined;
+  for (let i = donorMsgs.length - 1; i >= 0; i--) {
+    const t = donorMsgs[i].toLowerCase();
+    if (t.includes('monthly')) {
+      updateCadence = 'Monthly';
+      break;
+    }
+    if (t.includes('quarter') || t.includes('quarterly')) {
+      updateCadence = 'Quarterly';
+      break;
+    }
+    if (t.includes('annual') || t.includes('yearly')) {
+      updateCadence = 'Annual';
+      break;
+    }
+  }
+
+  // Verification detector (prefer last mention)
+  let verificationLevel: ImpactVision['verificationLevel'] = undefined;
+  for (let i = donorMsgs.length - 1; i >= 0; i--) {
+    const t = donorMsgs[i].toLowerCase();
+    if (t.includes('audited') || t.includes('audit') || t.includes('financial statement')) {
+      verificationLevel = 'Audited financials';
+      break;
+    }
+    if (t.includes('3rd') || t.includes('third') || t.includes('third-party')) {
+      verificationLevel = '3rd-party verified';
+      break;
+    }
+    if (t.includes('concierge') || t.includes('reviewed')) {
+      verificationLevel = 'Concierge-reviewed (MVP)';
+      break;
+    }
+  }
+
   const now = new Date().toISOString();
   return {
     pillars: uniq(pillars.length ? pillars : ['Impact Discovery']),
@@ -93,6 +140,8 @@ export function extractVision(messages: { role: string; content: string }[]): Im
     timeHorizon: horizon ?? undefined,
     outcome12m,
     constraints: uniq(constraints),
+    updateCadence,
+    verificationLevel,
     notes: uniq(notes).slice(0, 6),
     lastUpdatedAt: now,
   };
@@ -118,8 +167,8 @@ export function buildBoard(vision: ImpactVision): VisionBoard {
 
   const signals = [
     { label: 'Preference clarity', value: vision.pillars[0] === 'Impact Discovery' ? 'Draft' : 'Strong' },
-    { label: 'Update cadence', value: 'Quarterly' },
-    { label: 'Verification', value: 'Concierge-reviewed (MVP)' },
+    { label: 'Update cadence', value: vision.updateCadence ?? 'Quarterly' },
+    { label: 'Verification', value: vision.verificationLevel ?? 'Concierge-reviewed (MVP)' },
   ];
 
   return { headline, pillars, focus, signals };
@@ -167,6 +216,8 @@ export function nextBestQuestionKey(vision: ImpactVision): QuestionKey {
   if (!vision.timeHorizon) return 'horizon';
   if (!vision.geoFocus || vision.geoFocus[0] === 'Global') return 'geo';
   if (!vision.constraints || vision.constraints.length === 0) return 'constraints';
+  if (!vision.updateCadence) return 'update_cadence';
+  if (!vision.verificationLevel) return 'verification_level';
   return 'confirm';
 }
 
@@ -182,6 +233,10 @@ function questionText(key: QuestionKey): string {
       return 'Which geographies matter most to you (and which should we avoid)?';
     case 'constraints':
       return 'What’s your biggest non-negotiable constraint (privacy, verification, overhead cap, political neutrality, etc.)?';
+    case 'update_cadence':
+      return 'How often do you want updates from organizations?';
+    case 'verification_level':
+      return 'What verification standard do you require before you move forward?';
     case 'confirm':
       return 'If this looks right, reply: “confirm”. If not, tell me what to change.';
     case 'activated':
@@ -201,6 +256,10 @@ function guidedPrompt(key: QuestionKey): string {
       return `Name 1–3 geographies (or say “global”):\nExamples: Israel, NYC, Miami, Africa, Emerging markets`;
     case 'constraints':
       return `Pick one to lock first:\n- privacy\n- verification\n- overhead cap\n- political neutrality\n- speed to impact`;
+    case 'update_cadence':
+      return `Choose one:\n- monthly\n- quarterly\n- annual`;
+    case 'verification_level':
+      return `Choose one:\n- concierge reviewed\n- 3rd party verified\n- audited financials`;
     case 'outcome12m':
       return `Give a 12‑month outcome in one line:\nExample: “5,000 households protected and audited delivery within 12 months.”`;
     default:
@@ -259,16 +318,23 @@ export function composeAssistantReply(
     vision.timeHorizon ? `Horizon: ${vision.timeHorizon}.` : null,
     vision.outcome12m ? `12‑month outcome: captured.` : null,
     vision.constraints?.length ? `Constraints: ${vision.constraints.join(' • ')}.` : null,
+    vision.updateCadence ? `Update cadence: ${vision.updateCadence}.` : null,
+    vision.verificationLevel ? `Verification: ${vision.verificationLevel}.` : null,
   ]
     .filter(Boolean)
     .join('\n');
 
   const q = questionText(nextKey);
+  const options = guidedPrompt(nextKey);
 
   // Make it feel responsive to new inputs
   const echo = lastDonorMessage.trim().length > 0 ? `\n\nNoted: “${lastDonorMessage.trim().slice(0, 120)}${lastDonorMessage.trim().length > 120 ? '…' : ''}”` : '';
 
   vision.lastQuestionKey = nextKey;
-  return { reply: `${summary}${echo}\n\nNext: ${q}`, nextKey, stage };
+  return {
+    reply: `${summary}${echo}\n\nNext: ${q}${options ? `\n\n${options}` : ''}`,
+    nextKey,
+    stage,
+  };
 }
 
