@@ -11,10 +11,10 @@ export default function CampaignsPage() {
     if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-gold" size={32} /></div>;
 
     return (
-        <div style={{ paddingTop: '2rem' }}>
+        <div>
             <header className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-serif">Campaigns</h1>
+                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Campaigns</h1>
                     <p className="text-secondary">Track performance across multiple opportunities.</p>
                 </div>
             </header>

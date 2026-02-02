@@ -51,10 +51,10 @@ export default function RequestWizard() {
     };
 
     return (
-        <div style={{ paddingTop: '2rem' }}>
+        <div>
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl">New Funding Request</h1>
+                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">New Funding Request</h1>
                     <p className="text-secondary">Draft your opportunity for the Aron Private Network.</p>
                 </div>
                 <div className="text-sm font-mono text-tertiary">Step {step} of 4</div>
@@ -259,7 +259,9 @@ export default function RequestWizard() {
                             </div>
                         </div>
                         <div className="p-4">
-                            <h3 className="text-lg font-serif mb-2" style={{ lineHeight: 1.2 }}>{formData.title || 'Untitled Project'}</h3>
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2" style={{ lineHeight: 1.2 }}>
+                                {formData.title || 'Untitled Project'}
+                            </h3>
                             <div className="text-xs text-secondary mb-2">{formData.location || 'Location'}</div>
                             <div className="flex items-baseline gap-1 mb-2">
                                 <span className="text-gold font-bold">${(formData.target || 0).toLocaleString()}</span>

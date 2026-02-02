@@ -30,10 +30,10 @@ export default function MyRequestsPage() {
     if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-gold" size={32} /></div>;
 
     return (
-        <div style={{ paddingTop: '2rem' }}>
+        <div>
             <header className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-serif">My Requests</h1>
+                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">My Requests</h1>
                     <p className="text-secondary">Manage your active and drafted funding opportunities.</p>
                 </div>
                 <Link href="/requestor">
@@ -56,7 +56,14 @@ export default function MyRequestsPage() {
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
                                     <h3 className="text-lg font-medium">{req.title}</h3>
-                                    <span className={`text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-bold ${req.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                    <span
+                                        className={[
+                                            'text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-bold border',
+                                            req.status === 'active'
+                                                ? 'bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border-[rgba(34,197,94,0.22)]'
+                                                : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[rgba(255,255,255,0.10)]',
+                                        ].join(' ')}
+                                    >
                                         {req.status}
                                     </span>
                                 </div>
