@@ -25,7 +25,7 @@ Legend:
 - `[~]` **Opportunity dashboard** (email/inbox-style list view + right-pane detail + hover actions)
 - `[~]` **Opportunity actions + history** (New → Requested Info → Scheduled → Shortlisted → Passed → Leverage Flagged → Funded)
 - `[~]` **Leverage engine UI** (create catalytic offer / leverage terms)
-- `[ ]` **Donor-to-donor matching (Level 2)** surfaced as opt-in insight (Phase 1: light UI + toggle; no automation)
+- `[x]` **Donor-to-donor matching (Level 2)** surfaced as opt-in insight (Phase 1: light UI + toggle; no automation)
 
 ### Requester/org experience (progressive disclosure)
 - `[x]` **Lightweight initial submission** (brief text + optional video link) via donor-generated link
