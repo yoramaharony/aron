@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { donorOpportunityState, requests, submissionEntries } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
+import { toIsoTime } from '@/lib/time';
 
 type OpportunityRow = {
   key: string;
@@ -61,7 +62,7 @@ export async function GET() {
       orgName: s.orgName || s.orgEmail || 'Unknown',
       summary: s.summary,
       amount: s.amountRequested ?? null,
-      createdAt: s.createdAt ? new Date(s.createdAt).toISOString() : null,
+      createdAt: toIsoTime(s.createdAt),
       state: stateByKey.get(key) ?? 'new',
     });
   }
@@ -77,7 +78,7 @@ export async function GET() {
       category: r.category,
       summary: r.summary,
       amount: r.targetAmount ? Number(r.targetAmount) - Number(r.currentAmount ?? 0) : null,
-      createdAt: r.createdAt ? new Date(r.createdAt).toISOString() : null,
+      createdAt: toIsoTime(r.createdAt),
       state: stateByKey.get(key) ?? 'new',
     });
   }

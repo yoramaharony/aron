@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { donorOpportunityEvents, donorOpportunityState, leverageOffers, requests, submissionEntries } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
+import { toIsoTime } from '@/lib/time';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -37,7 +38,7 @@ export async function GET(_request: Request, { params }: { params: { key: string
       videoUrl: row.videoUrl ?? null,
       contactName: row.contactName ?? null,
       contactEmail: row.contactEmail ?? null,
-      createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : null,
+      createdAt: toIsoTime(row.createdAt),
     };
   } else {
     const row = await db.select().from(requests).where(eq(requests.id, key)).get();
@@ -52,7 +53,7 @@ export async function GET(_request: Request, { params }: { params: { key: string
       location: row.location,
       targetAmount: row.targetAmount,
       currentAmount: row.currentAmount,
-      createdAt: row.createdAt ? new Date(row.createdAt).toISOString() : null,
+      createdAt: toIsoTime(row.createdAt),
     };
   }
 
@@ -75,7 +76,7 @@ export async function GET(_request: Request, { params }: { params: { key: string
       id: e.id,
       type: e.type,
       meta: e.metaJson ? JSON.parse(e.metaJson) : null,
-      createdAt: e.createdAt ? new Date(e.createdAt).toISOString() : null,
+      createdAt: toIsoTime(e.createdAt),
     }));
 
   const offers = await db
@@ -94,7 +95,7 @@ export async function GET(_request: Request, { params }: { params: { key: string
       topUpCap: o.topUpCap,
       deadline: o.deadline,
       status: o.status,
-      createdAt: o.createdAt ? new Date(o.createdAt).toISOString() : null,
+      createdAt: toIsoTime(o.createdAt),
     }));
 
   return NextResponse.json({ opportunity, state, events: eventsForKey, leverageOffers: offersForKey });
