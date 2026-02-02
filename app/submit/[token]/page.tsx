@@ -165,7 +165,7 @@ export default function SubmitToDonorPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
-                  <label className="label">Title (optional)</label>
+                  <label className="label whitespace-nowrap">Title (optional)</label>
                   <input
                     className="input-field"
                     value={form.title}
@@ -174,7 +174,7 @@ export default function SubmitToDonorPage() {
                   />
                 </div>
                 <div>
-                  <label className="label">Amount requested (optional)</label>
+                  <label className="label whitespace-nowrap">Amount (optional)</label>
                   <input
                     className="input-field"
                     value={form.amountRequested}
