@@ -150,7 +150,7 @@ export default function DonorInvitesPage() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             className="input-field"
-            placeholder='e.g. "Donor: Yehuda (pilot)"'
+            placeholder='e.g. "Nonprofit: Demo Organization (pilot)"'
           />
         </div>
 
