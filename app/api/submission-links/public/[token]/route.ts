@@ -5,7 +5,13 @@ import { eq } from 'drizzle-orm';
 
 // Public validation endpoint used by /submit/<token>
 export async function GET(_request: Request, { params }: { params: { token: string } }) {
-  const token = params.token;
+  // Next.js 16 can provide params as a promise-like object in some runtimes.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resolvedParams: any = await (params as any);
+  const token = String(resolvedParams?.token ?? '').trim();
+  if (!token) {
+    return NextResponse.json({ valid: false, reason: 'MISSING_TOKEN' }, { status: 400 });
+  }
   const link = await db.select().from(submissionLinks).where(eq(submissionLinks.token, token)).get();
 
   if (!link) {
