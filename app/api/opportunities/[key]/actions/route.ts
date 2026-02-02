@@ -64,14 +64,6 @@ export async function POST(request: Request, { params }: { params: { key: string
       .where(eq(donorOpportunityState.id, row.id));
   }
 
-  await db.insert(donorOpportunityEvents).values({
-    id: uuidv4(),
-    donorId,
-    opportunityKey: key,
-    type: action,
-    metaJson: body?.meta ? JSON.stringify(body.meta) : null,
-  });
-
   // Progressive disclosure: on request_info for submissions, mint token + link
   if (action === 'request_info' && key.startsWith('sub_')) {
     const submissionId = key.slice('sub_'.length);
@@ -88,6 +80,20 @@ export async function POST(request: Request, { params }: { params: { key: string
       moreInfoUrl = `${origin}/more-info/${token}`;
     }
   }
+
+  const metaObj = {
+    ...(body?.meta && typeof body.meta === 'object' ? body.meta : {}),
+    ...(moreInfoUrl ? { moreInfoUrl } : {}),
+  };
+
+  await db.insert(donorOpportunityEvents).values({
+    id: uuidv4(),
+    donorId,
+    opportunityKey: key,
+    type: action,
+    metaJson: Object.keys(metaObj).length ? JSON.stringify(metaObj) : null,
+    createdAt: new Date(),
+  });
 
   return NextResponse.json({ success: true, state, moreInfoUrl });
 }

@@ -86,6 +86,7 @@ export async function POST(request: Request) {
     opportunityKey,
     type: 'leverage_created',
     metaJson: JSON.stringify({ leverageOfferId: id, anchorAmount, challengeGoal, deadline }),
+    createdAt: new Date(),
   });
 
   return NextResponse.json({ success: true, offerId: id });

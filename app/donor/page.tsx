@@ -446,12 +446,58 @@ export default function DonorFeed() {
                                     <div className="text-sm text-[var(--text-tertiary)]">No actions yet.</div>
                                 ) : (
                                     <div className="space-y-2">
-                                        {detail.events.map((e: any) => (
-                                            <div key={e.id} className="text-sm text-[var(--text-secondary)]">
-                                                <span className="font-mono text-[var(--text-tertiary)]">{e.createdAt?.slice(0, 19)?.replace('T', ' ')}</span>{' '}
-                                                — {e.type}
-                                            </div>
-                                        ))}
+                                        {(() => {
+                                            const humanize = (type: string) => {
+                                                const t = String(type || '');
+                                                const map: Record<string, string> = {
+                                                    save: 'Shortlisted',
+                                                    shortlist: 'Shortlisted',
+                                                    pass: 'Passed',
+                                                    request_info: 'Requested more info',
+                                                    leverage_created: 'Drafted leverage offer',
+                                                    scheduled: 'Scheduled',
+                                                    funded: 'Marked funded',
+                                                    reset: 'Reset',
+                                                };
+                                                if (map[t]) return map[t];
+                                                return t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+                                            };
+
+                                            const items = (detail.events ?? []).filter((e: any, idx: number, arr: any[]) => {
+                                                // Collapse consecutive duplicates (e.g., double-click)
+                                                if (idx === 0) return true;
+                                                return String(e.type) !== String(arr[idx - 1]?.type);
+                                            });
+
+                                            return items.map((e: any) => (
+                                                <div key={e.id} className="text-sm text-[var(--text-secondary)] flex items-start gap-3">
+                                                    <span className="font-mono text-[var(--text-tertiary)] shrink-0">
+                                                        {e.createdAt ? String(e.createdAt).slice(0, 19).replace('T', ' ') : '—'}
+                                                    </span>
+                                                    <span className="text-[var(--text-secondary)]">
+                                                        {humanize(e.type)}
+                                                        {e?.meta?.moreInfoUrl ? (
+                                                            <>
+                                                                {' '}
+                                                                <button
+                                                                    type="button"
+                                                                    className="text-[var(--color-gold)] hover:underline"
+                                                                    onClick={async () => {
+                                                                        try {
+                                                                            await navigator.clipboard.writeText(e.meta.moreInfoUrl);
+                                                                        } catch {
+                                                                            // ignore
+                                                                        }
+                                                                    }}
+                                                                >
+                                                                    (copy link)
+                                                                </button>
+                                                            </>
+                                                        ) : null}
+                                                    </span>
+                                                </div>
+                                            ));
+                                        })()}
                                     </div>
                                 )}
                             </div>
