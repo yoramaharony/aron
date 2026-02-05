@@ -62,10 +62,10 @@ function seedPreset(theme: SeedTheme) {
           orgEmail: 'hatzolah-demo@aron.local',
           contactName: 'Demo Dispatcher',
           contactEmail: 'hatzolah-demo@aron.local',
-          title: 'Hatzolah: cardiac response equipment + volunteer training',
+          title: 'Hatzolah: new ambulance + cardiac response equipment',
           summary:
-            'Hatzolah is upgrading AED units and emergency response kits. Need $250k to equip 12 ambu teams and train 60 volunteers within 6 weeks. Serving Monsey and Boro Park.',
-          amountRequested: 250000,
+            'Hatzolah is adding a new ambulance and upgrading AED units and response kits. Need $1.2M for vehicle + equipment + readiness. Serving Monsey and Boro Park.',
+          amountRequested: 1200000,
           linkNote: 'Happy path demo link (Hatzolah)',
           includeMoreInfo: false,
         },
@@ -81,6 +81,54 @@ function seedPreset(theme: SeedTheme) {
           linkNote: "Happy path demo link (Kimcha d'Pischa)",
           includeMoreInfo: false,
         },
+        {
+          orgName: 'Chinuch Crisis Fund',
+          orgEmail: 'chinuch-demo@aron.local',
+          contactName: 'Demo Director',
+          contactEmail: 'chinuch-demo@aron.local',
+          title: 'Chinuch: tuition relief for 200 families',
+          summary:
+            'Chinuch tuition relief (scholarships) for 200 families for the coming zman. Need $500k to prevent mid-year dropouts. Serving Lakewood and Boro Park.',
+          amountRequested: 500000,
+          linkNote: 'Happy path demo link (Chinuch)',
+          includeMoreInfo: false,
+        },
+        {
+          orgName: 'Mikveh Expansion Committee',
+          orgEmail: 'mikveh-demo@aron.local',
+          contactName: 'Demo Coordinator',
+          contactEmail: 'mikveh-demo@aron.local',
+          title: 'Mikveh: expansion + renovation (capital project)',
+          summary:
+            'Mikveh expansion and renovation: new preparation rooms, plumbing, and ADA access. Need $950k to complete the buildout this year. Serving Monsey.',
+          amountRequested: 950000,
+          linkNote: 'Happy path demo link (Mikveh)',
+          includeMoreInfo: false,
+        },
+        {
+          orgName: 'Yeshiva Building Fund',
+          orgEmail: 'yeshiva-demo@aron.local',
+          contactName: 'Demo Administrator',
+          contactEmail: 'yeshiva-demo@aron.local',
+          title: 'Yeshiva: new wing + beis medrash expansion',
+          summary:
+            'Yeshiva capital campaign: new classrooms + beis medrash expansion. Need $2.5M to complete the next phase. Serving Yerushalayim.',
+          amountRequested: 2500000,
+          linkNote: 'Happy path demo link (Yeshiva / Beis Medrash)',
+          includeMoreInfo: false,
+        },
+        {
+          orgName: 'Gemach (Free-Loan) Fund',
+          orgEmail: 'gemach-demo@aron.local',
+          contactName: 'Demo Treasurer',
+          contactEmail: 'gemach-demo@aron.local',
+          title: "Gemach: interest-free loan pool (G'mach)",
+          summary:
+            "G'mach seed pool for short-term emergency loans. Need $25k to start a revolving fund and cover basic operations. Serving Bnei Brak.",
+          amountRequested: 25000,
+          linkNote: "Happy path demo link (G'mach)",
+          includeMoreInfo: false,
+        },
       ],
       curatedRequest: {
         id: 'req_demo',
@@ -89,8 +137,8 @@ function seedPreset(theme: SeedTheme) {
         location: 'Jerusalem, Israel',
         summary:
           'Curated opportunity for demo purposes: discreet matching for hachnasas kallah with concierge-reviewed verification.',
-        targetAmount: 750000,
-        currentAmount: 280000,
+        targetAmount: 2000000,
+        currentAmount: 650000,
       },
     };
   }
