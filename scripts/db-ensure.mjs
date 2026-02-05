@@ -40,6 +40,34 @@ async function main() {
     `CREATE INDEX IF NOT EXISTS requests_created_at_idx ON requests(created_at);`,
     `CREATE INDEX IF NOT EXISTS requests_status_idx ON requests(status);`,
 
+    `
+    CREATE TABLE IF NOT EXISTS email_templates (
+      key TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      text_body TEXT NOT NULL,
+      html_body TEXT,
+      "from" TEXT,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      updated_at INTEGER,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS email_templates_enabled_idx ON email_templates(enabled);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS password_resets (
+      id TEXT PRIMARY KEY NOT NULL,
+      user_id TEXT NOT NULL REFERENCES users(id),
+      token TEXT NOT NULL UNIQUE,
+      expires_at INTEGER NOT NULL,
+      used_at INTEGER,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS password_resets_token_idx ON password_resets(token);`,
+    `CREATE INDEX IF NOT EXISTS password_resets_user_idx ON password_resets(user_id);`,
+
     // Create missing tables first (so ALTER TABLE doesn't fail on older DBs).
     `
     CREATE TABLE IF NOT EXISTS org_kyc (
@@ -214,6 +242,41 @@ async function main() {
     `ALTER TABLE submission_entries ADD COLUMN more_info_requested_at INTEGER;`,
     `ALTER TABLE submission_entries ADD COLUMN more_info_submitted_at INTEGER;`,
     `ALTER TABLE submission_entries ADD COLUMN details_json TEXT;`,
+
+    // Seed default email templates (B"H prefix is customary in Hasidic community).
+    `
+    INSERT INTO email_templates (key, name, subject, text_body, html_body, enabled)
+    SELECT
+      'invite_donor',
+      'Invite (Donor)',
+      'B\"H — You are invited to Aron (Donor)',
+      'B\"H\\n\\nHello,\\n\\n{{inviter_name}} invited you to join Aron as a Donor.\\n\\nUse this link to create your account:\\n{{invite_url}}\\n\\nInvite code: {{invite_code}}\\n{{note_block}}\\n\\nThank you,\\nAron',
+      '<div style=\"font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5\"><div style=\"margin-bottom:12px\">B&quot;H</div><p>Hello,</p><p><strong>{{inviter_name}}</strong> invited you to join Aron as a <strong>Donor</strong>.</p><p><a href=\"{{invite_url}}\">Create your account</a></p><p>Invite code: <code>{{invite_code}}</code></p>{{note_block_html}}<p>Thank you,<br/>Aron</p></div>',
+      1
+    WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE key='invite_donor');
+    `,
+    `
+    INSERT INTO email_templates (key, name, subject, text_body, html_body, enabled)
+    SELECT
+      'invite_requestor',
+      'Invite (Nonprofit)',
+      'B\"H — You are invited to Aron (Nonprofit)',
+      'B\"H\\n\\nHello,\\n\\n{{inviter_name}} invited your organization to join Aron as a Nonprofit (Requestor).\\n\\nUse this link to create your account:\\n{{invite_url}}\\n\\nInvite code: {{invite_code}}\\n{{note_block}}\\n\\nThank you,\\nAron',
+      '<div style=\"font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5\"><div style=\"margin-bottom:12px\">B&quot;H</div><p>Hello,</p><p><strong>{{inviter_name}}</strong> invited your organization to join Aron as a <strong>Nonprofit</strong> (Requestor).</p><p><a href=\"{{invite_url}}\">Create your account</a></p><p>Invite code: <code>{{invite_code}}</code></p>{{note_block_html}}<p>Thank you,<br/>Aron</p></div>',
+      1
+    WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE key='invite_requestor');
+    `,
+    `
+    INSERT INTO email_templates (key, name, subject, text_body, html_body, enabled)
+    SELECT
+      'forgot_password',
+      'Forgot Password',
+      'B\"H — Reset your Aron password',
+      'B\"H\\n\\nHello,\\n\\nWe received a request to reset your Aron password.\\n\\nReset link (expires in {{expires_minutes}} minutes):\\n{{reset_url}}\\n\\nIf you did not request this, you can ignore this email.\\n\\nThank you,\\nAron',
+      '<div style=\"font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5\"><div style=\"margin-bottom:12px\">B&quot;H</div><p>Hello,</p><p>We received a request to reset your Aron password.</p><p><a href=\"{{reset_url}}\">Reset password</a> (expires in {{expires_minutes}} minutes)</p><p>If you did not request this, you can ignore this email.</p><p>Thank you,<br/>Aron</p></div>',
+      1
+    WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE key='forgot_password');
+    `,
   ];
 
   for (const sql of statements) {

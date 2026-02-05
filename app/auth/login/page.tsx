@@ -113,6 +113,12 @@ function LoginContent() {
                     </Button>
                 </form>
 
+                <div className="mt-4 text-center text-sm text-secondary">
+                    <Link href="/auth/forgot-password" className="text-gold hover:underline">
+                        Forgot password?
+                    </Link>
+                </div>
+
                 <div className="mt-6 text-center text-sm text-secondary">
                     Don't have an account? <Link href="/auth/signup" className="text-gold hover:underline">Sign up</Link>
                 </div>

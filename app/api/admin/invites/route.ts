@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { inviteCodes } from '@/db/schema';
+import { inviteCodes, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { generateInviteCode, normalizeInviteCode } from '@/lib/invites';
-import { desc } from 'drizzle-orm';
+import { renderEmailFromTemplate } from '@/lib/email-templates';
+import { sendMailgunEmail } from '@/lib/mailgun';
+import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 function forbidden() {
@@ -48,6 +50,7 @@ export async function POST(request: Request) {
   const expiresInDays = typeof body?.expiresInDays === 'number' ? body.expiresInDays : 14;
   const note = typeof body?.note === 'string' ? body.note : null;
   const maxUses = typeof body?.maxUses === 'number' ? body.maxUses : 1;
+  const recipientEmail = typeof body?.recipientEmail === 'string' ? body.recipientEmail.trim() : '';
 
   // Product rule: admin can only create donor invites. Nonprofits are invited by donors they submit to.
   if (intendedRole !== 'donor') {
@@ -78,11 +81,41 @@ export async function POST(request: Request) {
         uses: 0,
       });
 
+      let email: any = null;
+      if (recipientEmail) {
+        const origin = new URL(request.url).origin;
+        const inviteUrl = `${origin}/auth/signup?invite=${encodeURIComponent(code)}&role=${encodeURIComponent(intendedRole)}`;
+        const inviterRow = await db.select().from(users).where(eq(users.id, session.userId)).get().catch(() => null as any);
+        const inviterName = inviterRow?.name || inviterRow?.email || 'Admin';
+        try {
+          const rendered = await renderEmailFromTemplate({
+            key: 'invite_donor',
+            vars: {
+              inviter_name: inviterName,
+              invite_url: inviteUrl,
+              invite_code: code,
+              note: note ?? '',
+            },
+          });
+          await sendMailgunEmail({
+            to: recipientEmail,
+            subject: rendered.subject,
+            text: rendered.text,
+            html: rendered.html,
+            from: rendered.from,
+          });
+          email = { sent: true, to: recipientEmail };
+        } catch (e: any) {
+          email = { sent: false, to: recipientEmail, error: String(e?.message || e) };
+        }
+      }
+
       return NextResponse.json({
         code,
         intendedRole,
         expiresAt,
         maxUses,
+        email,
       });
     } catch (e: any) {
       if (String(e?.message ?? '').toLowerCase().includes('unique')) continue;

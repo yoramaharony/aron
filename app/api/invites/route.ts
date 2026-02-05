@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { inviteCodes } from '@/db/schema';
+import { inviteCodes, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { generateInviteCode, normalizeInviteCode } from '@/lib/invites';
+import { renderEmailFromTemplate } from '@/lib/email-templates';
+import { sendMailgunEmail } from '@/lib/mailgun';
 import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -46,6 +48,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const intendedRole = body?.intendedRole ?? 'requestor';
   const note = typeof body?.note === 'string' ? body.note : null;
+  const recipientEmail = typeof body?.recipientEmail === 'string' ? body.recipientEmail.trim() : '';
   const expiresInDays = typeof body?.expiresInDays === 'number' ? body.expiresInDays : 14;
   const maxUses = typeof body?.maxUses === 'number' ? body.maxUses : 1;
 
@@ -81,11 +84,48 @@ export async function POST(request: Request) {
         uses: 0,
       });
 
+      // Optional: send email invite via Mailgun
+      let email: any = null;
+      if (recipientEmail) {
+        const origin = new URL(request.url).origin;
+        const inviteUrl = `${origin}/auth/signup?invite=${encodeURIComponent(code)}&role=${encodeURIComponent(intendedRole)}`;
+        const inviterRow = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, session.userId))
+          .get()
+          .catch(() => null as any);
+        const inviterName = inviterRow?.name || inviterRow?.email || 'A donor';
+        const tplKey = intendedRole === 'donor' ? 'invite_donor' : 'invite_requestor';
+        try {
+          const rendered = await renderEmailFromTemplate({
+            key: tplKey,
+            vars: {
+              inviter_name: inviterName,
+              invite_url: inviteUrl,
+              invite_code: code,
+              note: note ?? '',
+            },
+          });
+          await sendMailgunEmail({
+            to: recipientEmail,
+            subject: rendered.subject,
+            text: rendered.text,
+            html: rendered.html,
+            from: rendered.from,
+          });
+          email = { sent: true, to: recipientEmail };
+        } catch (e: any) {
+          email = { sent: false, to: recipientEmail, error: String(e?.message || e) };
+        }
+      }
+
       return NextResponse.json({
         code,
         intendedRole,
         expiresAt,
         maxUses,
+        email,
       });
     } catch (e: any) {
       // Unique constraint collision; retry.

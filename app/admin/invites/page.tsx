@@ -22,11 +22,13 @@ export default function AdminInvitesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdCode, setCreatedCode] = useState<string | null>(null);
+  const [createdEmailStatus, setCreatedEmailStatus] = useState<string | null>(null);
   const [rows, setRows] = useState<InviteRow[]>([]);
 
   const [expiresInDays, setExpiresInDays] = useState<number>(30);
   const [maxUses, setMaxUses] = useState<number>(1);
   const [note, setNote] = useState<string>('');
+  const [recipientEmail, setRecipientEmail] = useState<string>('');
 
   const refresh = async () => {
     const res = await fetch('/api/admin/invites');
@@ -43,6 +45,7 @@ export default function AdminInvitesPage() {
     setLoading(true);
     setError('');
     setCreatedCode(null);
+    setCreatedEmailStatus(null);
     try {
       const res = await fetch('/api/admin/invites', {
         method: 'POST',
@@ -53,11 +56,16 @@ export default function AdminInvitesPage() {
           expiresInDays,
           maxUses,
           note: note.trim() ? note.trim() : null,
+          recipientEmail: recipientEmail.trim() ? recipientEmail.trim() : null,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Failed to create invite');
       setCreatedCode(data.code);
+      if (data?.email?.sent) setCreatedEmailStatus(`Email sent to ${data.email.to}`);
+      if (data?.email && data.email.sent === false) {
+        setCreatedEmailStatus(`Email NOT sent: ${data.email.error || 'unknown error'}`);
+      }
       await refresh();
     } catch (e: any) {
       setError(e?.message || 'Failed to create invite');
@@ -175,6 +183,21 @@ export default function AdminInvitesPage() {
           />
         </div>
 
+        <div className="space-y-2">
+          <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+            Recipient email (optional)
+          </div>
+          <input
+            value={recipientEmail}
+            onChange={(e) => setRecipientEmail(e.target.value)}
+            placeholder="e.g. someone@example.com"
+            className="input-field"
+          />
+          <div className="text-xs text-[var(--text-tertiary)]">
+            If provided, we will email the invite link via Mailgun (B&quot;H included).
+          </div>
+        </div>
+
         {createdCode ? (
           <div className="rounded-xl border border-[rgba(255,43,214,0.22)] bg-[linear-gradient(180deg,rgba(255,43,214,0.10),rgba(255,255,255,0.02))] p-4">
             <div className="text-xs text-[var(--text-tertiary)] uppercase tracking-widest">
@@ -193,6 +216,9 @@ export default function AdminInvitesPage() {
                 </Button>
               </div>
             </div>
+            {createdEmailStatus ? (
+              <div className="mt-2 text-xs text-[var(--text-tertiary)] whitespace-pre-wrap">{createdEmailStatus}</div>
+            ) : null}
           </div>
         ) : null}
       </Card>

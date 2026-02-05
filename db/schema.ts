@@ -52,6 +52,29 @@ export const inviteCodes = sqliteTable('invite_codes', {
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
+// Email templates (DB-backed so admin can edit copy without code changes)
+export const emailTemplates = sqliteTable('email_templates', {
+    key: text('key').primaryKey(), // e.g. 'invite_donor', 'invite_requestor', 'forgot_password'
+    name: text('name').notNull(),
+    subject: text('subject').notNull(),
+    textBody: text('text_body').notNull(),
+    htmlBody: text('html_body'),
+    from: text('from'), // optional override
+    enabled: integer('enabled').notNull().default(1), // 1/0
+    updatedAt: integer('updated_at', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
+// Password reset tokens (forgot-password flow)
+export const passwordResets = sqliteTable('password_resets', {
+    id: text('id').primaryKey(), // UUID
+    userId: text('user_id').notNull().references(() => users.id),
+    token: text('token').notNull().unique(), // long random token
+    expiresAt: integer('expires_at', { mode: 'timestamp' }).notNull(),
+    usedAt: integer('used_at', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Donor-generated submission links (org uses this link to submit a brief request to a specific donor)
 export const submissionLinks = sqliteTable('submission_links', {
     id: text('id').primaryKey(), // UUID

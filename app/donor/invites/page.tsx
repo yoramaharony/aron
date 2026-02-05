@@ -20,12 +20,14 @@ export default function DonorInvitesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [createdCode, setCreatedCode] = useState<string | null>(null);
+  const [createdEmailStatus, setCreatedEmailStatus] = useState<string | null>(null);
   const [rows, setRows] = useState<InviteRow[]>([]);
 
   const [intendedRole, setIntendedRole] = useState<'donor' | 'requestor'>('requestor');
   const [expiresInDays, setExpiresInDays] = useState<number>(30);
   const [maxUses, setMaxUses] = useState<number>(1);
   const [note, setNote] = useState<string>('');
+  const [recipientEmail, setRecipientEmail] = useState<string>('');
 
   const refresh = async () => {
     const res = await fetch('/api/invites');
@@ -41,6 +43,7 @@ export default function DonorInvitesPage() {
     setLoading(true);
     setError('');
     setCreatedCode(null);
+    setCreatedEmailStatus(null);
     try {
       const res = await fetch('/api/invites', {
         method: 'POST',
@@ -51,11 +54,16 @@ export default function DonorInvitesPage() {
           expiresInDays,
           maxUses,
           note: note.trim() ? note.trim() : null,
+          recipientEmail: recipientEmail.trim() ? recipientEmail.trim() : null,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to create invite');
       setCreatedCode(data.code);
+      if (data?.email?.sent) setCreatedEmailStatus(`Email sent to ${data.email.to}`);
+      if (data?.email && data.email.sent === false) {
+        setCreatedEmailStatus(`Email NOT sent: ${data.email.error || 'unknown error'}`);
+      }
       await refresh();
     } catch (e: any) {
       setError(e?.message || 'Failed to create invite');
@@ -181,6 +189,21 @@ export default function DonorInvitesPage() {
           />
         </div>
 
+        <div className="space-y-2">
+          <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+            Recipient email (optional)
+          </div>
+          <input
+            value={recipientEmail}
+            onChange={(e) => setRecipientEmail(e.target.value)}
+            className="input-field"
+            placeholder="e.g. someone@example.com"
+          />
+          <div className="text-xs text-[var(--text-tertiary)]">
+            If provided, we will email the invite link via Mailgun (B&quot;H included).
+          </div>
+        </div>
+
         {createdCode ? (
           <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4">
             <div className="text-xs text-[var(--text-tertiary)] uppercase tracking-widest">Invite Code</div>
@@ -198,6 +221,9 @@ export default function DonorInvitesPage() {
             <div className="mt-2 text-xs text-[var(--text-tertiary)]">
               Link includes a locked role: <span className="font-mono">{intendedRole}</span>
             </div>
+            {createdEmailStatus ? (
+              <div className="mt-2 text-xs text-[var(--text-tertiary)] whitespace-pre-wrap">{createdEmailStatus}</div>
+            ) : null}
           </div>
         ) : null}
       </Card>
