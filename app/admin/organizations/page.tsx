@@ -203,7 +203,7 @@ export default function AdminOrganizationsPage() {
       ) : null}
 
       {tab === 'accounts' ? (
-        <Card className="p-6 space-y-4">
+        <Card className="p-4 md:p-6 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <label className="label">Search</label>
@@ -224,7 +224,8 @@ export default function AdminOrganizationsPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-[var(--text-tertiary)]">
                 <tr className="border-b border-[var(--border-subtle)]">
@@ -298,9 +299,71 @@ export default function AdminOrganizationsPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {accounts.length === 0 ? (
+              <div className="text-sm text-[var(--text-tertiary)] py-2">No organization accounts found.</div>
+            ) : (
+              accounts.map((u) => (
+                <div
+                  key={u.id}
+                  className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4 space-y-3"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[var(--text-primary)] font-semibold truncate">{u.name}</div>
+                    <div className="text-xs text-[var(--text-secondary)] font-mono truncate">{u.email}</div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] text-[var(--text-tertiary)]">
+                        Invited by:{' '}
+                        <span className="text-[var(--text-secondary)]">
+                          {u.invitedBy ? (u.invitedBy.name || u.invitedBy.email) : '—'}
+                        </span>
+                      </span>
+                      {kycByEmail?.[u.email?.toLowerCase()]?.verified ? (
+                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.12)] text-green-200">
+                          verified
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
+                          unverified
+                        </span>
+                      )}
+                      {u.disabledAt ? (
+                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.10)] text-red-200">
+                          disabled
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]">
+                          active
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toggleKyc(u.email, u.name)}
+                      disabled={loading}
+                      className="flex-1"
+                    >
+                      {kycByEmail?.[u.email?.toLowerCase()]?.verified ? 'Unverify' : 'Verify'}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => resetPassword(u)} disabled={loading} className="flex-1">
+                      Reset PW
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => toggleDisable(u)} disabled={loading} className="flex-1">
+                      {u.disabledAt ? 'Enable' : 'Disable'}
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </Card>
       ) : (
-        <Card className="p-6 space-y-4">
+        <Card className="p-4 md:p-6 space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="flex-1">
               <label className="label">Search</label>
@@ -313,7 +376,8 @@ export default function AdminOrganizationsPage() {
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop table */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="text-[var(--text-tertiary)]">
                 <tr className="border-b border-[var(--border-subtle)]">
@@ -367,6 +431,55 @@ export default function AdminOrganizationsPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile cards */}
+          <div className="md:hidden space-y-3">
+            {softFiltered.length === 0 ? (
+              <div className="text-sm text-[var(--text-tertiary)] py-2">No soft orgs found.</div>
+            ) : (
+              softFiltered.map((o) => (
+                <div
+                  key={o.key}
+                  className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4 space-y-3"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[var(--text-primary)] font-semibold truncate">{o.orgName}</div>
+                    <div className="text-xs text-[var(--text-secondary)] font-mono truncate">{o.orgEmail ?? '—'}</div>
+                    <div className="mt-2 text-xs text-[var(--text-tertiary)]">
+                      submissions: {o.submissionsCount} • links: {o.linksCount} • donors: {o.donorsCount}
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {o.orgEmail && kycByEmail?.[o.orgEmail?.toLowerCase()]?.verified ? (
+                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.12)] text-green-200">
+                          verified
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
+                          unverified
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    {o.orgEmail ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleKyc(o.orgEmail!, o.orgName)}
+                        disabled={loading}
+                        className="flex-1"
+                      >
+                        {kycByEmail?.[o.orgEmail?.toLowerCase()]?.verified ? 'Unverify' : 'Verify'}
+                      </Button>
+                    ) : null}
+                    <Button variant="outline" size="sm" onClick={() => convertSoftOrg(o)} disabled={loading} className="flex-1">
+                      Convert
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </Card>
       )}

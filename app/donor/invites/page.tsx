@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ShareButton } from '@/components/ui/ShareButton';
 
 type InviteRow = {
   code: string;
@@ -216,6 +217,16 @@ export default function DonorInvitesPage() {
                 <Button variant="outline" onClick={() => copy(inviteUrl)} disabled={!inviteUrl}>
                   Copy Link
                 </Button>
+                {inviteUrl ? (
+                  <ShareButton
+                    url={inviteUrl}
+                    title="Aron invite"
+                    text="Join Aron"
+                    variant="outline"
+                    size="sm"
+                    label="Share"
+                  />
+                ) : null}
               </div>
             </div>
             <div className="mt-2 text-xs text-[var(--text-tertiary)]">

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ShareButton } from '@/components/ui/ShareButton';
 
 export default function AdminHappyPathPage() {
   const [loading, setLoading] = useState(false);
@@ -110,6 +111,19 @@ export default function AdminHappyPathPage() {
               <a className="text-[var(--color-gold)] underline" href={data.submitUrl}>
                 Public submission link (seeded)
               </a>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(String(window.location.origin + data.submitUrl))}>
+                  Copy
+                </Button>
+                <ShareButton
+                  url={String(window.location.origin + data.submitUrl)}
+                  title="Aron submission link"
+                  text="Submission link"
+                  variant="outline"
+                  size="sm"
+                  label="Share"
+                />
+              </div>
               <a className="text-[var(--color-gold)] underline" href={data.donorDashboard}>
                 Donor dashboard
               </a>

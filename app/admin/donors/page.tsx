@@ -116,7 +116,7 @@ export default function AdminDonorsPage() {
         </div>
       </div>
 
-      <Card className="p-6 space-y-4">
+      <Card className="p-4 md:p-6 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
             <label className="label">Search</label>
@@ -174,7 +174,8 @@ export default function AdminDonorsPage() {
           </div>
         ) : null}
 
-        <div className="overflow-x-auto">
+        {/* Desktop table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-[var(--text-tertiary)]">
               <tr className="border-b border-[var(--border-subtle)]">
@@ -232,6 +233,50 @@ export default function AdminDonorsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile cards */}
+        <div className="md:hidden space-y-3">
+          {filtered.length === 0 ? (
+            <div className="text-sm text-[var(--text-tertiary)] py-2">No donors found.</div>
+          ) : (
+            filtered.map((u) => (
+              <div
+                key={u.id}
+                className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4 space-y-3"
+              >
+                <div className="min-w-0">
+                  <div className="text-[var(--text-primary)] font-semibold truncate">{u.name}</div>
+                  <div className="text-xs text-[var(--text-secondary)] font-mono truncate">{u.email}</div>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    {u.disabledAt ? (
+                      <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(248,113,113,0.25)] bg-[rgba(248,113,113,0.10)] text-red-200">
+                        disabled
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]">
+                        active
+                      </span>
+                    )}
+                    <span className="text-[10px] text-[var(--text-tertiary)]">
+                      Invited by:{' '}
+                      <span className="text-[var(--text-secondary)]">
+                        {u.invitedBy ? (u.invitedBy.name || u.invitedBy.email) : '—'}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => resetPassword(u)} disabled={loading} className="flex-1">
+                    Reset PW
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => toggleDisable(u)} disabled={loading} className="flex-1">
+                    {u.disabledAt ? 'Enable' : 'Disable'}
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </Card>
     </div>
