@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users } from '@/db/schema';
+import { inviteCodes, users } from '@/db/schema';
 import { getSession, hashPassword } from '@/lib/auth';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 function forbidden() {
@@ -17,6 +17,7 @@ function sanitizeUser(u: any) {
     role: u.role,
     disabledAt: u.disabledAt,
     createdAt: u.createdAt,
+    invitedBy: u.invitedBy ?? null,
   };
 }
 
@@ -40,7 +41,52 @@ export async function GET(request: Request) {
     return hay.includes(q);
   });
 
-  return NextResponse.json({ users: filtered.map(sanitizeUser) });
+  // "Invited by" graph: invite_codes.used_by -> invite_codes.created_by -> users
+  const userIds = filtered.map((u) => String(u.id)).filter(Boolean);
+  const inviteRows = userIds.length
+    ? await db
+        .select({
+          usedBy: inviteCodes.usedBy,
+          createdBy: inviteCodes.createdBy,
+          usedAt: inviteCodes.usedAt,
+        })
+        .from(inviteCodes)
+        .where(and(inArray(inviteCodes.usedBy, userIds), isNotNull(inviteCodes.usedBy)))
+        .limit(500)
+    : [];
+
+  const usedByToCreatedBy = new Map<string, { createdBy: string; usedAt: number }>();
+  for (const r of inviteRows) {
+    const usedBy = String(r.usedBy || '');
+    const createdBy = String(r.createdBy || '');
+    if (!usedBy || !createdBy) continue;
+    const usedAt = typeof r.usedAt === 'number' ? r.usedAt : 0;
+    const prev = usedByToCreatedBy.get(usedBy);
+    if (!prev || usedAt > prev.usedAt) usedByToCreatedBy.set(usedBy, { createdBy, usedAt });
+  }
+
+  const inviterIds = Array.from(new Set(Array.from(usedByToCreatedBy.values()).map((v) => v.createdBy))).filter(Boolean);
+  const inviterRows = inviterIds.length
+    ? await db
+        .select({ id: users.id, name: users.name, email: users.email, role: users.role })
+        .from(users)
+        .where(inArray(users.id, inviterIds))
+        .limit(500)
+    : [];
+  const inviterById = new Map(inviterRows.map((u) => [String(u.id), u]));
+
+  const withInvitedBy = filtered.map((u) => {
+    const edge = usedByToCreatedBy.get(String(u.id));
+    const inviter = edge ? inviterById.get(edge.createdBy) : null;
+    return {
+      ...u,
+      invitedBy: inviter
+        ? { id: inviter.id, name: inviter.name, email: inviter.email, role: inviter.role }
+        : null,
+    };
+  });
+
+  return NextResponse.json({ users: withInvitedBy.map(sanitizeUser) });
 }
 
 export async function POST(request: Request) {

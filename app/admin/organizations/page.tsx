@@ -11,6 +11,7 @@ type AdminUser = {
   role: 'donor' | 'requestor' | 'admin';
   disabledAt?: string | null;
   createdAt?: string | null;
+  invitedBy?: { id: string; name: string; email: string; role: string } | null;
 };
 
 type SoftOrg = {
@@ -229,6 +230,7 @@ export default function AdminOrganizationsPage() {
                 <tr className="border-b border-[var(--border-subtle)]">
                   <th className="text-left py-3 pr-3 font-semibold">Organization</th>
                   <th className="text-left py-3 pr-3 font-semibold">Email</th>
+                  <th className="text-left py-3 pr-3 font-semibold">Invited by</th>
                   <th className="text-left py-3 pr-3 font-semibold">KYC</th>
                   <th className="text-left py-3 pr-3 font-semibold">Status</th>
                   <th className="text-right py-3 font-semibold">Actions</th>
@@ -237,7 +239,7 @@ export default function AdminOrganizationsPage() {
               <tbody>
                 {accounts.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="py-6 text-[var(--text-tertiary)]">
+                    <td colSpan={6} className="py-6 text-[var(--text-tertiary)]">
                       No organization accounts found.
                     </td>
                   </tr>
@@ -246,6 +248,15 @@ export default function AdminOrganizationsPage() {
                     <tr key={u.id} className="border-b border-[var(--border-subtle)]">
                       <td className="py-3 pr-3 text-[var(--text-primary)] font-medium">{u.name}</td>
                       <td className="py-3 pr-3 text-[var(--text-secondary)] font-mono">{u.email}</td>
+                      <td className="py-3 pr-3 text-[var(--text-tertiary)]">
+                        {u.invitedBy ? (
+                          <span title={u.invitedBy.email} className="truncate inline-block max-w-[240px]">
+                            {u.invitedBy.name || u.invitedBy.email}
+                          </span>
+                        ) : (
+                          '—'
+                        )}
+                      </td>
                       <td className="py-3 pr-3">
                         {kycByEmail?.[u.email?.toLowerCase()]?.verified ? (
                           <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.12)] text-green-200">
