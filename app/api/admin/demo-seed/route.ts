@@ -340,7 +340,8 @@ export async function POST(req: Request) {
       targetAmount: preset.curatedRequest.targetAmount,
       currentAmount: preset.curatedRequest.currentAmount,
       status: 'active',
-      createdBy: session.userId,
+      // Use the seeded donor as createdBy to avoid foreign-key issues if the admin session user isn't present in this DB.
+      createdBy: donorId,
     });
   } else {
     // Keep the curated request aligned to the chosen theme.
