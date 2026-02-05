@@ -9,20 +9,7 @@ async function main() {
   // Idempotent schema creation for local/dev environments.
   // (We avoid drizzle-kit migrations for now because the repo doesn't currently include a migrations folder.)
   const statements = [
-    // Add missing columns safely (ignore "duplicate column" errors).
-    `ALTER TABLE users ADD COLUMN disabled_at INTEGER;`,
-    `ALTER TABLE donor_profiles ADD COLUMN share_token TEXT;`,
-    `ALTER TABLE donor_profiles ADD COLUMN donor_to_donor_opt_in INTEGER;`,
-    `ALTER TABLE donor_profiles ADD COLUMN collab_settings_json TEXT;`,
-    `ALTER TABLE submission_entries ADD COLUMN extracted_json TEXT;`,
-    `ALTER TABLE submission_entries ADD COLUMN extracted_cause TEXT;`,
-    `ALTER TABLE submission_entries ADD COLUMN extracted_geo TEXT;`,
-    `ALTER TABLE submission_entries ADD COLUMN extracted_urgency TEXT;`,
-    `ALTER TABLE submission_entries ADD COLUMN extracted_amount INTEGER;`,
-    `ALTER TABLE submission_entries ADD COLUMN more_info_token TEXT;`,
-    `ALTER TABLE submission_entries ADD COLUMN more_info_requested_at INTEGER;`,
-    `ALTER TABLE submission_entries ADD COLUMN more_info_submitted_at INTEGER;`,
-    `ALTER TABLE submission_entries ADD COLUMN details_json TEXT;`,
+    // Create missing tables first (so ALTER TABLE doesn't fail on older DBs).
     `
     CREATE TABLE IF NOT EXISTS org_kyc (
       id TEXT PRIMARY KEY NOT NULL,
@@ -180,6 +167,22 @@ async function main() {
     `,
     `CREATE INDEX IF NOT EXISTS leverage_offers_donor_idx ON leverage_offers(donor_id);`,
     `CREATE INDEX IF NOT EXISTS leverage_offers_key_idx ON leverage_offers(opportunity_key);`,
+
+    // Add missing columns safely (ignore "duplicate column" errors).
+    // Note: older DBs may not have these tables yet; we ignore "no such table" for ALTERs.
+    `ALTER TABLE users ADD COLUMN disabled_at INTEGER;`,
+    `ALTER TABLE donor_profiles ADD COLUMN share_token TEXT;`,
+    `ALTER TABLE donor_profiles ADD COLUMN donor_to_donor_opt_in INTEGER;`,
+    `ALTER TABLE donor_profiles ADD COLUMN collab_settings_json TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_json TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_cause TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_geo TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_urgency TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN extracted_amount INTEGER;`,
+    `ALTER TABLE submission_entries ADD COLUMN more_info_token TEXT;`,
+    `ALTER TABLE submission_entries ADD COLUMN more_info_requested_at INTEGER;`,
+    `ALTER TABLE submission_entries ADD COLUMN more_info_submitted_at INTEGER;`,
+    `ALTER TABLE submission_entries ADD COLUMN details_json TEXT;`,
   ];
 
   for (const sql of statements) {
@@ -191,7 +194,10 @@ async function main() {
         msg.toLowerCase().includes('duplicate column') ||
         msg.toLowerCase().includes('already exists') ||
         msg.toLowerCase().includes('already has a column');
+      const isNoSuchTable = msg.toLowerCase().includes('no such table');
+      const isAlter = String(sql).trim().toLowerCase().startsWith('alter table');
       if (isDuplicateColumn) continue;
+      if (isNoSuchTable && isAlter) continue;
       throw e;
     }
   }
