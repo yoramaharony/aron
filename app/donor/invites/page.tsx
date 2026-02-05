@@ -22,6 +22,7 @@ export default function DonorInvitesPage() {
   const [createdCode, setCreatedCode] = useState<string | null>(null);
   const [rows, setRows] = useState<InviteRow[]>([]);
 
+  const [intendedRole, setIntendedRole] = useState<'donor' | 'requestor'>('requestor');
   const [expiresInDays, setExpiresInDays] = useState<number>(30);
   const [maxUses, setMaxUses] = useState<number>(1);
   const [note, setNote] = useState<string>('');
@@ -45,8 +46,8 @@ export default function DonorInvitesPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // Product rule: donors can only invite nonprofits (requestors)
-          intendedRole: 'requestor',
+          // Product rule: donors can invite donors or nonprofits (requestors)
+          intendedRole,
           expiresInDays,
           maxUses,
           note: note.trim() ? note.trim() : null,
@@ -71,7 +72,9 @@ export default function DonorInvitesPage() {
     }
   };
 
-  const inviteUrl = createdCode ? `${window.location.origin}/?invite=${encodeURIComponent(createdCode)}` : '';
+  const inviteUrl = createdCode
+    ? `${window.location.origin}/?invite=${encodeURIComponent(createdCode)}&role=${encodeURIComponent(intendedRole)}`
+    : '';
 
   return (
     <div className="space-y-6">
@@ -79,7 +82,7 @@ export default function DonorInvitesPage() {
         <div>
           <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Invites</h1>
           <p className="text-sm text-[var(--text-secondary)] mt-1">
-            Generate invite codes for nonprofits to submit opportunities to you. Codes are enforced at landing + signup.
+            Generate invite codes for donors or nonprofits. Codes are enforced at landing + signup.
           </p>
         </div>
       </div>
@@ -102,12 +105,32 @@ export default function DonorInvitesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
             <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">Invite Type</div>
-            <div className="mt-2 text-sm text-[var(--text-secondary)]">
-              <span className="font-semibold text-[var(--text-primary)]">Nonprofit</span>{' '}
-              <span className="text-[var(--text-tertiary)]">(requestor)</span>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
+                  intendedRole === 'requestor'
+                    ? 'border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]'
+                    : 'border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}
+                onClick={() => setIntendedRole('requestor')}
+              >
+                Nonprofit <span className="text-[var(--text-tertiary)]">(requestor)</span>
+              </button>
+              <button
+                type="button"
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
+                  intendedRole === 'donor'
+                    ? 'border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]'
+                    : 'border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}
+                onClick={() => setIntendedRole('donor')}
+              >
+                Donor
+              </button>
             </div>
-            <div className="mt-1 text-xs text-[var(--text-tertiary)]">
-              Nonprofits should be tied to a donor; they can only submit to donors who invited them.
+            <div className="mt-2 text-xs text-[var(--text-tertiary)]">
+              We track who invited whom (for later insights), but invites don’t create “ownership” or any in-app messaging.
             </div>
           </div>
 
@@ -150,7 +173,11 @@ export default function DonorInvitesPage() {
             value={note}
             onChange={(e) => setNote(e.target.value)}
             className="input-field"
-            placeholder='e.g. "Nonprofit: Demo Organization (pilot)"'
+            placeholder={
+              intendedRole === 'requestor'
+                ? 'e.g. "Nonprofit: Bikur Cholim (pilot)"'
+                : 'e.g. "Donor: Lakewood chevra referral"'
+            }
           />
         </div>
 
@@ -167,6 +194,9 @@ export default function DonorInvitesPage() {
                   Copy Link
                 </Button>
               </div>
+            </div>
+            <div className="mt-2 text-xs text-[var(--text-tertiary)]">
+              Link includes a locked role: <span className="font-mono">{intendedRole}</span>
             </div>
           </div>
         ) : null}
