@@ -26,67 +26,77 @@ export async function GET(request: Request) {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'admin') return forbidden();
 
-  const url = new URL(request.url);
-  const role = url.searchParams.get('role'); // donor|requestor|admin|all
-  const q = (url.searchParams.get('q') || '').trim().toLowerCase();
+  try {
+    const url = new URL(request.url);
+    const role = url.searchParams.get('role'); // donor|requestor|admin|all
+    const q = (url.searchParams.get('q') || '').trim().toLowerCase();
 
-  // Simple approach: fetch recent users, filter in JS (small-scale MVP).
-  // If needed later, add indexed search.
-  const rows = await db.select().from(users).orderBy(desc(users.createdAt)).limit(200);
+    // Simple approach: fetch recent users, filter in JS (small-scale MVP).
+    // If needed later, add indexed search.
+    const rows = await db.select().from(users).orderBy(desc(users.createdAt)).limit(200);
 
-  const filtered = rows.filter((u) => {
-    if (role && role !== 'all' && u.role !== role) return false;
-    if (!q) return true;
-    const hay = `${u.name} ${u.email} ${u.role}`.toLowerCase();
-    return hay.includes(q);
-  });
+    const filtered = rows.filter((u) => {
+      if (role && role !== 'all' && u.role !== role) return false;
+      if (!q) return true;
+      const hay = `${u.name} ${u.email} ${u.role}`.toLowerCase();
+      return hay.includes(q);
+    });
 
-  // "Invited by" graph: invite_codes.used_by -> invite_codes.created_by -> users
-  const userIds = filtered.map((u) => String(u.id)).filter(Boolean);
-  const inviteRows = userIds.length
-    ? await db
-        .select({
-          usedBy: inviteCodes.usedBy,
-          createdBy: inviteCodes.createdBy,
-          usedAt: inviteCodes.usedAt,
-        })
-        .from(inviteCodes)
-        .where(and(inArray(inviteCodes.usedBy, userIds), isNotNull(inviteCodes.usedBy)))
-        .limit(500)
-    : [];
+    // "Invited by" graph: invite_codes.used_by -> invite_codes.created_by -> users
+    const userIds = filtered.map((u) => String(u.id)).filter(Boolean);
+    const inviteRows = userIds.length
+      ? await db
+          .select({
+            usedBy: inviteCodes.usedBy,
+            createdBy: inviteCodes.createdBy,
+            usedAt: inviteCodes.usedAt,
+          })
+          .from(inviteCodes)
+          .where(and(inArray(inviteCodes.usedBy, userIds), isNotNull(inviteCodes.usedBy)))
+          .limit(500)
+      : [];
 
-  const usedByToCreatedBy = new Map<string, { createdBy: string; usedAt: number }>();
-  for (const r of inviteRows) {
-    const usedBy = String(r.usedBy || '');
-    const createdBy = String(r.createdBy || '');
-    if (!usedBy || !createdBy) continue;
-    const usedAt = typeof r.usedAt === 'number' ? r.usedAt : 0;
-    const prev = usedByToCreatedBy.get(usedBy);
-    if (!prev || usedAt > prev.usedAt) usedByToCreatedBy.set(usedBy, { createdBy, usedAt });
+    const usedByToCreatedBy = new Map<string, { createdBy: string; usedAt: number }>();
+    for (const r of inviteRows) {
+      const usedBy = String(r.usedBy || '');
+      const createdBy = String(r.createdBy || '');
+      if (!usedBy || !createdBy) continue;
+      const usedAt = typeof r.usedAt === 'number' ? r.usedAt : 0;
+      const prev = usedByToCreatedBy.get(usedBy);
+      if (!prev || usedAt > prev.usedAt) usedByToCreatedBy.set(usedBy, { createdBy, usedAt });
+    }
+
+    const inviterIds = Array.from(new Set(Array.from(usedByToCreatedBy.values()).map((v) => v.createdBy))).filter(Boolean);
+    const inviterRows = inviterIds.length
+      ? await db
+          .select({ id: users.id, name: users.name, email: users.email, role: users.role })
+          .from(users)
+          .where(inArray(users.id, inviterIds))
+          .limit(500)
+      : [];
+    const inviterById = new Map(inviterRows.map((u) => [String(u.id), u]));
+
+    const withInvitedBy = filtered.map((u) => {
+      const edge = usedByToCreatedBy.get(String(u.id));
+      const inviter = edge ? inviterById.get(edge.createdBy) : null;
+      return {
+        ...u,
+        invitedBy: inviter
+          ? { id: inviter.id, name: inviter.name, email: inviter.email, role: inviter.role }
+          : null,
+      };
+    });
+
+    return NextResponse.json({ users: withInvitedBy.map(sanitizeUser) });
+  } catch (e: any) {
+    const msg = String(e?.message ?? e ?? '');
+    const isSchema =
+      msg.toLowerCase().includes('no such column') || msg.toLowerCase().includes('no such table');
+    const hint = isSchema
+      ? 'DB schema is out of date (or you are pointing at the wrong DB). Run `npm run db:ensure` from yesod-platform/, then restart `npm run dev`. Also verify `TURSO_DATABASE_URL` (unset = uses local file:./yesod.db).'
+      : null;
+    return NextResponse.json({ error: 'Failed to load users', detail: msg, hint }, { status: 500 });
   }
-
-  const inviterIds = Array.from(new Set(Array.from(usedByToCreatedBy.values()).map((v) => v.createdBy))).filter(Boolean);
-  const inviterRows = inviterIds.length
-    ? await db
-        .select({ id: users.id, name: users.name, email: users.email, role: users.role })
-        .from(users)
-        .where(inArray(users.id, inviterIds))
-        .limit(500)
-    : [];
-  const inviterById = new Map(inviterRows.map((u) => [String(u.id), u]));
-
-  const withInvitedBy = filtered.map((u) => {
-    const edge = usedByToCreatedBy.get(String(u.id));
-    const inviter = edge ? inviterById.get(edge.createdBy) : null;
-    return {
-      ...u,
-      invitedBy: inviter
-        ? { id: inviter.id, name: inviter.name, email: inviter.email, role: inviter.role }
-        : null,
-    };
-  });
-
-  return NextResponse.json({ users: withInvitedBy.map(sanitizeUser) });
 }
 
 export async function POST(request: Request) {

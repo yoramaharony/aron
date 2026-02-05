@@ -21,71 +21,81 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'admin') return forbidden();
 
-  // Fetch recent submissions and links and aggregate into "soft orgs"
-  const entries = await db.select().from(submissionEntries).limit(500);
-  const links = await db.select().from(submissionLinks).limit(500);
+  try {
+    // Fetch recent submissions and links and aggregate into "soft orgs"
+    const entries = await db.select().from(submissionEntries).limit(500);
+    const links = await db.select().from(submissionLinks).limit(500);
 
-  type Agg = {
-    key: string;
-    orgName: string;
-    orgEmail: string | null;
-    submissionsCount: number;
-    linksCount: number;
-    lastSubmittedAt: string | null;
-    donorsTouched: Set<string>;
-  };
+    type Agg = {
+      key: string;
+      orgName: string;
+      orgEmail: string | null;
+      submissionsCount: number;
+      linksCount: number;
+      lastSubmittedAt: string | null;
+      donorsTouched: Set<string>;
+    };
 
-  const byKey = new Map<string, Agg>();
+    const byKey = new Map<string, Agg>();
 
-  const upsert = (orgNameRaw: string | null, orgEmailRaw: string | null) => {
-    const orgEmail = orgEmailRaw ? normEmail(orgEmailRaw) : null;
-    const orgName = (orgNameRaw || '').trim();
-    const key = orgEmail ? `email:${orgEmail}` : `name:${normName(orgName || 'unknown')}`;
-    if (!byKey.has(key)) {
-      byKey.set(key, {
-        key,
-        orgName: orgName || (orgEmail ? orgEmail : 'Unknown'),
-        orgEmail,
-        submissionsCount: 0,
-        linksCount: 0,
-        lastSubmittedAt: null,
-        donorsTouched: new Set(),
-      });
+    const upsert = (orgNameRaw: string | null, orgEmailRaw: string | null) => {
+      const orgEmail = orgEmailRaw ? normEmail(orgEmailRaw) : null;
+      const orgName = (orgNameRaw || '').trim();
+      const key = orgEmail ? `email:${orgEmail}` : `name:${normName(orgName || 'unknown')}`;
+      if (!byKey.has(key)) {
+        byKey.set(key, {
+          key,
+          orgName: orgName || (orgEmail ? orgEmail : 'Unknown'),
+          orgEmail,
+          submissionsCount: 0,
+          linksCount: 0,
+          lastSubmittedAt: null,
+          donorsTouched: new Set(),
+        });
+      }
+      const agg = byKey.get(key)!;
+      if (!agg.orgName && orgName) agg.orgName = orgName;
+      return agg;
+    };
+
+    for (const e of entries) {
+      const agg = upsert(e.orgName, e.orgEmail);
+      agg.submissionsCount += 1;
+      if (e.createdAt) {
+        const ts = new Date(e.createdAt).toISOString();
+        if (!agg.lastSubmittedAt || ts > agg.lastSubmittedAt) agg.lastSubmittedAt = ts;
+      }
+      if (e.donorId) agg.donorsTouched.add(String(e.donorId));
     }
-    const agg = byKey.get(key)!;
-    if (!agg.orgName && orgName) agg.orgName = orgName;
-    return agg;
-  };
 
-  for (const e of entries) {
-    const agg = upsert(e.orgName, e.orgEmail);
-    agg.submissionsCount += 1;
-    if (e.createdAt) {
-      const ts = new Date(e.createdAt).toISOString();
-      if (!agg.lastSubmittedAt || ts > agg.lastSubmittedAt) agg.lastSubmittedAt = ts;
+    for (const l of links) {
+      const agg = upsert(l.orgName, l.orgEmail);
+      agg.linksCount += 1;
+      if (l.donorId) agg.donorsTouched.add(String(l.donorId));
     }
-    if (e.donorId) agg.donorsTouched.add(String(e.donorId));
+
+    const rows = Array.from(byKey.values())
+      .map((a) => ({
+        key: a.key,
+        orgName: a.orgName,
+        orgEmail: a.orgEmail,
+        submissionsCount: a.submissionsCount,
+        linksCount: a.linksCount,
+        donorsCount: a.donorsTouched.size,
+        lastSubmittedAt: a.lastSubmittedAt,
+      }))
+      .sort((a, b) => (b.submissionsCount - a.submissionsCount) || (b.linksCount - a.linksCount));
+
+    return NextResponse.json({ orgs: rows });
+  } catch (e: any) {
+    const msg = String(e?.message ?? e ?? '');
+    const isSchema =
+      msg.toLowerCase().includes('no such column') || msg.toLowerCase().includes('no such table');
+    const hint = isSchema
+      ? 'DB schema is out of date (or you are pointing at the wrong DB). Run `npm run db:ensure` from yesod-platform/, then restart `npm run dev`. Also verify `TURSO_DATABASE_URL` (unset = uses local file:./yesod.db).'
+      : null;
+    return NextResponse.json({ error: 'Failed to load soft orgs', detail: msg, hint }, { status: 500 });
   }
-
-  for (const l of links) {
-    const agg = upsert(l.orgName, l.orgEmail);
-    agg.linksCount += 1;
-    if (l.donorId) agg.donorsTouched.add(String(l.donorId));
-  }
-
-  const rows = Array.from(byKey.values())
-    .map((a) => ({
-      key: a.key,
-      orgName: a.orgName,
-      orgEmail: a.orgEmail,
-      submissionsCount: a.submissionsCount,
-      linksCount: a.linksCount,
-      donorsCount: a.donorsTouched.size,
-      lastSubmittedAt: a.lastSubmittedAt,
-    }))
-    .sort((a, b) => (b.submissionsCount - a.submissionsCount) || (b.linksCount - a.linksCount));
-
-  return NextResponse.json({ orgs: rows });
 }
 
 // Convert soft org to a requestor account (admin sets password)
