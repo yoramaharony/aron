@@ -27,9 +27,10 @@ export default function AdminHappyPathPage() {
         json = null;
       }
       if (!res.ok) {
-        const msg = json?.error || json?.detail || raw || 'Seed failed';
+        const base = json?.error || raw || 'Seed failed';
+        const detail = json?.detail ? `\n${json.detail}` : '';
         const hint = json?.hint ? `\n\nHint: ${json.hint}` : '';
-        throw new Error(`${msg}${hint}`);
+        throw new Error(`${base}${detail}${hint}`);
       }
       setData(json);
     } catch (e: any) {

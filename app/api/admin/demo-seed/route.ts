@@ -373,6 +373,7 @@ export async function POST(req: Request) {
     });
   } catch (e: any) {
     const msg = String(e?.message ?? e ?? '');
+    console.error('❌ demo-seed failed', e);
     const hint =
       msg.toLowerCase().includes('no such column') || msg.toLowerCase().includes('no such table')
         ? 'Your local DB schema is out of date. Run `npm run db:ensure` (from yesod-platform/) and restart `npm run dev`.'
