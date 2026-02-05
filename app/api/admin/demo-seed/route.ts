@@ -44,13 +44,44 @@ function seedPreset(theme: SeedTheme) {
       // Keep the same Zoom URL used previously (demo expects it), but content is now themed.
       demoVideoUrl:
         'https://us06web.zoom.us/rec/component-page?eagerLoadZvaPages=sidemenu.billing.plan_management&accessLevel=meeting&action=viewdetailpage&sharelevel=meeting&useWhichPasswd=meeting&requestFrom=pwdCheck&clusterId=us06&componentName=need-password&meetingId=QRH1BktKpBgg_-v7eX2drb4YTzcMXQxSqfPFwG9H0mXBfaclalI6K566Khun711V.1kwuhLrFEMJhpZWl&originRequestUrl=https%3A%2F%2Fus06web.zoom.us%2Frec%2Fshare%2FUdhC9IEPLBhGMOJmya1goqGu7-UgsUuVwy2BFDBBQWzFDRqKwQ92byW4j_9R2LgL.2M8jQlvIh5L_XavM%3FstartTime%3D1768907539000%2520Passcode%3A%2520R*%26z6gdU',
-      submission: {
-        title: 'Bikur Cholim: rides + meals for families (Refuah)',
-        summary:
-          'We support families during refuah with bikur cholim visits, hospital rides, and Shabbos meals. Need bridge funding for 600 rides + 300 meal packages within 14 days. Serving Brooklyn (Boro Park) and Lakewood.',
-        amountRequested: 180000,
-        geoHint: 'Brooklyn / Lakewood',
-      },
+      submissions: [
+        {
+          orgName: 'Bikur Cholim & Chesed Fund',
+          orgEmail: 'demo-org@aron.local',
+          contactName: 'Demo Contact',
+          contactEmail: 'demo-org@aron.local',
+          title: 'Refuah / Bikur Cholim: rides + meals for families',
+          summary:
+            'We support families during refuah with bikur cholim visits, hospital rides, and Shabbos meals. Need bridge funding for 600 rides + 300 meal packages within 14 days. Serving Boro Park and Lakewood.',
+          amountRequested: 180000,
+          linkNote: 'Happy path demo link (Refuah / Bikur Cholim)',
+          includeMoreInfo: true,
+        },
+        {
+          orgName: 'Hatzolah Support Committee',
+          orgEmail: 'hatzolah-demo@aron.local',
+          contactName: 'Demo Dispatcher',
+          contactEmail: 'hatzolah-demo@aron.local',
+          title: 'Hatzolah: cardiac response equipment + volunteer training',
+          summary:
+            'Hatzolah is upgrading AED units and emergency response kits. Need $250k to equip 12 ambu teams and train 60 volunteers within 6 weeks. Serving Monsey and Boro Park.',
+          amountRequested: 250000,
+          linkNote: 'Happy path demo link (Hatzolah)',
+          includeMoreInfo: false,
+        },
+        {
+          orgName: "Kimcha d'Pischa / Maos Chitim",
+          orgEmail: 'kimcha-demo@aron.local',
+          contactName: 'Demo Coordinator',
+          contactEmail: 'kimcha-demo@aron.local',
+          title: "Kimcha d'Pischa: Pesach packages for families",
+          summary:
+            "We distribute kimcha d'Pischa / maos chitim to families before Pesach. Need $120k to cover 800 packages. Target delivery within 10 days. Serving Yerushalayim and Bnei Brak.",
+          amountRequested: 120000,
+          linkNote: "Happy path demo link (Kimcha d'Pischa)",
+          includeMoreInfo: false,
+        },
+      ],
       curatedRequest: {
         id: 'req_demo',
         title: 'Curated: Hachnasas Kallah matching campaign',
@@ -70,12 +101,19 @@ function seedPreset(theme: SeedTheme) {
     orgEmail: 'demo-org@aron.local',
     demoVideoUrl:
       'https://us06web.zoom.us/rec/component-page?eagerLoadZvaPages=sidemenu.billing.plan_management&accessLevel=meeting&action=viewdetailpage&sharelevel=meeting&useWhichPasswd=meeting&requestFrom=pwdCheck&clusterId=us06&componentName=need-password&meetingId=QRH1BktKpBgg_-v7eX2drb4YTzcMXQxSqfPFwG9H0mXBfaclalI6K566Khun711V.1kwuhLrFEMJhpZWl&originRequestUrl=https%3A%2F%2Fus06web.zoom.us%2Frec%2Fshare%2FUdhC9IEPLBhGMOJmya1goqGu7-UgsUuVwy2BFDBBQWzFDRqKwQ92byW4j_9R2LgL.2M8jQlvIh5L_XavM%3FstartTime%3D1768907539000%2520Passcode%3A%2520R*%26z6gdU',
-    submission: {
-      title: 'Bridge funding for emergency kits',
-      summary: 'We need bridge funding for 5,000 emergency kits. We can start distribution within 14 days. Short video available.',
-      amountRequested: 150000,
-      geoHint: 'New York, NY',
-    },
+    submissions: [
+      {
+        orgName: 'Demo Organization',
+        orgEmail: 'demo-org@aron.local',
+        contactName: 'Demo Contact',
+        contactEmail: 'demo-org@aron.local',
+        title: 'Bridge funding for emergency kits',
+        summary: 'We need bridge funding for 5,000 emergency kits. We can start distribution within 14 days. Short video available.',
+        amountRequested: 150000,
+        linkNote: 'Happy path demo link',
+        includeMoreInfo: true,
+      },
+    ],
     curatedRequest: {
       id: 'req_demo',
       title: 'Curated: Pediatric oncology expansion',
@@ -167,56 +205,78 @@ export async function POST(req: Request) {
   }
 
   // Create a demo submission link for the donor (one per run, keep latest)
-  const token = generateSubmissionToken();
-  const linkId = uuidv4();
-  await db.insert(submissionLinks).values({
-    id: linkId,
-    token,
-    donorId,
-    createdBy: donorId,
-    orgName: preset.orgName,
-    orgEmail,
-    note: 'Happy path demo link',
-    expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    maxSubmissions: 50,
-    submissionsCount: 0,
-    visitsCount: 0,
-  });
-
-  // Create a demo submission entry (so donor sees a real inbound request)
   const demoVideoUrl = preset.demoVideoUrl;
+  const seededSubmissions: Array<{
+    key: string;
+    title: string;
+    orgName: string | null;
+    moreInfoUrl: string | null;
+  }> = [];
 
-  const entryId = uuidv4();
-  const moreInfoToken = uuidv4();
-  const extracted = extractSubmissionSignals({
-    title: preset.submission.title,
-    summary: preset.submission.summary,
-    orgName: preset.orgName,
-    orgEmail,
-    videoUrl: demoVideoUrl,
-    amountRequested: preset.submission.amountRequested,
-  });
-  await db.insert(submissionEntries).values({
-    id: entryId,
-    linkId,
-    donorId,
-    contactName: 'Demo Contact',
-    contactEmail: orgEmail,
-    orgName: preset.orgName,
-    orgEmail,
-    title: preset.submission.title,
-    summary: preset.submission.summary,
-    amountRequested: preset.submission.amountRequested,
-    videoUrl: demoVideoUrl,
-    extractedJson: JSON.stringify(extracted),
-    extractedCause: extracted.cause ?? null,
-    extractedGeo: extracted.geo?.length ? extracted.geo.join(', ') : null,
-    extractedUrgency: extracted.urgency ?? null,
-    extractedAmount: typeof extracted.amount === 'number' ? extracted.amount : null,
-    moreInfoToken,
-    moreInfoRequestedAt: new Date(),
-    requestorUserId: orgId,
-  });
+  let primarySubmitUrl: string | null = null;
+  let primaryMoreInfoUrl: string | null = null;
+
+  for (let i = 0; i < preset.submissions.length; i++) {
+    const s = preset.submissions[i];
+    const token = generateSubmissionToken();
+    const linkId = uuidv4();
+
+    await db.insert(submissionLinks).values({
+      id: linkId,
+      token,
+      donorId,
+      createdBy: donorId,
+      orgName: s.orgName,
+      orgEmail: s.orgEmail,
+      note: s.linkNote,
+      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      maxSubmissions: 50,
+      submissionsCount: 0,
+      visitsCount: 0,
+    });
+
+    const entryId = uuidv4();
+    const moreInfoToken = uuidv4();
+    const extracted = extractSubmissionSignals({
+      title: s.title,
+      summary: s.summary,
+      orgName: s.orgName,
+      orgEmail: s.orgEmail,
+      videoUrl: demoVideoUrl,
+      amountRequested: s.amountRequested,
+    });
+
+    await db.insert(submissionEntries).values({
+      id: entryId,
+      linkId,
+      donorId,
+      contactName: s.contactName ?? null,
+      contactEmail: s.contactEmail ?? null,
+      orgName: s.orgName,
+      orgEmail: s.orgEmail,
+      title: s.title,
+      summary: s.summary,
+      amountRequested: s.amountRequested,
+      videoUrl: demoVideoUrl,
+      extractedJson: JSON.stringify(extracted),
+      extractedCause: extracted.cause ?? null,
+      extractedGeo: extracted.geo?.length ? extracted.geo.join(', ') : null,
+      extractedUrgency: extracted.urgency ?? null,
+      extractedAmount: typeof extracted.amount === 'number' ? extracted.amount : null,
+      moreInfoToken: s.includeMoreInfo ? moreInfoToken : null,
+      moreInfoRequestedAt: s.includeMoreInfo ? new Date() : null,
+      requestorUserId: i === 0 ? orgId : null,
+    });
+
+    const key = `sub_${entryId}`;
+    const moreInfoUrl = s.includeMoreInfo ? `/more-info/${moreInfoToken}` : null;
+    seededSubmissions.push({ key, title: s.title, orgName: s.orgName ?? null, moreInfoUrl });
+
+    if (i === 0) {
+      primarySubmitUrl = `/submit/${token}`;
+      primaryMoreInfoUrl = moreInfoUrl;
+    }
+  }
 
   // Create one curated request (optional)
   const reqId = preset.curatedRequest.id;
@@ -255,11 +315,12 @@ export async function POST(req: Request) {
     reset: doReset,
     donor: { email: donorEmail, password: donorPassword },
     organization: { email: orgEmail, password: orgPassword },
-    submitUrl: `/submit/${token}`,
+    submitUrl: primarySubmitUrl,
     donorDashboard: `/donor`,
     concierge: `/donor/legacy`,
     visionBoard: `/donor/impact`,
-    moreInfoUrl: `/more-info/${moreInfoToken}`,
+    moreInfoUrl: primaryMoreInfoUrl,
+    submissions: seededSubmissions,
   });
 }
 
