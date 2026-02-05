@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { getSession, hashPassword } from '@/lib/auth';
@@ -19,15 +19,12 @@ function sanitizeUser(u: any) {
   };
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'admin') return forbidden();
 
-  // Next 16 may provide params as an async value in some runtimes; handle both.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resolvedParams: any = await (params as any);
-  const id = resolvedParams?.id;
+  const { id } = await context.params;
   if (typeof id !== 'string' || !id) {
     return NextResponse.json({ error: 'Missing id' }, { status: 400 });
   }
@@ -66,6 +63,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updates: any = {};
   if (name) updates.name = name;
   if (email) updates.email = email;
@@ -87,15 +85,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   return NextResponse.json({ success: true, user: sanitizeUser(updated) });
 }
 
-export async function DELETE(_request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'admin') return forbidden();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resolvedParams: any = await (params as any);
-  const id = resolvedParams?.id;
-  if (typeof id !== 'string' || !id) {
+  const { id } = await context.params;
+  if (!id) {
     return NextResponse.json({ error: 'Missing id' }, { status: 400 });
   }
   const existing = await db.select().from(users).where(eq(users.id, id)).get();

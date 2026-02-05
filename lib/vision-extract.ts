@@ -67,11 +67,25 @@ export function extractVision(messages: { role: string; content: string }[]): Im
   addIf(lower.includes('education') || lower.includes('school') || lower.includes('stem'), 'Education & Mobility');
   addIf(lower.includes('israel'), 'Israel');
   addIf(lower.includes('environment') || lower.includes('climate') || lower.includes('sustainab'), 'Environment');
+  // Jewish / Yiddish common pillars (demo-friendly)
+  addIf(lower.includes('tzedakah') || lower.includes('tzedaka') || lower.includes('kimcha') || lower.includes('maos chitim'), 'Tzedakah / Family assistance');
+  addIf(lower.includes('chesed') || lower.includes('chessed') || lower.includes('gemach') || lower.includes('g\'mach'), 'Chesed / Community support');
+  addIf(lower.includes('bikur cholim') || lower.includes('bikkur cholim') || lower.includes('refuah') || lower.includes('refua'), 'Refuah / Bikur Cholim');
+  addIf(lower.includes('hachnasas kallah') || lower.includes('hachnasat kallah') || lower.includes('kallah'), 'Hachnasas Kallah');
+  addIf(lower.includes('yeshiva') || lower.includes('yeshivah') || lower.includes('kollel') || lower.includes('chinuch') || lower.includes('talmud torah'), 'Torah & Chinuch');
+  addIf(lower.includes('kiruv'), 'Kiruv / Outreach');
+  addIf(lower.includes('mikvah') || lower.includes('mikveh') || lower.includes('eruv') || lower.includes('erub'), 'Community infrastructure');
+  addIf(lower.includes('hatzalah'), 'Hatzalah / Emergency response');
 
   if (lower.includes('africa')) geo.push('Africa');
   if (lower.includes('israel')) geo.push('Israel');
   if (lower.includes('new york') || lower.includes('nyc')) geo.push('New York');
   if (lower.includes('emerging market')) geo.push('Emerging markets');
+  if (lower.includes('jerusalem') || lower.includes('yerushalayim')) geo.push('Jerusalem');
+  if (lower.includes('bnei brak') || lower.includes('bene braq')) geo.push('Bnei Brak');
+  if (lower.includes('lakewood')) geo.push('Lakewood');
+  if (lower.includes('monsey')) geo.push('Monsey');
+  if (lower.includes('boro park') || lower.includes('borough park') || lower.includes('boropark')) geo.push('Boro Park');
 
   const money = extractMoney(all);
   const horizon = extractTimeHorizon(all);
@@ -253,7 +267,7 @@ function guidedPrompt(key: QuestionKey): string {
     case 'horizon':
       return `Pick a horizon:\n- 12 months\n- 3 years\n- 10 years\n- open-ended`;
     case 'geo':
-      return `Name 1–3 geographies (or say “global”):\nExamples: Israel, NYC, Miami, Africa, Emerging markets`;
+      return `Name 1–3 geographies (or say “global”):\nExamples: Israel, Jerusalem (Yerushalayim), Bnei Brak, Lakewood, NYC, Miami`;
     case 'constraints':
       return `Pick one to lock first:\n- privacy\n- verification\n- overhead cap\n- political neutrality\n- speed to impact`;
     case 'update_cadence':

@@ -56,6 +56,11 @@ function parseGeo(text: string): string[] {
   };
 
   add(t.includes('israel'), 'Israel');
+  add(t.includes('jerusalem') || t.includes('yerushalayim'), 'Jerusalem');
+  add(t.includes('bnei brak') || t.includes('bene braq'), 'Bnei Brak');
+  add(t.includes('lakewood'), 'Lakewood');
+  add(t.includes('monsey'), 'Monsey');
+  add(t.includes('boro park') || t.includes('borough park') || t.includes('boropark'), 'Boro Park');
   add(t.includes('miami'), 'Miami');
   add(t.includes('new york') || t.includes('nyc'), 'New York');
   add(t.includes('africa'), 'Africa');
@@ -68,6 +73,20 @@ function parseGeo(text: string): string[] {
 
 function parseCause(text: string): string | undefined {
   const t = text.toLowerCase();
+  // Jewish / Yiddish common terms (demo-friendly; respectful; not exhaustive)
+  if (t.includes('bikur cholim') || t.includes('bikkur cholim') || t.includes('refuah') || t.includes('refua'))
+    return 'Refuah / Bikur Cholim';
+  if (t.includes('hatzalah') || t.includes('emergency response')) return 'Hatzalah / Emergency response';
+  if (t.includes('hachnasas kallah') || t.includes('hachnasat kallah') || t.includes('kallah')) return 'Hachnasas Kallah';
+  if (t.includes('tzedakah') || t.includes('tzedaka') || t.includes('tzedokeh') || t.includes('kimcha d\'pischa'))
+    return 'Tzedakah / Family assistance';
+  if (t.includes('yeshiva') || t.includes('yeshivah') || t.includes('kollel') || t.includes('chinuch') || t.includes('talmud torah'))
+    return 'Torah & Chinuch (Education)';
+  if (t.includes('kiruv') || t.includes('outreach')) return 'Kiruv / Outreach';
+  if (t.includes('mikvah') || t.includes('mikveh') || t.includes('eruv') || t.includes('erub')) return 'Community infrastructure';
+  if (t.includes('gemach') || t.includes('g\'mach') || t.includes('gmach')) return 'Gemach / Community support';
+  if (t.includes('chessed') || t.includes('chesed')) return 'Chesed / Community support';
+
   if (t.includes('emergency') || t.includes('kits') || t.includes('relief')) return 'Emergency relief';
   if (t.includes('water') || t.includes('well')) return 'Clean water';
   if (t.includes('cancer') || t.includes('oncology') || t.includes('medical') || t.includes('health')) return 'Health';

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { submissionLinks } from '@/db/schema';
 import { getSession } from '@/lib/auth';
@@ -8,12 +8,12 @@ function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'donor') return forbidden();
 
-  const id = params.id;
+  const { id } = await context.params;
   const row = await db
     .select()
     .from(submissionLinks)

@@ -16,6 +16,33 @@ cd yesod-platform
 node scripts/db-ensure.mjs
 ```
 
+### Reset + seed (Jewish-themed demo)
+
+There are two “reset” levels:
+
+- **Soft reset (recommended for demos)**: wipes only the demo donor/org data and re-seeds.
+- **Hard reset (full DB flush)**: deletes the local SQLite file and recreates schema.
+
+#### Soft reset (recommended)
+
+1. Login as **admin**.
+2. Open: `http://localhost:3000/admin/happy-path`
+3. Set **Theme → “Jewish causes”**
+4. Leave **Reset first** checked
+5. Click **Seed Demo Data**
+
+#### Hard reset (flush the entire local DB)
+
+From the repo root:
+
+```bash
+cd yesod-platform
+rm -f yesod.db
+npm run db:ensure
+```
+
+Then start the app again and run the **Soft reset** steps above.
+
 ### What you will show (high-level)
 - **Admin**: seed demo data + quick links
 - **Invite gating**: invite-only signup; **role lock** on invite links

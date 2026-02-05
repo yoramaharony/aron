@@ -8,6 +8,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   isLoading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  /**
+   * Compatibility prop: some call sites use `asChild` (Radix-style),
+   * but this Button renders a native <button>. We strip it before spreading to DOM.
+   */
+  asChild?: boolean;
 }
 
 export function Button({

@@ -1,15 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { submissionEntries } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
-export async function GET(_request: Request, { params }: { params: { token: string } }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resolvedParams: any = await (params as any);
-  const token = String(resolvedParams?.token || '');
-  if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
+export async function GET(_request: NextRequest, context: { params: Promise<{ token: string }> }) {
+  const { token } = await context.params;
+  const safeToken = String(token || '');
+  if (!safeToken) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
-  const row = await db.select().from(submissionEntries).where(eq(submissionEntries.moreInfoToken, token)).get();
+  const row = await db.select().from(submissionEntries).where(eq(submissionEntries.moreInfoToken, safeToken)).get();
   if (!row) return NextResponse.json({ error: 'Invalid token' }, { status: 404 });
 
   return NextResponse.json({
@@ -24,13 +23,12 @@ export async function GET(_request: Request, { params }: { params: { token: stri
   });
 }
 
-export async function POST(request: Request, { params }: { params: { token: string } }) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resolvedParams: any = await (params as any);
-  const token = String(resolvedParams?.token || '');
-  if (!token) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
+export async function POST(request: NextRequest, context: { params: Promise<{ token: string }> }) {
+  const { token } = await context.params;
+  const safeToken = String(token || '');
+  if (!safeToken) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
-  const row = await db.select().from(submissionEntries).where(eq(submissionEntries.moreInfoToken, token)).get();
+  const row = await db.select().from(submissionEntries).where(eq(submissionEntries.moreInfoToken, safeToken)).get();
   if (!row) return NextResponse.json({ error: 'Invalid token' }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));

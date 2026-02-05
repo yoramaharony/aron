@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { donorOpportunityEvents, donorOpportunityState, submissionEntries } from '@/db/schema';
 import { getSession } from '@/lib/auth';
@@ -9,15 +9,14 @@ function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
-export async function POST(request: Request, { params }: { params: { key: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ key: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'donor') return forbidden();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resolvedParams: any = await (params as any);
-  const key = String(resolvedParams?.key || '');
-  if (!key) return NextResponse.json({ error: 'Missing key' }, { status: 400 });
+  const { key } = await context.params;
+  const safeKey = String(key || '');
+  if (!safeKey) return NextResponse.json({ error: 'Missing key' }, { status: 400 });
 
   const body = await request.json().catch(() => ({}));
   const action = typeof body?.action === 'string' ? body.action : '';
@@ -46,14 +45,14 @@ export async function POST(request: Request, { params }: { params: { key: string
     .from(donorOpportunityState)
     .where(eq(donorOpportunityState.donorId, donorId))
     .limit(500);
-  const row = existing.find((r) => String(r.opportunityKey) === key);
+  const row = existing.find((r) => String(r.opportunityKey) === safeKey);
 
   const now = new Date();
   if (!row) {
     await db.insert(donorOpportunityState).values({
       id: uuidv4(),
       donorId,
-      opportunityKey: key,
+      opportunityKey: safeKey,
       state,
       updatedAt: now,
     });
@@ -65,8 +64,8 @@ export async function POST(request: Request, { params }: { params: { key: string
   }
 
   // Progressive disclosure: on request_info for submissions, mint token + link
-  if (action === 'request_info' && key.startsWith('sub_')) {
-    const submissionId = key.slice('sub_'.length);
+  if (action === 'request_info' && safeKey.startsWith('sub_')) {
+    const submissionId = safeKey.slice('sub_'.length);
     const sub = await db.select().from(submissionEntries).where(eq(submissionEntries.id, submissionId)).get();
     if (sub && String(sub.donorId) === String(donorId)) {
       const token = sub.moreInfoToken || uuidv4();
@@ -89,7 +88,7 @@ export async function POST(request: Request, { params }: { params: { key: string
   await db.insert(donorOpportunityEvents).values({
     id: uuidv4(),
     donorId,
-    opportunityKey: key,
+    opportunityKey: safeKey,
     type: action,
     metaJson: Object.keys(metaObj).length ? JSON.stringify(metaObj) : null,
     createdAt: new Date(),

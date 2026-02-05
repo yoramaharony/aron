@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { donorOpportunityEvents, donorOpportunityState, leverageOffers, requests, submissionEntries } from '@/db/schema';
 import { getSession } from '@/lib/auth';
@@ -10,24 +10,23 @@ function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 }
 
-export async function GET(_request: Request, { params }: { params: { key: string } }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ key: string }> }) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'donor') return forbidden();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const resolvedParams: any = await (params as any);
-  const key = String(resolvedParams?.key || '');
-  if (!key) return NextResponse.json({ error: 'Missing key' }, { status: 400 });
+  const { key } = await context.params;
+  const safeKey = String(key || '');
+  if (!safeKey) return NextResponse.json({ error: 'Missing key' }, { status: 400 });
 
   let opportunity: any = null;
   let source: 'request' | 'submission' | 'charidy' = 'request';
 
-  const curated = CHARIDY_CURATED.find((c) => c.key === key);
+  const curated = CHARIDY_CURATED.find((c) => c.key === safeKey);
   if (curated) {
     source = 'charidy';
     opportunity = {
-      key,
+      key: safeKey,
       source,
       title: curated.title,
       orgName: curated.orgName,
@@ -40,14 +39,14 @@ export async function GET(_request: Request, { params }: { params: { key: string
       createdAt: null,
     };
   } else
-  if (key.startsWith('sub_')) {
+  if (safeKey.startsWith('sub_')) {
     source = 'submission';
-    const id = key.slice('sub_'.length);
+    const id = safeKey.slice('sub_'.length);
     const row = await db.select().from(submissionEntries).where(eq(submissionEntries.id, id)).get();
     if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     if (String(row.donorId) !== String(session.userId)) return forbidden();
     opportunity = {
-      key,
+      key: safeKey,
       source,
       title: row.title || 'Submission',
       orgName: row.orgName || row.orgEmail || 'Unknown',
@@ -67,10 +66,10 @@ export async function GET(_request: Request, { params }: { params: { key: string
       createdAt: toIsoTime(row.createdAt),
     };
   } else {
-    const row = await db.select().from(requests).where(eq(requests.id, key)).get();
+    const row = await db.select().from(requests).where(eq(requests.id, safeKey)).get();
     if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     opportunity = {
-      key,
+      key: safeKey,
       source,
       title: row.title,
       orgName: 'Curated',
@@ -88,7 +87,7 @@ export async function GET(_request: Request, { params }: { params: { key: string
     .from(donorOpportunityState)
     .where(eq(donorOpportunityState.donorId, session.userId))
     .limit(500);
-  const state = stateRow.find((s) => String(s.opportunityKey) === key)?.state ?? 'new';
+  const state = stateRow.find((s) => String(s.opportunityKey) === safeKey)?.state ?? 'new';
 
   const events = await db
     .select()
@@ -97,7 +96,7 @@ export async function GET(_request: Request, { params }: { params: { key: string
     .orderBy(desc(donorOpportunityEvents.createdAt))
     .limit(50);
   const eventsForKey = events
-    .filter((e) => String(e.opportunityKey) === key)
+    .filter((e) => String(e.opportunityKey) === safeKey)
     .map((e) => ({
       id: e.id,
       type: e.type,
@@ -112,7 +111,7 @@ export async function GET(_request: Request, { params }: { params: { key: string
     .orderBy(desc(leverageOffers.createdAt))
     .limit(50);
   const offersForKey = offers
-    .filter((o) => String(o.opportunityKey) === key)
+    .filter((o) => String(o.opportunityKey) === safeKey)
     .map((o) => ({
       id: o.id,
       anchorAmount: o.anchorAmount,

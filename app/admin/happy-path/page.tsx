@@ -8,12 +8,17 @@ export default function AdminHappyPathPage() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
+  const [theme, setTheme] = useState<'general' | 'jewish'>('jewish');
+  const [resetFirst, setResetFirst] = useState(true);
 
   const seed = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/demo-seed', { method: 'POST' });
+      const qp = new URLSearchParams();
+      qp.set('theme', theme);
+      if (resetFirst) qp.set('reset', '1');
+      const res = await fetch(`/api/admin/demo-seed?${qp.toString()}`, { method: 'POST' });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || 'Seed failed');
       setData(json);
@@ -33,9 +38,31 @@ export default function AdminHappyPathPage() {
             One-click seed + guided links to verify donor core flows are DB/API-backed.
           </p>
         </div>
-        <Button variant="gold" onClick={seed} isLoading={loading}>
-          Seed Demo Data
-        </Button>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+            <span className="opacity-80">Theme</span>
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as any)}
+              className="h-10 rounded-md bg-white/5 border border-white/10 px-3 text-[var(--text-primary)]"
+            >
+              <option value="jewish">Jewish causes</option>
+              <option value="general">General</option>
+            </select>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-[var(--text-secondary)] select-none">
+            <input
+              type="checkbox"
+              checked={resetFirst}
+              onChange={(e) => setResetFirst(e.target.checked)}
+              className="accent-[var(--color-gold)]"
+            />
+            Reset first
+          </label>
+          <Button variant="gold" onClick={seed} isLoading={loading}>
+            Seed Demo Data
+          </Button>
+        </div>
       </div>
 
       {error ? <div className="text-sm text-red-300">{error}</div> : null}
@@ -61,6 +88,9 @@ export default function AdminHappyPathPage() {
               Organization: <span className="font-mono">{data.organization.email}</span> /{' '}
               <span className="font-mono">{data.organization.password}</span>
             </div>
+            <div className="text-xs text-[var(--text-secondary)] opacity-80">
+              Seed: <span className="font-mono">{data.theme}</span> {data.reset ? '(reset)' : ''}
+            </div>
           </Card>
 
           <Card className="p-6 space-y-3">
@@ -77,6 +107,9 @@ export default function AdminHappyPathPage() {
               </a>
               <a className="text-[var(--color-gold)] underline" href={data.visionBoard}>
                 Impact Vision Board
+              </a>
+              <a className="text-[var(--color-gold)] underline" href={data.moreInfoUrl}>
+                More-info form (public)
               </a>
             </div>
           </Card>
