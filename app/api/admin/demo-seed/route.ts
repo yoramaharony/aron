@@ -199,58 +199,59 @@ async function resetDemoData(opts: { donorId?: string | null; orgId?: string | n
 }
 
 export async function POST(req: Request) {
-  const session = await getSession();
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.role !== 'admin') return forbidden();
+  try {
+    const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (session.role !== 'admin') return forbidden();
 
-  const theme = getTheme(req);
-  const doReset = getReset(req);
-  const preset = seedPreset(theme);
+    const theme = getTheme(req);
+    const doReset = getReset(req);
+    const preset = seedPreset(theme);
 
-  // Create or reuse demo donor + requestor users (stable emails)
-  const donorEmail = 'demo-donor@aron.local';
-  const orgEmail = preset.orgEmail;
+    // Create or reuse demo donor + requestor users (stable emails)
+    const donorEmail = 'demo-donor@aron.local';
+    const orgEmail = preset.orgEmail;
 
-  const donor = await db.select().from(users).where(eq(users.email, donorEmail)).get();
-  const org = await db.select().from(users).where(eq(users.email, orgEmail)).get();
+    const donor = await db.select().from(users).where(eq(users.email, donorEmail)).get();
+    const org = await db.select().from(users).where(eq(users.email, orgEmail)).get();
 
-  const donorId = donor?.id ?? uuidv4();
-  const orgId = org?.id ?? uuidv4();
-  const donorPassword = 'AronDemo1!';
-  const orgPassword = 'AronDemo1!';
+    const donorId = donor?.id ?? uuidv4();
+    const orgId = org?.id ?? uuidv4();
+    const donorPassword = 'AronDemo1!';
+    const orgPassword = 'AronDemo1!';
 
-  if (doReset) {
-    await resetDemoData({ donorId: donor?.id ?? null, orgId: org?.id ?? null });
-    // If user rows exist, keep them (stable credentials), but make sure names are up to date per theme.
-    if (donor) await db.update(users).set({ name: preset.donorName }).where(eq(users.id, donorId));
-    if (org) await db.update(users).set({ name: preset.orgName }).where(eq(users.id, orgId));
-  } else {
-    // Even without full reset, keep the demo tidy by removing prior submission links/entries for this donor.
-    if (donor?.id) {
-      await db.delete(submissionEntries).where(eq(submissionEntries.donorId, donor.id));
-      await db.delete(submissionLinks).where(eq(submissionLinks.donorId, donor.id));
+    if (doReset) {
+      await resetDemoData({ donorId: donor?.id ?? null, orgId: org?.id ?? null });
+      // If user rows exist, keep them (stable credentials), but make sure names are up to date per theme.
+      if (donor) await db.update(users).set({ name: preset.donorName }).where(eq(users.id, donorId));
+      if (org) await db.update(users).set({ name: preset.orgName }).where(eq(users.id, orgId));
+    } else {
+      // Even without full reset, keep the demo tidy by removing prior submission links/entries for this donor.
+      if (donor?.id) {
+        await db.delete(submissionEntries).where(eq(submissionEntries.donorId, donor.id));
+        await db.delete(submissionLinks).where(eq(submissionLinks.donorId, donor.id));
+      }
     }
-  }
 
-  if (!donor) {
-    await db.insert(users).values({
-      id: donorId,
-      name: preset.donorName,
-      email: donorEmail,
-      password: await hashPassword(donorPassword),
-      role: 'donor',
-    });
-  }
+    if (!donor) {
+      await db.insert(users).values({
+        id: donorId,
+        name: preset.donorName,
+        email: donorEmail,
+        password: await hashPassword(donorPassword),
+        role: 'donor',
+      });
+    }
 
-  if (!org) {
-    await db.insert(users).values({
-      id: orgId,
-      name: preset.orgName,
-      email: orgEmail,
-      password: await hashPassword(orgPassword),
-      role: 'requestor',
-    });
-  }
+    if (!org) {
+      await db.insert(users).values({
+        id: orgId,
+        name: preset.orgName,
+        email: orgEmail,
+        password: await hashPassword(orgPassword),
+        role: 'requestor',
+      });
+    }
 
   // Create a demo submission link for the donor (one per run, keep latest)
   const demoVideoUrl = preset.demoVideoUrl;
@@ -357,18 +358,33 @@ export async function POST(req: Request) {
       .where(eq(requests.id, reqId));
   }
 
-  return NextResponse.json({
-    success: true,
-    theme,
-    reset: doReset,
-    donor: { email: donorEmail, password: donorPassword },
-    organization: { email: orgEmail, password: orgPassword },
-    submitUrl: primarySubmitUrl,
-    donorDashboard: `/donor`,
-    concierge: `/donor/legacy`,
-    visionBoard: `/donor/impact`,
-    moreInfoUrl: primaryMoreInfoUrl,
-    submissions: seededSubmissions,
-  });
+    return NextResponse.json({
+      success: true,
+      theme,
+      reset: doReset,
+      donor: { email: donorEmail, password: donorPassword },
+      organization: { email: orgEmail, password: orgPassword },
+      submitUrl: primarySubmitUrl,
+      donorDashboard: `/donor`,
+      concierge: `/donor/legacy`,
+      visionBoard: `/donor/impact`,
+      moreInfoUrl: primaryMoreInfoUrl,
+      submissions: seededSubmissions,
+    });
+  } catch (e: any) {
+    const msg = String(e?.message ?? e ?? '');
+    const hint =
+      msg.toLowerCase().includes('no such column') || msg.toLowerCase().includes('no such table')
+        ? 'Your local DB schema is out of date. Run `npm run db:ensure` (from yesod-platform/) and restart `npm run dev`.'
+        : null;
+    return NextResponse.json(
+      {
+        error: 'Demo seed failed',
+        detail: msg,
+        hint,
+      },
+      { status: 500 }
+    );
+  }
 }
 

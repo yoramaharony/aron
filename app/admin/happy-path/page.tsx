@@ -19,8 +19,18 @@ export default function AdminHappyPathPage() {
       qp.set('theme', theme);
       if (resetFirst) qp.set('reset', '1');
       const res = await fetch(`/api/admin/demo-seed?${qp.toString()}`, { method: 'POST' });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || 'Seed failed');
+      const raw = await res.text();
+      let json: any = null;
+      try {
+        json = raw ? JSON.parse(raw) : null;
+      } catch {
+        json = null;
+      }
+      if (!res.ok) {
+        const msg = json?.error || json?.detail || raw || 'Seed failed';
+        const hint = json?.hint ? `\n\nHint: ${json.hint}` : '';
+        throw new Error(`${msg}${hint}`);
+      }
       setData(json);
     } catch (e: any) {
       setError(e?.message || 'Seed failed');
