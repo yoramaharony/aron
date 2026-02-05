@@ -9,6 +9,37 @@ async function main() {
   // Idempotent schema creation for local/dev environments.
   // (We avoid drizzle-kit migrations for now because the repo doesn't currently include a migrations folder.)
   const statements = [
+    // Core tables that other tables reference.
+    `
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
+      role TEXT NOT NULL,
+      disabled_at INTEGER,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS users_email_idx ON users(email);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS requests (
+      id TEXT PRIMARY KEY NOT NULL,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL,
+      location TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      target_amount INTEGER NOT NULL,
+      current_amount INTEGER DEFAULT 0,
+      status TEXT DEFAULT 'draft',
+      created_by TEXT REFERENCES users(id),
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS requests_created_at_idx ON requests(created_at);`,
+    `CREATE INDEX IF NOT EXISTS requests_status_idx ON requests(status);`,
+
     // Create missing tables first (so ALTER TABLE doesn't fail on older DBs).
     `
     CREATE TABLE IF NOT EXISTS org_kyc (
