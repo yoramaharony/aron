@@ -1,8 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import clsx from 'clsx';
+import { ADMIN_NAV_ITEMS } from '@/components/layout/AdminNav';
 import { useAdminUi } from '@/components/providers/AdminUiContext';
 
 export function AdminTopBar() {
@@ -10,7 +13,14 @@ export function AdminTopBar() {
   const { sidebarCollapsed, toggleSidebar } = useAdminUi();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    // Close drawers/dropdowns on route change.
+    setMenuOpen(false);
+    setMobileNavOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -43,6 +53,16 @@ export function AdminTopBar() {
     <div className="sticky top-0 z-50 px-4 py-2 md:px-8 md:py-2 border-b border-[rgba(255,255,255,0.08)] bg-[rgba(10,10,14,0.78)]">
       <div className="w-full flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+            aria-label="Open menu"
+            title="Menu"
+          >
+            <Menu size={18} className="text-[var(--text-secondary)]" />
+          </button>
+
           <button
             type="button"
             onClick={toggleSidebar}
@@ -96,6 +116,65 @@ export function AdminTopBar() {
           ) : null}
         </div>
       </div>
+
+      {mobileNavOpen ? (
+        <div className="fixed inset-0 z-[60] md:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-[rgba(0,0,0,0.55)]"
+            aria-label="Close menu"
+            onClick={() => setMobileNavOpen(false)}
+          />
+          <div className="absolute left-0 top-0 h-full w-[86vw] max-w-[320px] border-r border-[rgba(255,43,214,0.22)] bg-[linear-gradient(180deg,rgba(255,43,214,0.10),rgba(10,10,14,0.96))] shadow-[0_30px_120px_-70px_rgba(0,0,0,0.95)] backdrop-blur">
+            <div className="px-4 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
+              <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
+                Admin Menu
+              </div>
+              <button
+                type="button"
+                onClick={() => setMobileNavOpen(false)}
+                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+                aria-label="Close menu"
+              >
+                <X size={18} className="text-[var(--text-secondary)]" />
+              </button>
+            </div>
+
+            <nav className="p-3 flex flex-col gap-2">
+              {ADMIN_NAV_ITEMS.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileNavOpen(false)}
+                    className={clsx(
+                      'flex items-center gap-3 px-3 py-3 rounded-xl border transition-colors',
+                      isActive
+                        ? 'border-[rgba(255,43,214,0.55)] bg-[rgba(255,43,214,0.10)]'
+                        : 'border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.04)]'
+                    )}
+                  >
+                    <Icon
+                      size={18}
+                      className={clsx(isActive ? 'text-[var(--color-magenta)]' : 'text-[var(--text-tertiary)]')}
+                    />
+                    <span
+                      className={clsx(
+                        'text-sm font-semibold',
+                        isActive ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'
+                      )}
+                    >
+                      {item.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

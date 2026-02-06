@@ -7,7 +7,7 @@ import { KeyRound, Users, Building2, Sparkles, Mail } from 'lucide-react';
 import { AronLogo } from '@/components/layout/AronLogo';
 import { useAdminUi } from '@/components/providers/AdminUiContext';
 
-const NAV_ITEMS = [
+export const ADMIN_NAV_ITEMS = [
   { label: 'Invites', icon: KeyRound, href: '/admin/invites' },
   { label: 'Donors', icon: Users, href: '/admin/donors' },
   { label: 'Organizations', icon: Building2, href: '/admin/organizations' },
@@ -42,7 +42,7 @@ export function AdminNav() {
       </div>
 
       <nav className="flex flex-col gap-2 flex-1">
-        {NAV_ITEMS.map((item) => {
+        {ADMIN_NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
