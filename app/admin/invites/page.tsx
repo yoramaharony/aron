@@ -27,7 +27,8 @@ export default function AdminInvitesPage() {
   const [createdEmailStatus, setCreatedEmailStatus] = useState<string | null>(null);
   const [rows, setRows] = useState<InviteRow[]>([]);
 
-  const [expiresInDays, setExpiresInDays] = useState<number>(30);
+  // Default: never expires (0)
+  const [expiresInDays, setExpiresInDays] = useState<number>(0);
   const [maxUses, setMaxUses] = useState<number>(1);
   const [note, setNote] = useState<string>('');
   const [recipientEmail, setRecipientEmail] = useState<string>('');
@@ -271,7 +272,7 @@ export default function AdminInvitesPage() {
                     min={0}
                     max={3650}
                     value={expiresInDays}
-                    onChange={(e) => setExpiresInDays(Number(e.target.value))}
+                    onChange={(e) => setExpiresInDays(e.target.value === '' ? 0 : Number(e.target.value))}
                     className="input-field"
                   />
                   <div className="text-xs text-[var(--text-tertiary)]">0 = no expiry</div>
