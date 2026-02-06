@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ShareButton } from '@/components/ui/ShareButton';
+import { Mail, Copy, MoreHorizontal, Sparkles } from 'lucide-react';
 
 type InviteRow = {
   code: string;
@@ -30,7 +31,8 @@ export default function AdminInvitesPage() {
   const [maxUses, setMaxUses] = useState<number>(1);
   const [note, setNote] = useState<string>('');
   const [recipientEmail, setRecipientEmail] = useState<string>('');
-  const [deliveryMethod, setDeliveryMethod] = useState<'copy' | 'email'>('copy');
+  const [deliveryMethod, setDeliveryMethod] = useState<'copy' | 'email'>('email');
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   const refresh = async () => {
     const res = await fetch('/api/admin/invites');
@@ -122,126 +124,209 @@ export default function AdminInvitesPage() {
               Admin-only endpoint: <span className="font-mono">/api/admin/invites</span>
             </div>
           </div>
-          <Button variant="gold" onClick={createInvite} isLoading={loading}>
-            Generate Code
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className={[
+                'h-10 w-10 rounded-lg border border-[var(--border-subtle)]',
+                'bg-[rgba(255,255,255,0.03)] text-[var(--text-secondary)]',
+                'hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]',
+                'transition-colors',
+              ].join(' ')}
+              aria-label="Advanced settings"
+              onClick={() => setShowAdvanced((v) => !v)}
+              title="Advanced"
+            >
+              <MoreHorizontal className="mx-auto" size={18} />
+            </button>
+            <Button variant="gold" onClick={createInvite} isLoading={loading}>
+              Generate Code
+            </Button>
+          </div>
         </div>
 
         {error ? <div className="text-sm text-red-400">{error}</div> : null}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
-            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">Invite Type</div>
-            <div className="mt-2 text-sm text-[var(--text-secondary)]">
-              <span className="font-semibold text-[var(--text-primary)]">Donor</span>
+        <div className="space-y-5">
+          {/* INVITE TYPE */}
+          <div>
+            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase mb-2">
+              Invite type
             </div>
-            <div className="mt-1 text-xs text-[var(--text-tertiary)]">
-              Admin creates donors; donors then invite nonprofits (requestors).
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
+              <div className="text-lg font-semibold text-[var(--text-primary)]">Donor</div>
+              <div className="mt-1 text-sm text-[var(--text-secondary)]">
+                Admin creates donors; donors then invite nonprofits (requestors).
+              </div>
             </div>
           </div>
 
-          <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
-            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">Delivery</div>
-            <div className="mt-3 grid grid-cols-2 gap-2">
+          {/* DELIVERY METHOD */}
+          <div>
+            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase mb-2">
+              Delivery method
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <button
                 type="button"
+                role="radio"
+                aria-checked={deliveryMethod === 'email'}
                 className={[
-                  'rounded-lg border px-3 py-2 text-sm text-left transition-colors',
+                  'rounded-2xl border p-4 md:p-6 text-left transition-colors',
+                  'bg-[rgba(255,255,255,0.02)]',
                   deliveryMethod === 'email'
-                    ? 'border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]'
-                    : 'border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
+                    ? 'border-[rgba(212,175,55,0.75)] shadow-[0_0_0_1px_rgba(212,175,55,0.35),0_18px_60px_-45px_rgba(212,175,55,0.35)]'
+                    : 'border-[var(--border-subtle)] hover:border-[rgba(255,255,255,0.16)]',
                 ].join(' ')}
                 onClick={() => setDeliveryMethod('email')}
               >
-                <div className="font-medium">Email invite</div>
-                <div className="text-[11px] text-[var(--text-tertiary)]">Send immediately</div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={[
+                        'h-10 w-10 rounded-xl flex items-center justify-center border',
+                        deliveryMethod === 'email'
+                          ? 'bg-[rgba(212,175,55,0.14)] border-[rgba(212,175,55,0.35)] text-[var(--color-gold)]'
+                          : 'bg-[rgba(255,255,255,0.03)] border-[var(--border-subtle)] text-[var(--text-secondary)]',
+                      ].join(' ')}
+                    >
+                      <Mail size={18} />
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">Email Invite</div>
+                      <div className="text-sm text-[var(--text-tertiary)]">Send immediately</div>
+                    </div>
+                  </div>
+                  <div className={deliveryMethod === 'email' ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'}>
+                    <span className="inline-block h-4 w-4 rounded-full border border-current relative">
+                      {deliveryMethod === 'email' ? <span className="absolute inset-1 rounded-full bg-current" /> : null}
+                    </span>
+                  </div>
+                </div>
               </button>
+
               <button
                 type="button"
+                role="radio"
+                aria-checked={deliveryMethod === 'copy'}
                 className={[
-                  'rounded-lg border px-3 py-2 text-sm text-left transition-colors',
+                  'rounded-2xl border p-4 md:p-6 text-left transition-colors',
+                  'bg-[rgba(255,255,255,0.02)]',
                   deliveryMethod === 'copy'
-                    ? 'border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]'
-                    : 'border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
+                    ? 'border-[rgba(212,175,55,0.75)] shadow-[0_0_0_1px_rgba(212,175,55,0.35),0_18px_60px_-45px_rgba(212,175,55,0.35)]'
+                    : 'border-[var(--border-subtle)] hover:border-[rgba(255,255,255,0.16)]',
                 ].join(' ')}
                 onClick={() => setDeliveryMethod('copy')}
               >
-                <div className="font-medium">Copy link</div>
-                <div className="text-[11px] text-[var(--text-tertiary)]">Share manually</div>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={[
+                        'h-10 w-10 rounded-xl flex items-center justify-center border',
+                        deliveryMethod === 'copy'
+                          ? 'bg-[rgba(212,175,55,0.14)] border-[rgba(212,175,55,0.35)] text-[var(--color-gold)]'
+                          : 'bg-[rgba(255,255,255,0.03)] border-[var(--border-subtle)] text-[var(--text-secondary)]',
+                      ].join(' ')}
+                    >
+                      <Copy size={18} />
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">Copy Link</div>
+                      <div className="text-sm text-[var(--text-tertiary)]">Share manually</div>
+                    </div>
+                  </div>
+                  <div className={deliveryMethod === 'copy' ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'}>
+                    <span className="inline-block h-4 w-4 rounded-full border border-current relative">
+                      {deliveryMethod === 'copy' ? <span className="absolute inset-1 rounded-full bg-current" /> : null}
+                    </span>
+                  </div>
+                </div>
               </button>
             </div>
-            <div className="mt-2 text-xs text-[var(--text-tertiary)]">
-              If you choose email, you can still copy/share the link after creating the code.
+
+            <div className="mt-3 rounded-xl border border-[rgba(212,175,55,0.22)] bg-[rgba(212,175,55,0.08)] p-3 text-sm text-[var(--text-secondary)] flex items-start gap-2">
+              <Sparkles className="mt-0.5 text-[var(--color-gold)]" size={16} />
+              <div>
+                {deliveryMethod === 'email'
+                  ? 'When the code is created, an invite email is sent immediately (via Mailgun). You can still copy/share the link after creation.'
+                  : 'Create the code and share the link manually. (You can always resend by switching to Email and creating another code.)'}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-            Note (optional)
-          </div>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder='e.g. "Donor: Yehuda (pilot)"'
-            className="input-field"
-          />
-        </div>
-
-        {deliveryMethod === 'email' ? (
-          <div className="space-y-2">
-            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-              Recipient email
-            </div>
-            <input
-              value={recipientEmail}
-              onChange={(e) => setRecipientEmail(e.target.value)}
-              placeholder="e.g. someone@example.com"
-              className="input-field"
-              required
-            />
-            <div className="text-xs text-[var(--text-tertiary)]">
-              When the code is created, an invite email is sent immediately (via Mailgun).
-            </div>
-          </div>
-        ) : null}
-
-        <details className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
-          <summary className="cursor-pointer select-none text-sm text-[var(--text-secondary)]">
-            Advanced
-          </summary>
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* NOTE + EMAIL */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-                Expires (days)
+                Note (optional)
               </div>
               <input
-                type="number"
-                min={0}
-                max={3650}
-                value={expiresInDays}
-                onChange={(e) => setExpiresInDays(Number(e.target.value))}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder='e.g. "Donor: Yehuda (pilot)"'
                 className="input-field"
               />
-              <div className="text-xs text-[var(--text-tertiary)]">0 = no expiry</div>
             </div>
 
-            <div className="space-y-2">
-              <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-                Max uses
+            {deliveryMethod === 'email' ? (
+              <div className="space-y-2">
+                <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+                  Recipient email
+                </div>
+                <input
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  placeholder="e.g. someone@example.com"
+                  className="input-field"
+                  required
+                />
+                <div className="text-xs text-[var(--text-tertiary)]">
+                  Required for Email Invite. (Copy/share is still available after creation.)
+                </div>
               </div>
-              <input
-                type="number"
-                min={1}
-                max={1000}
-                value={maxUses}
-                onChange={(e) => setMaxUses(Number(e.target.value))}
-                className="input-field"
-              />
-              <div className="text-xs text-[var(--text-tertiary)]">Usually 1 (one-time)</div>
-            </div>
+            ) : null}
           </div>
-        </details>
+
+          {/* ADVANCED */}
+          {showAdvanced ? (
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
+              <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase mb-3">
+                Advanced
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+                    Expires (days)
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    max={3650}
+                    value={expiresInDays}
+                    onChange={(e) => setExpiresInDays(Number(e.target.value))}
+                    className="input-field"
+                  />
+                  <div className="text-xs text-[var(--text-tertiary)]">0 = no expiry</div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+                    Max uses
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={maxUses}
+                    onChange={(e) => setMaxUses(Number(e.target.value))}
+                    className="input-field"
+                  />
+                  <div className="text-xs text-[var(--text-tertiary)]">Usually 1 (one-time)</div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         {createdCode ? (
           <div className="rounded-xl border border-[rgba(255,43,214,0.22)] bg-[linear-gradient(180deg,rgba(255,43,214,0.10),rgba(255,255,255,0.02))] p-4">
