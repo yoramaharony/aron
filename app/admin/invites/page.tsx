@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ShareButton } from '@/components/ui/ShareButton';
-import { Mail, Copy, MoreHorizontal, Sparkles } from 'lucide-react';
+import { Mail, Copy, MoreHorizontal } from 'lucide-react';
 
 type InviteRow = {
   code: string;
@@ -234,13 +234,10 @@ export default function AdminInvitesPage() {
               </button>
             </div>
 
-            <div className="mt-3 rounded-xl border border-[rgba(255,43,214,0.22)] bg-[rgba(255,43,214,0.08)] p-3 text-sm text-[var(--text-secondary)] flex items-start gap-2">
-              <Sparkles className="mt-0.5 text-[rgba(255,43,214,0.95)]" size={16} />
-              <div>
-                {deliveryMethod === 'email'
-                  ? 'When the code is created, an invite email is sent immediately (via Mailgun). You can still copy/share the link after creation.'
-                  : 'Create the code and share the link manually. (You can always resend by switching to Email and creating another code.)'}
-              </div>
+            <div className="mt-3 rounded-xl border border-[rgba(255,43,214,0.22)] bg-[rgba(255,43,214,0.08)] p-3 text-sm text-[var(--text-secondary)]">
+              {deliveryMethod === 'email'
+                ? 'When the code is created, an invite email is sent immediately (via Mailgun). You can still copy/share the link after creation.'
+                : 'Create the code and share the link manually. (You can always resend by switching to Email and creating another code.)'}
             </div>
           </div>
 
