@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ShareButton } from '@/components/ui/ShareButton';
-import { Mail, Copy, MoreHorizontal } from 'lucide-react';
+import { Mail, Copy, ChevronDown, ChevronUp } from 'lucide-react';
 
 type InviteRow = {
   code: string;
@@ -309,7 +309,7 @@ export default function AdminInvitesPage() {
               onClick={() => setShowAdvanced((v) => !v)}
               title="Advanced"
             >
-              <MoreHorizontal className="mx-auto" size={18} />
+              {showAdvanced ? <ChevronUp className="mx-auto" size={18} /> : <ChevronDown className="mx-auto" size={18} />}
             </button>
 
             <Button variant="gold" onClick={createInvite} isLoading={loading} className="min-w-[180px]">
