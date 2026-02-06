@@ -41,8 +41,19 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (e) {
+    const msg = String((e as any)?.message ?? (e as any) ?? '');
+    const isSchemaOutOfDate =
+      msg.toLowerCase().includes('no such column') || msg.toLowerCase().includes('no such table');
+
     console.error('invitation request failed', e);
-    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: isSchemaOutOfDate
+          ? 'DB schema is out of date (or you are pointing at the wrong DB). Run `npm run db:ensure` from yesod-platform/, then restart `npm run dev`. Also verify `TURSO_DATABASE_URL` (unset = uses local file:./yesod.db).'
+          : 'Internal Error',
+      },
+      { status: 500 }
+    );
   }
 }
 
