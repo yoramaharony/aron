@@ -36,7 +36,7 @@ export default function ForgotPasswordPage() {
       <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Reset password</h1>
         <p className="text-sm text-[var(--text-secondary)] mt-2">
-          Enter your email and we’ll send a reset link. (Emails begin with B&quot;H.)
+          Enter your email and we’ll send a reset link. <span className="text-[var(--text-tertiary)]">Note: emails begin with B&quot;H.</span>
         </p>
 
         {error ? <div className="mt-4 p-3 text-sm text-red-300 whitespace-pre-wrap">{error}</div> : null}
