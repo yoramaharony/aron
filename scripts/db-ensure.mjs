@@ -105,6 +105,7 @@ async function main() {
       intended_role TEXT NOT NULL,
       created_by TEXT NOT NULL REFERENCES users(id),
       note TEXT,
+      recipient_email TEXT,
       expires_at INTEGER,
       max_uses INTEGER NOT NULL DEFAULT 1,
       uses INTEGER NOT NULL DEFAULT 0,
@@ -246,6 +247,7 @@ async function main() {
     // Add missing columns safely (ignore "duplicate column" errors).
     // Note: older DBs may not have these tables yet; we ignore "no such table" for ALTERs.
     `ALTER TABLE users ADD COLUMN disabled_at INTEGER;`,
+    `ALTER TABLE invite_codes ADD COLUMN recipient_email TEXT;`,
     `ALTER TABLE donor_profiles ADD COLUMN share_token TEXT;`,
     `ALTER TABLE donor_profiles ADD COLUMN donor_to_donor_opt_in INTEGER;`,
     `ALTER TABLE donor_profiles ADD COLUMN collab_settings_json TEXT;`,

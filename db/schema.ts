@@ -43,6 +43,7 @@ export const inviteCodes = sqliteTable('invite_codes', {
     intendedRole: text('intended_role').notNull(), // 'donor' | 'requestor'
     createdBy: text('created_by').notNull().references(() => users.id),
     note: text('note'),
+    recipientEmail: text('recipient_email'),
     expiresAt: integer('expires_at', { mode: 'timestamp' }),
     maxUses: integer('max_uses').notNull().default(1),
     uses: integer('uses').notNull().default(0),

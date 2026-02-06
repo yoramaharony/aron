@@ -18,6 +18,7 @@ type InviteRow = {
   revokedAt?: string | null;
   createdBy?: string | null;
   note?: string | null;
+  recipientEmail?: string | null;
 };
 
 export default function AdminInvitesPage() {
@@ -411,6 +412,12 @@ export default function AdminInvitesPage() {
                     {r.note ? (
                       <div className="text-xs text-[var(--text-secondary)] mt-1">
                         {r.note}
+                      </div>
+                    ) : null}
+
+                    {r.recipientEmail ? (
+                      <div className="text-xs text-[var(--text-secondary)] mt-1">
+                        to: <span className="font-mono">{r.recipientEmail}</span>
                       </div>
                     ) : null}
 

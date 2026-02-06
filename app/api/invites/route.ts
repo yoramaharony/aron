@@ -36,6 +36,7 @@ export async function GET() {
       usedAt: r.usedAt,
       revokedAt: r.revokedAt,
       note: r.note,
+      recipientEmail: r.recipientEmail,
     })),
   });
 }
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
         intendedRole,
         createdBy: session.userId,
         note,
+        recipientEmail: recipientEmail || null,
         expiresAt,
         maxUses,
         uses: 0,

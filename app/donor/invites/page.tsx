@@ -16,6 +16,7 @@ type InviteRow = {
   usedAt?: string | null;
   revokedAt?: string | null;
   note?: string | null;
+  recipientEmail?: string | null;
 };
 
 export default function DonorInvitesPage() {
@@ -405,6 +406,7 @@ export default function DonorInvitesPage() {
                     <div className="text-xs text-[var(--text-tertiary)]">
                       {roleLabel} • uses: {r.uses ?? 0}/{r.maxUses ?? 1} • {expiresText}
                       {r.note ? ` • ${r.note}` : ''}
+                      {r.recipientEmail ? ` • to: ${r.recipientEmail}` : ''}
                     </div>
                   </div>
                   <div className="flex gap-2">
