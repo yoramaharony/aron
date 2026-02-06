@@ -30,33 +30,30 @@ Minimum recommended variables:
 
 ```bash
 JWT_SECRET=...          # required (session cookie signing)
-ADMIN_SEED_SECRET=...   # required only if you want to seed the first admin via API
+ADMIN_EMAIL=admin@aron.local
+ADMIN_PASSWORD=change-me-now
+# Optional:
+ADMIN_NAME=Admin
+# Legacy (optional): only needed if you want to seed the first admin via API
+# ADMIN_SEED_SECRET=...
 # TURSO_DATABASE_URL=file:./yesod.db   # optional (defaults to local file DB)
 # TURSO_AUTH_TOKEN=...                # only if using a Turso libsql URL
 ```
 
-### Seed the first admin (Concierge Console)
+### Admin login (local dev)
 
-Admin users cannot be created via public signup. In local dev, you seed the first admin once using a guarded endpoint.
+Admin users cannot be created via public signup.
 
-1) Set `ADMIN_SEED_SECRET` in `yesod-platform/.env` and restart dev.
+In **local dev**, the admin account is **env-driven**: if you set `ADMIN_EMAIL` and `ADMIN_PASSWORD`,
+the app will auto-create/update the admin user in the DB on login. This prevents “losing” admin when you reset/migrate the DB.
 
-2) Run the seed request (adjust port if needed):
+Login:
+- `http://localhost:3000/admin/login` → login with `ADMIN_EMAIL` / `ADMIN_PASSWORD`
 
-```bash
-curl -s -X POST http://localhost:3000/api/admin/seed \
-  -H "Content-Type: application/json" \
-  -d '{
-    "secret":"YOUR_ADMIN_SEED_SECRET_FROM_.env",
-    "name":"Aron Admin",
-    "email":"admin@aron.local",
-    "password":"change-me-now"
-  }'
-```
+Optional legacy seed endpoint (local only):
+- Set `ADMIN_SEED_SECRET` and POST `/api/admin/seed`
 
-3) Login:
-- `http://localhost:3000/admin/login` → login with the email/password you seeded
-- Admin landing: `http://localhost:3000/admin/invites` (generate donor/requestor invite codes)
+Admin landing: `http://localhost:3000/admin/invites`
 
 ## Learn More
 

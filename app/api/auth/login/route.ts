@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { comparePassword, createSession } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
+import { ensureEnvAdmin } from '@/lib/env-admin';
 
 export async function POST(request: Request) {
     try {
@@ -11,6 +12,25 @@ export async function POST(request: Request) {
 
         if (!email || !password) {
             return NextResponse.json({ error: 'Missing fields' }, { status: 400 });
+        }
+
+        // Dev-only convenience: env-driven admin account.
+        // If ADMIN_EMAIL/ADMIN_PASSWORD are set, we auto-create/update the admin user so
+        // local dev doesn't "lose" admin across DB resets/migrations.
+        const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+        if (process.env.NODE_ENV !== 'production' && envAdminEmail && String(email).trim().toLowerCase() === envAdminEmail) {
+            // Ensure the DB user exists and password matches env.
+            // We intentionally compare against env password (source of truth) and then
+            // log in the updated DB user.
+            if (String(password) !== String(process.env.ADMIN_PASSWORD || '')) {
+                return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+            }
+            const ensured = await ensureEnvAdmin();
+            if (!ensured) {
+                return NextResponse.json({ error: 'Admin env is not configured' }, { status: 500 });
+            }
+            await createSession(ensured.id, 'admin');
+            return NextResponse.json({ success: true, user: { id: ensured.id, name: process.env.ADMIN_NAME || 'Admin', email: ensured.email, role: 'admin' } });
         }
 
         const user = await db.select().from(users).where(eq(users.email, email)).get();

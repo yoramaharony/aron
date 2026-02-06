@@ -66,12 +66,15 @@ Then start the app again and run the **Soft reset** steps above.
 - Open: `http://localhost:3000/admin/login`
 - Log in with your seeded/known admin credentials.
 
-If you don’t have an admin yet (fresh DB), seed one:
+If you don’t have an admin yet (fresh DB), set env vars and log in (dev auto-creates it):
 
 ```bash
 cd yesod-platform
 npm run db:ensure
-ADMIN_NAME="Admin" ADMIN_EMAIL="admin@aron.local" ADMIN_PASSWORD="change-me" npm run admin:seed
+# in yesod-platform/.env:
+# ADMIN_EMAIL=admin@aron.local
+# ADMIN_PASSWORD=change-me
+# ADMIN_NAME=Admin
 ```
 
 ### A2) Seed demo data
