@@ -30,6 +30,7 @@ export default function LandingPage() {
   const [inviteCode, setInviteCode] = useState('');
   const [inviteError, setInviteError] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const validateInviteAndContinue = async (code: string) => {
     setInviteLoading(true);
@@ -56,6 +57,7 @@ export default function LandingPage() {
 
   // Support direct invite links like "/?invite=XXXX-XXXX-XXXX"
   useEffect(() => {
+    setMounted(true);
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     const invite = params.get('invite');
@@ -105,7 +107,17 @@ export default function LandingPage() {
       <main className="flex-1">
         {/* 1) HERO SECTION */}
         <section className="relative overflow-hidden min-h-screen flex items-center">
-          <RotatingVideoBackground className="pointer-events-none" />
+          {mounted ? (
+            <RotatingVideoBackground className="pointer-events-none" />
+          ) : (
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute inset-0 bg-black/32" />
+              <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(255,43,214,0.10),transparent_55%)] opacity-70 mix-blend-screen" />
+              <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.22),rgba(0,0,0,0.62))]" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/22 via-black/42 to-[var(--bg-app)]" />
+              <div className="absolute bottom-0 left-0 right-0 h-[120px] bg-gradient-to-b from-transparent to-[var(--bg-app)]" />
+            </div>
+          )}
           <div className="relative w-full px-6 py-24 md:py-32 max-w-5xl mx-auto text-center z-10">
             <motion.div initial="initial" animate="animate" variants={staggerContainer} className="space-y-8">
             <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl lg:text-8xl font-serif font-medium leading-[1.1] text-[var(--text-primary)]">
@@ -310,7 +322,34 @@ export default function LandingPage() {
             <h2 className="text-4xl font-serif">The Aron Flow</h2>
             <p className="text-[var(--text-secondary)] mt-2">From intent to outcome in 10 steps</p>
           </div>
-          <IntelligentSpine />
+          {mounted ? (
+            <IntelligentSpine />
+          ) : (
+            <div className="max-w-3xl mx-auto px-6">
+              <div className="grid gap-3">
+                {[
+                  'Define your Impact Vision',
+                  'Convert to strategy',
+                  'Intake & diligence',
+                  'Curated feed',
+                  'Decide in seconds',
+                  'Leverage engine',
+                  'Execution ("ugly work")',
+                  'Verification',
+                  'Impact compounds',
+                  'Iterate',
+                ].map((t, i) => (
+                  <div
+                    key={t}
+                    className="flex items-center justify-between rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] px-4 py-3"
+                  >
+                    <span className="text-sm text-[var(--text-secondary)]">{i + 1}.</span>
+                    <span className="flex-1 pl-3 text-sm text-[var(--text-primary)]">{t}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
 
