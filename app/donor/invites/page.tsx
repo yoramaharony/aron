@@ -37,8 +37,12 @@ export default function DonorInvitesPage() {
 
   const refresh = async () => {
     const res = await fetch('/api/invites');
-    const data = await res.json();
-    if (res.ok) setRows(data.invites ?? []);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setError(data?.error || 'Failed to load invites');
+      return;
+    }
+    setRows(data.invites ?? []);
   };
 
   useEffect(() => {

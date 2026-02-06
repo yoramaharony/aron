@@ -17,28 +17,42 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'donor') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const rows = await db
-    .select()
-    .from(inviteCodes)
-    .where(eq(inviteCodes.createdBy, session.userId))
-    .orderBy(desc(inviteCodes.createdAt))
-    .limit(25);
+  try {
+    const rows = await db
+      .select()
+      .from(inviteCodes)
+      .where(eq(inviteCodes.createdBy, session.userId))
+      .orderBy(desc(inviteCodes.createdAt))
+      .limit(25);
 
-  // Don't leak internal ids by default (keep it simple for MVP)
-  return NextResponse.json({
-    invites: rows.map((r) => ({
-      code: r.code,
-      intendedRole: r.intendedRole,
-      uses: r.uses,
-      maxUses: r.maxUses,
-      createdAt: r.createdAt,
-      expiresAt: r.expiresAt,
-      usedAt: r.usedAt,
-      revokedAt: r.revokedAt,
-      note: r.note,
-      recipientEmail: r.recipientEmail,
-    })),
-  });
+    // Don't leak internal ids by default (keep it simple for MVP)
+    return NextResponse.json({
+      invites: rows.map((r) => ({
+        code: r.code,
+        intendedRole: r.intendedRole,
+        uses: r.uses,
+        maxUses: r.maxUses,
+        createdAt: r.createdAt,
+        expiresAt: r.expiresAt,
+        usedAt: r.usedAt,
+        revokedAt: r.revokedAt,
+        note: r.note,
+        recipientEmail: r.recipientEmail,
+      })),
+    });
+  } catch (e: any) {
+    const msg = String(e?.message || e);
+    const isSchema =
+      msg.toLowerCase().includes('no such column') || msg.toLowerCase().includes('no such table');
+    return NextResponse.json(
+      {
+        error: isSchema
+          ? 'DB schema is out of date (or you are pointing at the wrong DB). Run `npm run db:ensure` from yesod-platform/, then restart `npm run dev`.'
+          : 'Internal Error',
+      },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
@@ -132,7 +146,17 @@ export async function POST(request: Request) {
     } catch (e: any) {
       // Unique constraint collision; retry.
       if (String(e?.message ?? '').toLowerCase().includes('unique')) continue;
-      return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+      const msg = String(e?.message || e);
+      const isSchema =
+        msg.toLowerCase().includes('no such column') || msg.toLowerCase().includes('no such table');
+      return NextResponse.json(
+        {
+          error: isSchema
+            ? 'DB schema is out of date (or you are pointing at the wrong DB). Run `npm run db:ensure` from yesod-platform/, then restart `npm run dev`.'
+            : 'Internal Error',
+        },
+        { status: 500 }
+      );
     }
   }
 

@@ -38,8 +38,12 @@ export default function AdminInvitesPage() {
 
   const refresh = async () => {
     const res = await fetch('/api/admin/invites');
-    const data = await res.json();
-    if (!res.ok) throw new Error(data?.error || 'Failed to load invites');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data?.error || 'Failed to load invites';
+      setError(msg);
+      throw new Error(msg);
+    }
     setRows(data.invites ?? []);
   };
 
