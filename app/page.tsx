@@ -1,10 +1,10 @@
 'use client';
 
-import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
+import LandingClient from './LandingClient';
 
-const LandingClient = dynamic(() => import('./LandingClient'), {
-  ssr: false,
-  loading: () => (
+function LoadingShell() {
+  return (
     <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-primary)] flex items-center justify-center">
       <div className="w-full max-w-md px-6 text-center">
         <div className="text-xs font-bold tracking-[0.25em] uppercase text-[var(--text-tertiary)]">
@@ -15,9 +15,19 @@ const LandingClient = dynamic(() => import('./LandingClient'), {
         </div>
       </div>
     </div>
-  ),
-});
+  );
+}
 
 export default function Page() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Important: ensure server HTML matches the first client render exactly.
+  // iOS Safari is especially sensitive to hydration races with animations.
+  if (!mounted) return <LoadingShell />;
+
   return <LandingClient />;
 }
