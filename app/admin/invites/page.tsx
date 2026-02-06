@@ -224,18 +224,6 @@ export default function AdminInvitesPage() {
 
           {/* NOTE + EMAIL */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-                Note (optional)
-              </div>
-              <input
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                placeholder='e.g. "Donor: Yehuda (pilot)"'
-                className="input-field"
-              />
-            </div>
-
             {deliveryMethod === 'email' ? (
               <div className="space-y-2">
                 <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
@@ -253,6 +241,18 @@ export default function AdminInvitesPage() {
                 </div>
               </div>
             ) : null}
+
+            <div className="space-y-2">
+              <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+                Note (optional)
+              </div>
+              <input
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder='e.g. "Donor: Yehuda (pilot)"'
+                className="input-field"
+              />
+            </div>
           </div>
 
           {/* ADVANCED */}
