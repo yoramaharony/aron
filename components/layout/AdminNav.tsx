@@ -12,7 +12,6 @@ const NAV_ITEMS = [
   { label: 'Donors', icon: Users, href: '/admin/donors' },
   { label: 'Organizations', icon: Building2, href: '/admin/organizations' },
   { label: 'Email', icon: Mail, href: '/admin/email-templates' },
-  { label: 'Email Test', icon: Mail, href: '/admin/email-test' },
   { label: 'Happy Path', icon: Sparkles, href: '/admin/happy-path' },
 ];
 

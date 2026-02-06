@@ -35,9 +35,11 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
       <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Reset password</h1>
-        <p className="text-sm text-[var(--text-secondary)] mt-2">
-          Enter your email and we’ll send a reset link.
-        </p>
+        {!done ? (
+          <p className="text-sm text-[var(--text-secondary)] mt-2">
+            Enter your email and we’ll send a reset link.
+          </p>
+        ) : null}
 
         {error ? <div className="mt-4 p-3 text-sm text-red-300 whitespace-pre-wrap">{error}</div> : null}
 
