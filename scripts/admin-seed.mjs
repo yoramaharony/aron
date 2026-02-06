@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { createClient } from '@libsql/client';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
