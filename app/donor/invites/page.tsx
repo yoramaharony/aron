@@ -111,25 +111,6 @@ export default function DonorInvitesPage() {
               Donor endpoint: <span className="font-mono">/api/invites</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className={[
-                'h-10 w-10 rounded-lg border border-[var(--border-subtle)]',
-                'bg-[rgba(255,255,255,0.03)] text-[var(--text-secondary)]',
-                'hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]',
-                'transition-colors',
-              ].join(' ')}
-              aria-label="Advanced settings"
-              onClick={() => setShowAdvanced((v) => !v)}
-              title="Advanced"
-            >
-              <MoreHorizontal className="mx-auto" size={18} />
-            </button>
-            <Button variant="gold" onClick={createInvite} isLoading={loading}>
-              Generate Code
-            </Button>
-          </div>
         </div>
 
         {error ? <div className="text-sm text-red-400">{error}</div> : null}
@@ -166,7 +147,7 @@ export default function DonorInvitesPage() {
                 </button>
               </div>
               <div className="mt-2 text-xs text-[var(--text-tertiary)]">
-                We track who invited whom (for later insights), but invites don’t create “ownership” or any in-app messaging.
+                You can invite nonprofits (requestors) and other donors. We track who invited whom (for later insights), but invites don’t create “ownership” or any in-app messaging.
               </div>
             </div>
           </div>
@@ -325,6 +306,28 @@ export default function DonorInvitesPage() {
               </div>
             </div>
           ) : null}
+
+          {/* ACTIONS (bottom) */}
+          <div className="pt-2 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              className={[
+                'h-10 w-10 rounded-lg border border-[var(--border-subtle)]',
+                'bg-[rgba(255,255,255,0.03)] text-[var(--text-secondary)]',
+                'hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]',
+                'transition-colors',
+              ].join(' ')}
+              aria-label="Advanced settings"
+              onClick={() => setShowAdvanced((v) => !v)}
+              title="Advanced"
+            >
+              <MoreHorizontal className="mx-auto" size={18} />
+            </button>
+
+            <Button variant="gold" onClick={createInvite} isLoading={loading} className="min-w-[180px]">
+              Generate Code
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">

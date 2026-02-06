@@ -124,25 +124,6 @@ export default function AdminInvitesPage() {
               Admin-only endpoint: <span className="font-mono">/api/admin/invites</span>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              className={[
-                'h-10 w-10 rounded-lg border border-[var(--border-subtle)]',
-                'bg-[rgba(255,255,255,0.03)] text-[var(--text-secondary)]',
-                'hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]',
-                'transition-colors',
-              ].join(' ')}
-              aria-label="Advanced settings"
-              onClick={() => setShowAdvanced((v) => !v)}
-              title="Advanced"
-            >
-              <MoreHorizontal className="mx-auto" size={18} />
-            </button>
-            <Button variant="gold" onClick={createInvite} isLoading={loading}>
-              Generate Code
-            </Button>
-          </div>
         </div>
 
         {error ? <div className="text-sm text-red-400">{error}</div> : null}
@@ -156,7 +137,7 @@ export default function AdminInvitesPage() {
             <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
               <div className="text-lg font-semibold text-[var(--text-primary)]">Donor</div>
               <div className="mt-1 text-sm text-[var(--text-secondary)]">
-                Admin creates donors; donors then invite nonprofits (requestors).
+                Admin creates donors; donors can then invite nonprofits (requestors) and other donors.
               </div>
             </div>
           </div>
@@ -313,6 +294,28 @@ export default function AdminInvitesPage() {
               </div>
             </div>
           ) : null}
+
+          {/* ACTIONS (bottom) */}
+          <div className="pt-2 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              className={[
+                'h-10 w-10 rounded-lg border border-[var(--border-subtle)]',
+                'bg-[rgba(255,255,255,0.03)] text-[var(--text-secondary)]',
+                'hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.05)]',
+                'transition-colors',
+              ].join(' ')}
+              aria-label="Advanced settings"
+              onClick={() => setShowAdvanced((v) => !v)}
+              title="Advanced"
+            >
+              <MoreHorizontal className="mx-auto" size={18} />
+            </button>
+
+            <Button variant="gold" onClick={createInvite} isLoading={loading} className="min-w-[180px]">
+              Generate Code
+            </Button>
+          </div>
         </div>
 
         {createdCode ? (
