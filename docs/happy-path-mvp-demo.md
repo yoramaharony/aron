@@ -66,6 +66,14 @@ Then start the app again and run the **Soft reset** steps above.
 - Open: `http://localhost:3000/admin/login`
 - Log in with your seeded/known admin credentials.
 
+If you don’t have an admin yet (fresh DB), seed one:
+
+```bash
+cd yesod-platform
+npm run db:ensure
+ADMIN_NAME="Admin" ADMIN_EMAIL="admin@aron.local" ADMIN_PASSWORD="change-me" npm run admin:seed
+```
+
 ### A2) Seed demo data
 - Open: `http://localhost:3000/admin/happy-path`
 - Click **Seed Demo Data**
