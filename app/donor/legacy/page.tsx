@@ -116,7 +116,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                     >
                         <div
                             className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${msg.role === 'assistant'
-                                ? 'bg-[rgba(255,43,214,0.08)] border border-[rgba(255,43,214,0.35)] text-[var(--color-gold)]'
+                                ? 'bg-[rgba(var(--accent-rgb), 0.08)] border border-[rgba(var(--accent-rgb), 0.35)] text-[var(--color-gold)]'
                                 : 'bg-[rgba(255,255,255,0.05)] border border-[var(--border-subtle)] text-[var(--text-secondary)]'
                                 }`}
                         >
@@ -124,7 +124,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                         </div>
                         <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'assistant'
                                 ? 'bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-[var(--text-secondary)] rounded-tl-none'
-                                : 'bg-[rgba(255,43,214,0.18)] border border-[rgba(255,43,214,0.30)] text-[var(--text-primary)] rounded-tr-none'
+                                : 'bg-[rgba(var(--accent-rgb), 0.18)] border border-[rgba(var(--accent-rgb), 0.30)] text-[var(--text-primary)] rounded-tr-none'
                             }`}>
                             {msg.content}
                         </div>
@@ -135,7 +135,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
 
                 {isTyping && (
                     <div className="flex gap-4">
-                        <div className="w-8 h-8 rounded-full bg-[rgba(255,43,214,0.08)] border border-[rgba(255,43,214,0.35)] text-[var(--color-gold)] flex items-center justify-center">
+                        <div className="w-8 h-8 rounded-full bg-[rgba(var(--accent-rgb), 0.08)] border border-[rgba(var(--accent-rgb), 0.35)] text-[var(--color-gold)] flex items-center justify-center">
                             <Bot size={16} />
                         </div>
                         <div className="bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] p-4 rounded-2xl rounded-tl-none flex gap-1 items-center h-12 shadow-sm">
@@ -160,7 +160,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                     <button
                         onClick={handleSend}
                         disabled={!input.trim() || isTyping}
-                        className="absolute right-2 top-2 p-2 bg-[rgba(255,43,214,0.35)] border border-[rgba(255,43,214,0.35)] text-[var(--text-primary)] rounded-lg hover:bg-[rgba(255,43,214,0.45)] disabled:opacity-50 transition-colors"
+                        className="absolute right-2 top-2 p-2 bg-[rgba(var(--accent-rgb), 0.35)] border border-[rgba(var(--accent-rgb), 0.35)] text-[var(--text-primary)] rounded-lg hover:bg-[rgba(var(--accent-rgb), 0.45)] disabled:opacity-50 transition-colors"
                     >
                         <Send size={18} />
                     </button>

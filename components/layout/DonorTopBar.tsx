@@ -71,7 +71,7 @@ export function DonorTopBar() {
           </button>
 
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-2 h-2 rounded-full bg-[rgba(255,43,214,0.55)] shadow-[0_0_0_3px_rgba(255,43,214,0.14)]" />
+            <div className="w-2 h-2 rounded-full bg-[rgba(var(--accent-rgb), 0.55)] shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.14)]" />
             <div className="text-sm md:text-base font-semibold text-[var(--text-primary)] truncate">
               {title}
             </div>
@@ -93,7 +93,7 @@ export function DonorTopBar() {
           {menuOpen ? (
             <div
               role="menu"
-              className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-[rgba(255,43,214,0.22)] bg-[linear-gradient(180deg,rgba(255,43,214,0.10),rgba(10,10,14,0.92))] shadow-[0_30px_100px_-60px_rgba(0,0,0,0.95)] backdrop-blur"
+              className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-[rgba(var(--accent-rgb), 0.22)] bg-[linear-gradient(180deg,rgba(var(--accent-rgb), 0.10),rgba(10,10,14,0.92))] shadow-[0_30px_100px_-60px_rgba(0,0,0,0.95)] backdrop-blur"
             >
               <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
                 <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">

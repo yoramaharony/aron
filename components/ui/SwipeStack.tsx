@@ -146,7 +146,7 @@ export function SwipeStack({ items, variant = 'compact' }: { items: DonationRequ
 
                 <Button
                     variant="gold"
-                    className="h-14 px-8 rounded-full -mt-2 border border-[rgba(255,43,214,0.45)] flex items-center gap-2 hover:scale-105 transition-transform shadow-[0_0_0_1px_rgba(255,43,214,0.18),0_20px_70px_-35px_rgba(255,43,214,0.55)]"
+                    className="h-14 px-8 rounded-full -mt-2 border border-[rgba(var(--accent-rgb), 0.45)] flex items-center gap-2 hover:scale-105 transition-transform shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.18),0_20px_70px_-35px_rgba(var(--accent-rgb), 0.55)]"
                     onClick={() => openLeverageDrawer(activeItem)}
                 >
                     <Zap size={20} fill="currentColor" />
@@ -170,7 +170,7 @@ export function SwipeStack({ items, variant = 'compact' }: { items: DonationRequ
                     <motion.div
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="rounded-xl p-6 w-full max-w-sm border border-[rgba(255,255,255,0.10)] shadow-[0_30px_90px_-50px_rgba(0,0,0,0.9)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.16),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
+                        className="rounded-xl p-6 w-full max-w-sm border border-[rgba(255,255,255,0.10)] shadow-[0_30px_90px_-50px_rgba(0,0,0,0.9)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb), 0.16),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
                     >
                         <h3 className="text-lg font-serif mb-4">Why is this not a match?</h3>
                         <textarea
@@ -363,7 +363,7 @@ function DraggableDetailCard({ item, onSwipe, onLeverage }: { item: DonationRequ
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             {/* AI INSIGHTS */}
                             <div>
-                                <Card className="overflow-hidden relative border-[rgba(255,43,214,0.20)] bg-[rgba(255,43,214,0.06)]">
+                                <Card className="overflow-hidden relative border-[rgba(var(--accent-rgb), 0.20)] bg-[rgba(var(--accent-rgb), 0.06)]">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                                         <Zap size={80} />
                                     </div>

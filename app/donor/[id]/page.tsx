@@ -134,7 +134,7 @@ export default function OpportunityDetailsPage() {
                 <div className="space-y-6">
 
                     {/* AI INSIGHTS */}
-                    <Card className="overflow-hidden relative border-[rgba(255,43,214,0.20)] bg-[rgba(255,43,214,0.06)]">
+                    <Card className="overflow-hidden relative border-[rgba(var(--accent-rgb), 0.20)] bg-[rgba(var(--accent-rgb), 0.06)]">
                         <div className="absolute top-0 right-0 p-4 opacity-10">
                             <Zap size={80} />
                         </div>

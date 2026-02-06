@@ -73,7 +73,7 @@ export default function LandingClient() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-primary)] font-sans selection:bg-[rgba(255,43,214,0.25)] selection:text-[var(--text-primary)]">
+    <div className="min-h-screen flex flex-col bg-[var(--bg-app)] text-[var(--text-primary)] font-sans selection:bg-[rgba(var(--accent-rgb), 0.25)] selection:text-[var(--text-primary)]">
 
       {/* HEADER */}
       <header className="p-6 md:px-12 md:py-8 flex justify-between items-end max-w-7xl mx-auto w-full z-10 relative border-b border-transparent">
@@ -93,11 +93,11 @@ export default function LandingClient() {
             bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]
             border border-[rgba(255,255,255,0.14)]
             shadow-[0_18px_60px_-40px_rgba(0,0,0,0.75)]
-            hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.12),rgba(255,255,255,0.02))]
-            hover:border-[rgba(255,43,214,0.45)]
-            hover:shadow-[0_22px_70px_-42px_rgba(255,43,214,0.35)]
+            hover:bg-[linear-gradient(180deg,rgba(var(--accent-rgb), 0.12),rgba(255,255,255,0.02))]
+            hover:border-[rgba(var(--accent-rgb), 0.45)]
+            hover:shadow-[0_22px_70px_-42px_rgba(var(--accent-rgb), 0.35)]
             active:translate-y-[1px]
-            focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22),0_18px_60px_-40px_rgba(0,0,0,0.75)]
+            focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22),0_18px_60px_-40px_rgba(0,0,0,0.75)]
             transition-[background,border-color,box-shadow,transform] duration-300"
         >
           <Link href="/auth/login">Member Login</Link>
@@ -112,7 +112,7 @@ export default function LandingClient() {
           ) : (
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute inset-0 bg-black/32" />
-              <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(255,43,214,0.10),transparent_55%)] opacity-70 mix-blend-screen" />
+              <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(var(--accent-rgb), 0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(var(--accent-rgb), 0.10),transparent_55%)] opacity-70 mix-blend-screen" />
               <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.22),rgba(0,0,0,0.62))]" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/22 via-black/42 to-[var(--bg-app)]" />
               <div className="absolute bottom-0 left-0 right-0 h-[120px] bg-gradient-to-b from-transparent to-[var(--bg-app)]" />
@@ -145,17 +145,17 @@ export default function LandingClient() {
                     placeholder="Enter code"
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
-                    className="flex-1 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.10)] px-4 py-3 text-lg outline-none focus:border-[rgba(255,43,214,0.65)] focus:ring-1 focus:ring-[rgba(255,43,214,0.55)] transition-all rounded-sm placeholder:text-[var(--text-tertiary)]"
+                    className="flex-1 bg-[rgba(255,255,255,0.03)] border border-[rgba(255,255,255,0.10)] px-4 py-3 text-lg outline-none focus:border-[rgba(var(--accent-rgb), 0.65)] focus:ring-1 focus:ring-[rgba(var(--accent-rgb), 0.55)] transition-all rounded-sm placeholder:text-[var(--text-tertiary)]"
                   />
                   <Button
                     variant="primary"
                     className="px-8 rounded-sm font-semibold
-                      bg-[linear-gradient(135deg,rgba(255,43,214,0.95)_0%,rgba(192,22,255,0.88)_45%,rgba(212,175,55,0.85)_100%)]
-                      shadow-[0_20px_70px_-45px_rgba(255,43,214,0.70)]
-                      hover:shadow-[0_26px_80px_-45px_rgba(255,43,214,0.85)]
+                      bg-[linear-gradient(135deg,rgba(var(--accent-rgb), 0.95)_0%,rgba(192,22,255,0.88)_45%,rgba(212,175,55,0.85)_100%)]
+                      shadow-[0_20px_70px_-45px_rgba(var(--accent-rgb), 0.70)]
+                      hover:shadow-[0_26px_80px_-45px_rgba(var(--accent-rgb), 0.85)]
                       hover:brightness-110
                       active:translate-y-[1px]
-                      focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22),0_20px_70px_-45px_rgba(255,43,214,0.70)]
+                      focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22),0_20px_70px_-45px_rgba(var(--accent-rgb), 0.70)]
                       transition-[box-shadow,filter,transform] duration-300"
                     onClick={handleInviteContinue}
                     isLoading={inviteLoading}
@@ -179,7 +179,7 @@ export default function LandingClient() {
         </section>
 
         {/* 2) THE LEVERAGE ENGINE (Signature Feature - Moved Up) */}
-        <section className="px-6 py-24 overflow-hidden relative bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
+        <section className="px-6 py-24 overflow-hidden relative bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb), 0.18),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
           {/* Removed oversized background icon behind the demo card (kept section clean). */}
 
           <div className="max-w-6xl mx-auto flex flex-col md:flex-row gap-20 items-center relative z-10">
@@ -242,13 +242,13 @@ export default function LandingClient() {
                   <Button
                     variant="primary"
                     className="w-full font-bold rounded-lg
-                      bg-[linear-gradient(135deg,rgba(255,43,214,0.92)_0%,rgba(192,22,255,0.80)_45%,rgba(212,175,55,0.70)_100%)]
+                      bg-[linear-gradient(135deg,rgba(var(--accent-rgb), 0.92)_0%,rgba(192,22,255,0.80)_45%,rgba(212,175,55,0.70)_100%)]
                       border border-[rgba(255,255,255,0.14)]
-                      shadow-[0_22px_75px_-55px_rgba(255,43,214,0.85)]
-                      hover:shadow-[0_30px_90px_-55px_rgba(255,43,214,0.95)]
+                      shadow-[0_22px_75px_-55px_rgba(var(--accent-rgb), 0.85)]
+                      hover:shadow-[0_30px_90px_-55px_rgba(var(--accent-rgb), 0.95)]
                       hover:brightness-110
                       active:translate-y-[1px]
-                      focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22),0_22px_75px_-55px_rgba(255,43,214,0.85)]
+                      focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22),0_22px_75px_-55px_rgba(var(--accent-rgb), 0.85)]
                       transition-[box-shadow,filter,transform] duration-300"
                   >
                     Create Catalytic Offer
@@ -271,7 +271,7 @@ export default function LandingClient() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(255,43,214,0.35)] hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(255,43,214,0.40)]"
+              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(var(--accent-rgb), 0.35)] hover:bg-[linear-gradient(180deg,rgba(var(--accent-rgb), 0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(var(--accent-rgb), 0.40)]"
             >
               <div className="w-12 h-12 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mb-6 text-[var(--color-sage)] group-hover:bg-[var(--color-sage)] group-hover:text-white transition-colors">
                 <Layers size={24} />
@@ -287,7 +287,7 @@ export default function LandingClient() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.1 }}
-              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(255,43,214,0.35)] hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(255,43,214,0.40)]"
+              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(var(--accent-rgb), 0.35)] hover:bg-[linear-gradient(180deg,rgba(var(--accent-rgb), 0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(var(--accent-rgb), 0.40)]"
             >
               <div className="w-12 h-12 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mb-6 text-[var(--color-sage)] group-hover:bg-[var(--color-sage)] group-hover:text-white transition-colors">
                 <Filter size={24} />
@@ -303,7 +303,7 @@ export default function LandingClient() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: 0.2 }}
-              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(255,43,214,0.35)] hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(255,43,214,0.40)]"
+              className="group rounded-sm border border-[var(--border-subtle)] bg-[var(--bg-paper)] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(var(--accent-rgb), 0.35)] hover:bg-[linear-gradient(180deg,rgba(var(--accent-rgb), 0.06)_0%,rgba(255,255,255,0.02)_100%)] hover:shadow-[0_26px_70px_-40px_rgba(var(--accent-rgb), 0.40)]"
             >
               <div className="w-12 h-12 bg-[var(--bg-surface)] rounded-full flex items-center justify-center mb-6 text-[var(--color-sage)] group-hover:bg-[var(--color-sage)] group-hover:text-white transition-colors">
                 <ShieldCheck size={24} />
@@ -420,7 +420,7 @@ export default function LandingClient() {
         </section>
 
         {/* 7) DISCRETION */}
-        <section className="px-6 py-32 relative overflow-hidden bg-[radial-gradient(900px_500px_at_70%_0%,rgba(255,43,214,0.16),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
+        <section className="px-6 py-32 relative overflow-hidden bg-[radial-gradient(900px_500px_at_70%_0%,rgba(var(--accent-rgb), 0.16),transparent_60%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))]">
           <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--color-gold)] to-transparent opacity-25" />
 
           <div className="max-w-4xl mx-auto text-center relative z-10">

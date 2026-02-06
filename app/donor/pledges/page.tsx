@@ -72,7 +72,7 @@ export default function DonorPledges() {
                             <Card key={offer.id} className="flex flex-col md:flex-row gap-6 items-center p-6 border-[var(--color-gold)]/30 bg-[var(--bg-ivory)]">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-[rgba(255,255,255,0.04)] px-2 py-0.5 rounded border border-[rgba(255,43,214,0.30)] text-[var(--color-gold)]">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider bg-[rgba(255,255,255,0.04)] px-2 py-0.5 rounded border border-[rgba(var(--accent-rgb), 0.30)] text-[var(--color-gold)]">
                                             {offer.status.replace('_', ' ')}
                                         </span>
                                         <span className="text-xs text-secondary">Created {new Date(offer.createdAt).toLocaleDateString()}</span>

@@ -78,7 +78,7 @@ export function AdminTopBar() {
           </button>
 
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-2 h-2 rounded-full bg-[rgba(255,43,214,0.55)] shadow-[0_0_0_3px_rgba(255,43,214,0.14)]" />
+            <div className="w-2 h-2 rounded-full bg-[rgba(var(--accent-rgb), 0.55)] shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.14)]" />
             <div className="text-sm md:text-base font-semibold text-[var(--text-primary)] truncate">{title}</div>
           </div>
         </div>
@@ -98,7 +98,7 @@ export function AdminTopBar() {
           {menuOpen ? (
             <div
               role="menu"
-              className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-[rgba(255,43,214,0.22)] bg-[linear-gradient(180deg,rgba(255,43,214,0.10),rgba(10,10,14,0.92))] shadow-[0_30px_100px_-60px_rgba(0,0,0,0.95)] backdrop-blur"
+              className="absolute right-0 mt-3 w-64 overflow-hidden rounded-2xl border border-[rgba(var(--accent-rgb), 0.22)] bg-[linear-gradient(180deg,rgba(var(--accent-rgb), 0.10),rgba(10,10,14,0.92))] shadow-[0_30px_100px_-60px_rgba(0,0,0,0.95)] backdrop-blur"
             >
               <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
                 <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">Signed in</div>
@@ -125,7 +125,7 @@ export function AdminTopBar() {
             aria-label="Close menu"
             onClick={() => setMobileNavOpen(false)}
           />
-          <div className="absolute left-0 top-0 h-full w-[86vw] max-w-[320px] border-r border-[rgba(255,43,214,0.22)] bg-[linear-gradient(180deg,rgba(255,43,214,0.10),rgba(10,10,14,0.96))] shadow-[0_30px_120px_-70px_rgba(0,0,0,0.95)] backdrop-blur">
+          <div className="absolute left-0 top-0 h-full w-[86vw] max-w-[320px] border-r border-[rgba(var(--accent-rgb), 0.22)] bg-[linear-gradient(180deg,rgba(var(--accent-rgb), 0.10),rgba(10,10,14,0.96))] shadow-[0_30px_120px_-70px_rgba(0,0,0,0.95)] backdrop-blur">
             <div className="px-4 py-4 border-b border-[rgba(255,255,255,0.08)] flex items-center justify-between">
               <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">
                 Admin Menu
@@ -152,7 +152,7 @@ export function AdminTopBar() {
                     className={clsx(
                       'flex items-center gap-3 px-3 py-3 rounded-xl border transition-colors',
                       isActive
-                        ? 'border-[rgba(255,43,214,0.55)] bg-[rgba(255,43,214,0.10)]'
+                        ? 'border-[rgba(var(--accent-rgb), 0.55)] bg-[rgba(var(--accent-rgb), 0.10)]'
                         : 'border-[rgba(255,255,255,0.08)] bg-[rgba(255,255,255,0.02)] hover:bg-[rgba(255,255,255,0.04)]'
                     )}
                   >

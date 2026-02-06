@@ -203,7 +203,7 @@ export default function ImpactPage() {
                                     className={[
                                         'h-9 w-[56px] rounded-full border transition-colors relative',
                                         collabOptIn
-                                            ? 'bg-[rgba(255,43,214,0.22)] border-[rgba(255,43,214,0.35)]'
+                                            ? 'bg-[rgba(var(--accent-rgb), 0.22)] border-[rgba(var(--accent-rgb), 0.35)]'
                                             : 'bg-[rgba(255,255,255,0.04)] border-[rgba(255,255,255,0.14)]',
                                     ].join(' ')}
                                     onClick={async () => {
@@ -266,7 +266,7 @@ export default function ImpactPage() {
                             <div className="text-sm text-[var(--text-secondary)]">
                                 Go back to Concierge AI and answer the 12‑month outcome question to strengthen matching.
                             </div>
-                            <div className="mt-4 rounded-xl border border-[rgba(255,43,214,0.22)] bg-[rgba(255,43,214,0.08)] p-4">
+                            <div className="mt-4 rounded-xl border border-[rgba(var(--accent-rgb), 0.22)] bg-[rgba(var(--accent-rgb), 0.08)] p-4">
                                 <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">Happy path example</div>
                                 <div className="mt-2 text-sm text-[var(--text-primary)] font-mono">
                                     In 12 months I want 5,000 households protected with measurable outcomes. Budget $250k/year. Israel + Miami.

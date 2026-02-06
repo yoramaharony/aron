@@ -59,7 +59,7 @@ export default function DonorVault() {
                     {allDocs.map((doc) => (
                         <div
                             key={doc.id}
-                            className={`p-4 flex items-center gap-4 transition-colors group hover:bg-[rgba(255,255,255,0.04)] ${doc.isNew ? 'bg-[rgba(255,43,214,0.06)]' : ''}`}
+                            className={`p-4 flex items-center gap-4 transition-colors group hover:bg-[rgba(255,255,255,0.04)] ${doc.isNew ? 'bg-[rgba(var(--accent-rgb), 0.06)]' : ''}`}
                         >
                             <div className="w-10 h-10 rounded bg-[rgba(255,255,255,0.04)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
                                 <FileText size={20} className={doc.isNew ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'} />

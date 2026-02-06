@@ -191,7 +191,7 @@ export default function DonorSubmissionLinksPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-3 flex-wrap">
                       <div className="font-semibold text-[var(--text-primary)]">{r.orgName || '—'}</div>
-                      <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]">
+                      <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb), 0.25)] bg-[rgba(var(--accent-rgb), 0.10)] text-[var(--text-primary)]">
                         {state}
                       </span>
                       <span className="text-xs text-[var(--text-tertiary)]">

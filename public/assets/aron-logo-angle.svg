@@ -1,34 +1,34 @@
 <svg width="400" height="100" viewBox="0 0 400 100" fill="none" xmlns="http://www.w3.org/2000/svg">
   <!-- A icon -->
   <g transform="translate(0, 0)">
-    <path d="M25 80 L50 25 L75 80" stroke="#ff2bd6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <line x1="32" y1="60" x2="68" y2="60" stroke="#ff2bd6" stroke-width="4" stroke-linecap="round"/>
-    <circle cx="50" cy="25" r="6" fill="#ff2bd6"/>
-    <circle cx="32" cy="60" r="6" fill="#ff2bd6"/>
-    <circle cx="68" cy="60" r="6" fill="#ff2bd6"/>
+    <path d="M25 80 L50 25 L75 80" stroke="#D4AF37" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <line x1="32" y1="60" x2="68" y2="60" stroke="#D4AF37" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="50" cy="25" r="6" fill="#D4AF37"/>
+    <circle cx="32" cy="60" r="6" fill="#D4AF37"/>
+    <circle cx="68" cy="60" r="6" fill="#D4AF37"/>
   </g>
   <!-- R icon - Angle -->
   <g transform="translate(98, 0)">
-    <path d="M30 75 L30 35 L70 35" stroke="#ff2bd6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-    <circle cx="30" cy="75" r="6" fill="#ff2bd6"/>
-    <circle cx="30" cy="35" r="6" fill="#ff2bd6"/>
-    <circle cx="70" cy="35" r="6" fill="#ff2bd6"/>
+    <path d="M30 75 L30 35 L70 35" stroke="#D4AF37" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="30" cy="75" r="6" fill="#D4AF37"/>
+    <circle cx="30" cy="35" r="6" fill="#D4AF37"/>
+    <circle cx="70" cy="35" r="6" fill="#D4AF37"/>
   </g>
   <!-- O icon - Community Hexagon -->
   <g transform="translate(196, 0)">
-    <path d="M50 25 L70 37.5 L70 62.5 L50 75 L30 62.5 L30 37.5 Z" stroke="#ff2bd6" stroke-width="3" fill="none"/>
-    <circle cx="50" cy="25" r="4" fill="#ff2bd6"/>
-    <circle cx="70" cy="37.5" r="4" fill="#ff2bd6"/>
-    <circle cx="70" cy="62.5" r="4" fill="#ff2bd6"/>
-    <circle cx="50" cy="75" r="4" fill="#ff2bd6"/>
-    <circle cx="30" cy="62.5" r="4" fill="#ff2bd6"/>
-    <circle cx="30" cy="37.5" r="4" fill="#ff2bd6"/>
+    <path d="M50 25 L70 37.5 L70 62.5 L50 75 L30 62.5 L30 37.5 Z" stroke="#D4AF37" stroke-width="3" fill="none"/>
+    <circle cx="50" cy="25" r="4" fill="#D4AF37"/>
+    <circle cx="70" cy="37.5" r="4" fill="#D4AF37"/>
+    <circle cx="70" cy="62.5" r="4" fill="#D4AF37"/>
+    <circle cx="50" cy="75" r="4" fill="#D4AF37"/>
+    <circle cx="30" cy="62.5" r="4" fill="#D4AF37"/>
+    <circle cx="30" cy="37.5" r="4" fill="#D4AF37"/>
   </g>
   <!-- N icon - Aron Kodesh -->
   <g transform="translate(294, 0)">
-    <path d="M25 80 L25 45 Q25 25, 50 25 Q75 25, 75 45 L75 80" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round" fill="none"/>
-    <line x1="25" y1="80" x2="75" y2="80" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round"/>
-    <line x1="50" y1="80" x2="50" y2="30" stroke="#ff2bd6" stroke-width="3" stroke-linecap="round"/>
-    <path d="M42 38 L50 30 L58 38" stroke="#ff2bd6" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M25 80 L25 45 Q25 25, 50 25 Q75 25, 75 45 L75 80" stroke="#D4AF37" stroke-width="3" stroke-linecap="round" fill="none"/>
+    <line x1="25" y1="80" x2="75" y2="80" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+    <line x1="50" y1="80" x2="50" y2="30" stroke="#D4AF37" stroke-width="3" stroke-linecap="round"/>
+    <path d="M42 38 L50 30 L58 38" stroke="#D4AF37" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
   </g>
 </svg>

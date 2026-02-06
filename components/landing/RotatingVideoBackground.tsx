@@ -167,7 +167,7 @@ export function RotatingVideoBackground({
       <div className={`absolute inset-0 overflow-hidden ${className ?? ''}`}>
         {/* Fallback: keep the same luxe overlays while sources load */}
         <div className="absolute inset-0 bg-black/32" />
-        <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(255,43,214,0.10),transparent_55%)] opacity-70 mix-blend-screen" />
+        <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(var(--accent-rgb), 0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(var(--accent-rgb), 0.10),transparent_55%)] opacity-70 mix-blend-screen" />
         <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.22),rgba(0,0,0,0.62))]" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/22 via-black/42 to-[var(--bg-app)]" />
       </div>
@@ -204,7 +204,7 @@ export function RotatingVideoBackground({
       {/* Reduce mask ~15% vs previous (55% → ~47%) */}
       {/* Reduce mask further for brighter video */}
       <div className="absolute inset-0 bg-black/32" />
-      <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(255,43,214,0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(255,43,214,0.10),transparent_55%)] opacity-70 mix-blend-screen" />
+      <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(var(--accent-rgb), 0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(var(--accent-rgb), 0.10),transparent_55%)] opacity-70 mix-blend-screen" />
       <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.22),rgba(0,0,0,0.62))]" />
       <div className="absolute inset-0 bg-gradient-to-b from-black/22 via-black/42 to-[var(--bg-app)]" />
       {/* Extra bottom fade (~100px) to hide bright/AI-video edge artifacts */}

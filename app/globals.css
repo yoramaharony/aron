@@ -3,41 +3,45 @@
 @tailwind utilities;
 
 :root {
-  /* Dark mode system theme (default) */
-  --bg-app: #07070a;
-  --bg-surface: #0b0b12;
-  --bg-card: #10101a;
-  --bg-elevated: #151523;
+  /* Black Card (Centurion-inspired) — global default */
+  --bg-app: #0a0a0a; /* absolute black */
+  --bg-surface: #1a1a1a; /* primary panels */
+  --bg-card: #2a2a2a; /* cards */
+  --bg-elevated: #3a3a3a; /* elevated hover/panels */
 
-  --text-primary: #f5f3ff;
-  --text-secondary: #c4bfd6;
-  --text-tertiary: #8d87a3;
+  --text-primary: #e5e5e5;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #707070;
 
-  /* Accent: glowing magenta */
-  --color-magenta: #ff2bd6;
-  --color-magenta-dim: #ff7ae6;
-  --color-magenta-hover: #ff4bdd;
+  /* Metallic accent: gold */
+  --color-gold: #d4af37;
+  --color-gold-dim: #e5c158;
+  --color-gold-hover: #b8941f;
+
+  /* Backwards-compat: older pages still reference "magenta" tokens */
+  --color-magenta: var(--color-gold);
+  --color-magenta-dim: var(--color-gold-dim);
+  --color-magenta-hover: var(--color-gold-hover);
+
+  /* Helper RGB vars for arbitrary Tailwind values */
+  --accent-rgb: 212, 175, 55; /* gold */
+  --silver-rgb: 192, 192, 192;
 
   /* Success */
   --color-green: #22c55e;
 
   /* Legacy accent names (map to magenta) */
   --color-sage: var(--color-magenta);
-  --color-sage-mist: rgba(255, 43, 214, 0.12);
-  --color-sage-dark: #ff7ae6;
-
-  /* Backwards-compat: previously "gold" now magenta */
-  --color-gold: var(--color-magenta);
-  --color-gold-dim: var(--color-magenta-dim);
-  --color-gold-hover: var(--color-magenta-hover);
+  --color-sage-mist: rgba(var(--accent-rgb), 0.12);
+  --color-sage-dark: var(--color-gold-dim);
 
   /* Backwards-compat: some pages reference older tokens */
   --bg-ivory: var(--bg-surface);
   --bg-paper: var(--bg-card);
-  --accent-gold: var(--color-magenta);
+  --accent-gold: var(--color-gold);
 
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-subtle: rgba(var(--silver-rgb), 0.15);
+  --border-strong: rgba(var(--silver-rgb), 0.30);
 
   /* Tailwind convenience vars (used in tailwind.config.ts) */
   --background: var(--bg-app);
@@ -51,12 +55,12 @@
   /* Sharper buttons for luxury feel */
 
   /* Shadows + glow */
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.35);
-  --shadow-md: 0 10px 30px -16px rgb(0 0 0 / 0.65), 0 2px 10px -6px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 20px 60px -26px rgb(0 0 0 / 0.75), 0 4px 18px -10px rgb(0 0 0 / 0.45);
-  --shadow-xl: 0 30px 90px -38px rgb(0 0 0 / 0.85), 0 6px 24px -12px rgb(0 0 0 / 0.5);
-  --glow-magenta-sm: 0 0 0 3px rgba(255, 43, 214, 0.22);
-  --glow-magenta-md: 0 0 0 3px rgba(255, 43, 214, 0.22), 0 0 24px rgba(255, 43, 214, 0.22);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 14px 60px rgba(0, 0, 0, 0.75);
+  --glow-magenta-sm: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
+  --glow-magenta-md: 0 0 0 3px rgba(var(--accent-rgb), 0.12), 0 0 24px rgba(var(--accent-rgb), 0.18);
 }
 
 body {
@@ -93,12 +97,12 @@ body {
   0%,
   100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 0 rgba(255, 43, 214, 0));
+    filter: drop-shadow(0 0 0 rgba(var(--accent-rgb), 0));
     opacity: 0.92;
   }
   50% {
     transform: scale(1.04);
-    filter: drop-shadow(0 0 18px rgba(255, 43, 214, 0.60));
+    filter: drop-shadow(0 0 18px rgba(var(--accent-rgb), 0.55));
     opacity: 1;
   }
 }
@@ -111,12 +115,12 @@ body {
   0%,
   100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 0 rgba(255, 43, 214, 0));
+    filter: drop-shadow(0 0 0 rgba(var(--accent-rgb), 0));
     opacity: 0.96;
   }
   50% {
     transform: scale(1.015);
-    filter: drop-shadow(0 0 10px rgba(255, 43, 214, 0.28));
+    filter: drop-shadow(0 0 10px rgba(var(--accent-rgb), 0.22));
     opacity: 1;
   }
 }
@@ -160,26 +164,26 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, rgba(255, 43, 214, 0.95), rgba(255, 43, 214, 0.78));
-  color: #120014;
-  border: 1px solid rgba(255, 43, 214, 0.45);
-  box-shadow: 0 12px 35px -20px rgba(255, 43, 214, 0.75);
+  background: linear-gradient(135deg, var(--color-gold-hover) 0%, var(--color-gold) 55%, var(--color-gold-dim) 100%);
+  color: #0a0a0a;
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
+  box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(180deg, rgba(255, 75, 221, 0.98), rgba(255, 43, 214, 0.82));
+  background: linear-gradient(135deg, var(--color-gold) 0%, var(--color-gold-dim) 100%);
   box-shadow: var(--glow-magenta-md);
   transform: translateY(-1px);
 }
 
 .btn-gold {
-  background: rgba(255, 43, 214, 0.1);
+  background: rgba(var(--accent-rgb), 0.12);
   color: var(--text-primary);
-  border: 1px solid rgba(255, 43, 214, 0.35);
+  border: 1px solid rgba(var(--accent-rgb), 0.35);
 }
 
 .btn-gold:hover {
-  background: rgba(255, 43, 214, 0.14);
+  background: rgba(var(--accent-rgb), 0.16);
   box-shadow: var(--glow-magenta-sm);
 }
 
@@ -190,9 +194,9 @@ body {
 }
 
 .btn-outline:hover {
-  border-color: rgba(255, 43, 214, 0.55);
-  background-color: rgba(255, 43, 214, 0.06);
-  box-shadow: 0 0 0 1px rgba(255, 43, 214, 0.25);
+  border-color: rgba(var(--accent-rgb), 0.55);
+  background-color: rgba(var(--accent-rgb), 0.06);
+  box-shadow: 0 0 0 1px rgba(var(--accent-rgb), 0.25);
 }
 
 .btn-ghost {
@@ -207,8 +211,8 @@ body {
 
 .card {
   background:
-    radial-gradient(1200px 800px at 20% 0%, rgba(255, 43, 214, 0.06), transparent 55%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02));
+    radial-gradient(1200px 800px at 20% 0%, rgba(var(--accent-rgb), 0.06), transparent 55%),
+    linear-gradient(135deg, rgba(58, 58, 58, 0.55), rgba(26, 26, 26, 0.55));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-md);
@@ -365,7 +369,7 @@ body {
 
 .input-field:focus {
   outline: none;
-  border-color: rgba(255, 43, 214, 0.65);
+  border-color: rgba(var(--accent-rgb), 0.65);
   box-shadow: var(--glow-magenta-sm);
 }
 

@@ -97,7 +97,7 @@ export default function AdminEmailTemplatesPage() {
                 className={[
                   'w-full text-left rounded-lg border px-3 py-2 transition',
                   selectedKey === t.key
-                    ? 'border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]'
+                    ? 'border-[rgba(var(--accent-rgb), 0.25)] bg-[rgba(var(--accent-rgb), 0.10)] text-[var(--text-primary)]'
                     : 'border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
                 ].join(' ')}
                 onClick={() => setSelectedKey(t.key)}

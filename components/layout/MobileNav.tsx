@@ -45,7 +45,7 @@ export default function MobileNav({ role }: MobileNavProps) {
                     <Link key={link.href} href={link.href} className="flex flex-col items-center gap-1 min-w-[60px]">
                         <div
                             className={`p-2 rounded-xl transition-all ${isActive
-                                ? 'bg-[rgba(255,43,214,0.10)] text-[var(--color-gold)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)]'
+                                ? 'bg-[rgba(var(--accent-rgb), 0.10)] text-[var(--color-gold)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)]'
                                 : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
                                 }`}
                         >

@@ -86,7 +86,7 @@ export default function SignupPage() {
         <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
             <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
                 <div className="text-center mb-8">
-                    <div className="mx-auto w-14 h-14 bg-[rgba(255,43,214,0.10)] rounded-2xl flex items-center justify-center mb-6 text-gold shadow-[0_0_0_1px_rgba(255,43,214,0.20)]">
+                    <div className="mx-auto w-14 h-14 bg-[rgba(var(--accent-rgb), 0.10)] rounded-2xl flex items-center justify-center mb-6 text-gold shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.20)]">
                         <UserPlus size={28} />
                     </div>
                     <h1 className="text-3xl font-semibold mb-3">Create Account</h1>
@@ -97,8 +97,8 @@ export default function SignupPage() {
                     <button
                         type="button"
                         aria-disabled={!!roleLock && roleLock !== 'requestor'}
-                        className={`flex-1 py-3 text-sm font-medium rounded-lg border transition-colors transition-shadow focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] ${role === 'requestor'
-                            ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border-[rgba(255,43,214,0.20)]'
+                        className={`flex-1 py-3 text-sm font-medium rounded-lg border transition-colors transition-shadow focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22)] ${role === 'requestor'
+                            ? 'bg-[rgba(var(--accent-rgb), 0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] border-[rgba(var(--accent-rgb), 0.20)]'
                             : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
                             } ${roleLock && roleLock !== 'requestor' ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                         onClick={() => {
@@ -111,8 +111,8 @@ export default function SignupPage() {
                     <button
                         type="button"
                         aria-disabled={!!roleLock && roleLock !== 'donor'}
-                        className={`flex-1 py-3 text-sm font-medium rounded-lg border transition-colors transition-shadow focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] ${role === 'donor'
-                            ? 'bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] border-[rgba(255,43,214,0.20)]'
+                        className={`flex-1 py-3 text-sm font-medium rounded-lg border transition-colors transition-shadow focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22)] ${role === 'donor'
+                            ? 'bg-[rgba(var(--accent-rgb), 0.10)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] border-[rgba(var(--accent-rgb), 0.20)]'
                             : 'bg-transparent text-[var(--text-secondary)] border-transparent hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
                             } ${roleLock && roleLock !== 'donor' ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
                         onClick={() => {

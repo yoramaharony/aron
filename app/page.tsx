@@ -11,7 +11,7 @@ function LoadingShell() {
           Loading Aron…
         </div>
         <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.06)]">
-          <div className="h-full w-1/2 bg-[linear-gradient(90deg,rgba(255,43,214,0.70),rgba(212,175,55,0.55))]" />
+          <div className="h-full w-1/2 bg-[linear-gradient(90deg,rgba(var(--accent-rgb), 0.70),rgba(212,175,55,0.55))]" />
         </div>
       </div>
     </div>

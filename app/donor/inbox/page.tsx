@@ -132,9 +132,9 @@ export default function DonorInbox() {
                                         className={[
                                             'p-4 border-b border-[var(--border-subtle)] cursor-pointer flex gap-4 transition-colors',
                                             isSelected
-                                                ? 'bg-[rgba(255,43,214,0.10)]'
+                                                ? 'bg-[rgba(var(--accent-rgb), 0.10)]'
                                                 : 'hover:bg-[rgba(255,255,255,0.04)] active:bg-[rgba(255,255,255,0.06)]',
-                                            msg.type === 'leverage' && !isSelected ? 'bg-[rgba(255,43,214,0.06)]' : '',
+                                            msg.type === 'leverage' && !isSelected ? 'bg-[rgba(var(--accent-rgb), 0.06)]' : '',
                                         ].join(' ')}
                                     >
                                         <div className="mt-1">
@@ -147,7 +147,7 @@ export default function DonorInbox() {
 
                                         <div className="w-10 h-10 rounded-full bg-[rgba(255,255,255,0.05)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
                                             {msg.from === 'Concierge' ? (
-                                                <div className="bg-[rgba(255,43,214,0.18)] text-[var(--text-primary)] border border-[rgba(255,43,214,0.25)] w-full h-full rounded-full flex items-center justify-center text-xs font-semibold">
+                                                <div className="bg-[rgba(var(--accent-rgb), 0.18)] text-[var(--text-primary)] border border-[rgba(var(--accent-rgb), 0.25)] w-full h-full rounded-full flex items-center justify-center text-xs font-semibold">
                                                     AI
                                                 </div>
                                             ) : (
@@ -227,7 +227,7 @@ export default function DonorInbox() {
                                 </div>
 
                                 {selectedMessage.hasAttachment && (
-                                    <div className="bg-[rgba(255,43,214,0.06)] border border-[rgba(255,43,214,0.18)] rounded-xl p-4 flex items-center justify-between">
+                                    <div className="bg-[rgba(var(--accent-rgb), 0.06)] border border-[rgba(var(--accent-rgb), 0.18)] rounded-xl p-4 flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <Paperclip size={18} className="text-[var(--color-gold)]" />
                                             <div>
@@ -235,7 +235,7 @@ export default function DonorInbox() {
                                                 <div className="text-xs text-[var(--text-tertiary)]">Available in Vault (demo)</div>
                                             </div>
                                         </div>
-                                        <button className="px-3 py-2 rounded-lg border border-[rgba(255,43,214,0.24)] text-[var(--text-primary)] bg-[rgba(255,43,214,0.16)] hover:bg-[rgba(255,43,214,0.22)] transition-colors text-sm font-semibold">
+                                        <button className="px-3 py-2 rounded-lg border border-[rgba(var(--accent-rgb), 0.24)] text-[var(--text-primary)] bg-[rgba(var(--accent-rgb), 0.16)] hover:bg-[rgba(var(--accent-rgb), 0.22)] transition-colors text-sm font-semibold">
                                             Open Vault
                                         </button>
                                     </div>

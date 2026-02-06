@@ -143,11 +143,11 @@ export function IntelligentSpine() {
                 {/* Ambient glows to prevent "dead black" negative space on wide screens */}
                 <div className="absolute inset-y-0 right-0 w-1/2 pointer-events-none">
                     {/* Right glow: pushed DOWN for asymmetry */}
-                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_30%_62%,rgba(255,43,214,0.20),transparent_60%),radial-gradient(700px_500px_at_60%_78%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
+                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_30%_62%,rgba(var(--accent-rgb), 0.20),transparent_60%),radial-gradient(700px_500px_at_60%_78%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
                 </div>
                 <div className="absolute inset-y-0 left-0 w-1/2 pointer-events-none">
                     {/* Left glow: pulled UP for asymmetry */}
-                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_70%_24%,rgba(255,43,214,0.22),transparent_62%),radial-gradient(700px_500px_at_40%_46%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
+                    <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_70%_24%,rgba(var(--accent-rgb), 0.22),transparent_62%),radial-gradient(700px_500px_at_40%_46%,rgba(212,175,55,0.10),transparent_65%)] opacity-70" />
                 </div>
 
                 <svg ref={svgRef} viewBox="0 0 800 600" className="w-full h-full max-w-4xl opacity-90">
@@ -223,7 +223,7 @@ export function IntelligentSpine() {
                     >
                         <div
                             ref={textRefs[i]}
-                            className="p-8 rounded-xl border border-[rgba(255,255,255,0.10)] backdrop-blur max-w-md opacity-0 shadow-[0_18px_60px_-35px_rgba(0,0,0,0.85)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.14),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
+                            className="p-8 rounded-xl border border-[rgba(255,255,255,0.10)] backdrop-blur max-w-md opacity-0 shadow-[0_18px_60px_-35px_rgba(0,0,0,0.85)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb), 0.14),transparent_55%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))]"
                         >
                             <h3 className="font-serif text-2xl mb-2 text-[var(--color-gold)]">{step.title}</h3>
                             <p className="text-[var(--text-secondary)] leading-relaxed">{step.desc}</p>

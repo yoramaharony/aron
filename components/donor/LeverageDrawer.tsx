@@ -30,7 +30,7 @@ export function LeverageDrawer() {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border-l border-[rgba(255,255,255,0.10)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(255,43,214,0.14),transparent_55%),linear-gradient(180deg,rgba(12,12,20,0.92),rgba(10,10,16,0.86))]"
+                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border-l border-[rgba(255,255,255,0.10)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb), 0.14),transparent_55%),linear-gradient(180deg,rgba(12,12,20,0.92),rgba(10,10,16,0.86))]"
                     >
                         <LeverageForm onClose={closeLeverageDrawer} opportunity={activeOpportunity} onCreate={createOffer} />
                     </motion.div>
@@ -171,8 +171,8 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                 <button
                                     key={amt}
                                     onClick={() => setAnchor(amt)}
-                                    className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all border focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] ${anchor === amt
-                                        ? 'bg-[rgba(255,43,214,0.20)] text-[var(--text-primary)] border-[rgba(255,43,214,0.35)] shadow-[0_18px_50px_-34px_rgba(255,43,214,0.9)]'
+                                    className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all border focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22)] ${anchor === amt
+                                        ? 'bg-[rgba(var(--accent-rgb), 0.20)] text-[var(--text-primary)] border-[rgba(var(--accent-rgb), 0.35)] shadow-[0_18px_50px_-34px_rgba(var(--accent-rgb), 0.9)]'
                                         : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:text-[var(--text-primary)]'
                                         }`}
                                 >
@@ -194,18 +194,18 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         <div className="grid grid-cols-2 gap-2 p-1 bg-[rgba(255,255,255,0.04)] rounded-lg border border-[rgba(255,255,255,0.10)]">
                             <button
                                 onClick={() => setMatchMode('match')}
-                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'match' ? 'bg-[rgba(255,43,214,0.12)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
+                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'match' ? 'bg-[rgba(var(--accent-rgb), 0.12)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
                             >
                                 Match Me (1:1)
                             </button>
                             <button
                                 onClick={() => setMatchMode('remainder')}
-                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'remainder' ? 'bg-[rgba(255,43,214,0.12)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
+                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'remainder' ? 'bg-[rgba(var(--accent-rgb), 0.12)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
                             >
                                 Cover Remainder
                             </button>
                         </div>
-                        <div className="mt-3 text-sm text-[var(--text-secondary)] bg-[rgba(255,43,214,0.08)] p-3 rounded border border-[rgba(255,43,214,0.18)]">
+                        <div className="mt-3 text-sm text-[var(--text-secondary)] bg-[rgba(var(--accent-rgb), 0.08)] p-3 rounded border border-[rgba(var(--accent-rgb), 0.18)]">
                             Required to raise: <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span>
                         </div>
                     </div>
@@ -230,7 +230,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                 onChange={e => setProofRequired(e.target.checked)}
                                 className="peer sr-only"
                             />
-                            <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] flex items-center justify-center transition-all group-hover:bg-[rgba(255,255,255,0.06)] peer-checked:bg-[rgba(255,43,214,0.22)] peer-checked:border-[rgba(255,43,214,0.45)] peer-focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] peer-checked:[&>span]:opacity-100 peer-checked:[&>span]:scale-100">
+                            <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] flex items-center justify-center transition-all group-hover:bg-[rgba(255,255,255,0.06)] peer-checked:bg-[rgba(var(--accent-rgb), 0.22)] peer-checked:border-[rgba(var(--accent-rgb), 0.45)] peer-focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22)] peer-checked:[&>span]:opacity-100 peer-checked:[&>span]:scale-100">
                                 <span className="text-[var(--text-primary)] opacity-0 scale-75 transition-all">
                                     <Check size={14} strokeWidth={3} />
                                 </span>
@@ -246,7 +246,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                 onChange={e => setMilestones(e.target.checked)}
                                 className="peer sr-only"
                             />
-                            <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] flex items-center justify-center transition-all group-hover:bg-[rgba(255,255,255,0.06)] peer-checked:bg-[rgba(255,43,214,0.22)] peer-checked:border-[rgba(255,43,214,0.45)] peer-focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22)] peer-checked:[&>span]:opacity-100 peer-checked:[&>span]:scale-100">
+                            <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] flex items-center justify-center transition-all group-hover:bg-[rgba(255,255,255,0.06)] peer-checked:bg-[rgba(var(--accent-rgb), 0.22)] peer-checked:border-[rgba(var(--accent-rgb), 0.45)] peer-focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22)] peer-checked:[&>span]:opacity-100 peer-checked:[&>span]:scale-100">
                                 <span className="text-[var(--text-primary)] opacity-0 scale-75 transition-all">
                                     <Check size={14} strokeWidth={3} />
                                 </span>

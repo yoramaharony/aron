@@ -140,7 +140,7 @@ export default function AdminDonorsPage() {
         {error ? <div className="text-sm text-red-300">{error}</div> : null}
 
         {createOpen ? (
-          <div className="rounded-xl border border-[rgba(255,43,214,0.22)] bg-[rgba(255,43,214,0.08)] p-4">
+          <div className="rounded-xl border border-[rgba(var(--accent-rgb), 0.22)] bg-[rgba(var(--accent-rgb), 0.08)] p-4">
             <div className="text-sm font-semibold text-[var(--text-primary)]">Create donor</div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3">
               <input
@@ -213,7 +213,7 @@ export default function AdminDonorsPage() {
                           disabled
                         </span>
                       ) : (
-                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]">
+                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb), 0.25)] bg-[rgba(var(--accent-rgb), 0.10)] text-[var(--text-primary)]">
                           active
                         </span>
                       )}
@@ -254,7 +254,7 @@ export default function AdminDonorsPage() {
                         disabled
                       </span>
                     ) : (
-                      <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]">
+                      <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb), 0.25)] bg-[rgba(var(--accent-rgb), 0.10)] text-[var(--text-primary)]">
                         active
                       </span>
                     )}

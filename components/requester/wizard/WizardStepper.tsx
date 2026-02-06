@@ -26,9 +26,9 @@ export function WizardStepper({ steps, currentStep }: WizardStepperProps) {
                             {/* Circle */}
                             <div
                                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${isCompleted
-                                        ? 'bg-[var(--color-gold)] text-[#120014] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] scale-100'
+                                        ? 'bg-[var(--color-gold)] text-[#120014] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] scale-100'
                                         : isCurrent
-                                            ? 'bg-[rgba(255,43,214,0.10)] border border-[rgba(255,43,214,0.45)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(255,43,214,0.25)] scale-110'
+                                            ? 'bg-[rgba(var(--accent-rgb), 0.10)] border border-[rgba(var(--accent-rgb), 0.45)] text-[var(--text-primary)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] scale-110'
                                             : 'bg-[var(--bg-surface)] text-[var(--text-tertiary)] border border-[var(--border-subtle)]'
                                     }`}
                             >

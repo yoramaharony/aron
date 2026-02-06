@@ -177,7 +177,7 @@ export default function DonorFeed() {
                                     onClick={() => loadDetail(r.key)}
                                     className={[
                                         'w-full text-left p-5 transition-colors',
-                                        selectedKey === r.key ? 'bg-[rgba(255,43,214,0.10)]' : 'hover:bg-[rgba(255,255,255,0.04)]',
+                                        selectedKey === r.key ? 'bg-[rgba(var(--accent-rgb), 0.10)]' : 'hover:bg-[rgba(255,255,255,0.04)]',
                                     ].join(' ')}
                                 >
                                     <div className="flex items-start justify-between gap-3">
@@ -293,7 +293,7 @@ export default function DonorFeed() {
                                         className={[
                                             'px-3 py-2 rounded-lg text-sm font-semibold border transition-colors',
                                             detailTab === 'promise'
-                                                ? 'bg-[rgba(255,43,214,0.14)] border-[rgba(255,43,214,0.28)] text-[var(--text-primary)]'
+                                                ? 'bg-[rgba(var(--accent-rgb), 0.14)] border-[rgba(var(--accent-rgb), 0.28)] text-[var(--text-primary)]'
                                                 : 'bg-[rgba(255,255,255,0.03)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
                                         ].join(' ')}
                                     >
@@ -305,7 +305,7 @@ export default function DonorFeed() {
                                         className={[
                                             'px-3 py-2 rounded-lg text-sm font-semibold border transition-colors',
                                             detailTab === 'diligence'
-                                                ? 'bg-[rgba(255,43,214,0.14)] border-[rgba(255,43,214,0.28)] text-[var(--text-primary)]'
+                                                ? 'bg-[rgba(var(--accent-rgb), 0.14)] border-[rgba(var(--accent-rgb), 0.28)] text-[var(--text-primary)]'
                                                 : 'bg-[rgba(255,255,255,0.03)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]',
                                         ].join(' ')}
                                     >
@@ -398,7 +398,7 @@ export default function DonorFeed() {
                             ) : null}
 
                             {detail.opportunity.details ? (
-                                <div className="rounded-2xl border border-[rgba(255,43,214,0.18)] bg-[rgba(255,43,214,0.06)] p-5">
+                                <div className="rounded-2xl border border-[rgba(var(--accent-rgb), 0.18)] bg-[rgba(var(--accent-rgb), 0.06)] p-5">
                                     <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-3">
                                         More info received
                                     </div>
