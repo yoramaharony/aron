@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Inbox, Briefcase, LayoutGrid, Radio, KeyRound, Users, Building2, Sparkles } from 'lucide-react';
+import { Home, Inbox, Briefcase, LayoutGrid, Radio, KeyRound, Users, Building2, Sparkles, Mail } from 'lucide-react';
 
 interface MobileNavProps {
     role: 'donor' | 'requestor' | 'admin';
@@ -28,6 +28,7 @@ export default function MobileNav({ role }: MobileNavProps) {
         { name: 'Invites', href: '/admin/invites', icon: KeyRound },
         { name: 'Donors', href: '/admin/donors', icon: Users },
         { name: 'Orgs', href: '/admin/organizations', icon: Building2 },
+        { name: 'Email', href: '/admin/email-test', icon: Mail },
         { name: 'Demo', href: '/admin/happy-path', icon: Sparkles },
     ];
 
