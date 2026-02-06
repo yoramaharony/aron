@@ -2,6 +2,8 @@ import 'dotenv/config';
 import { createClient } from '@libsql/client';
 import bcrypt from 'bcryptjs';
 import { randomUUID } from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
 function requiredEnv(name) {
   const v = process.env[name];
@@ -10,8 +12,18 @@ function requiredEnv(name) {
 }
 
 async function main() {
-  const url = process.env.TURSO_DATABASE_URL ?? 'file:./yesod.db';
-  const authToken = process.env.TURSO_AUTH_TOKEN || undefined;
+  const explicit = process.env.TURSO_DATABASE_URL?.trim();
+  const cwd = process.cwd();
+  const here = path.resolve(cwd, 'yesod.db');
+  const nested = path.resolve(cwd, 'yesod-platform', 'yesod.db');
+  const url = explicit
+    ? explicit
+    : fs.existsSync(here)
+      ? `file:${here}`
+      : fs.existsSync(nested)
+        ? `file:${nested}`
+        : `file:${here}`;
+  const authToken = process.env.TURSO_AUTH_TOKEN?.trim() || undefined;
   const client = createClient({ url, authToken });
 
   const name = process.env.ADMIN_NAME || 'Admin';

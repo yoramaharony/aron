@@ -1,7 +1,20 @@
 import { createClient } from '@libsql/client';
+import fs from 'fs';
+import path from 'path';
 
-const url = process.env.TURSO_DATABASE_URL ?? 'file:./yesod.db';
-const authToken = process.env.TURSO_AUTH_TOKEN || undefined;
+function getDbUrl() {
+  const explicit = process.env.TURSO_DATABASE_URL?.trim();
+  if (explicit) return explicit;
+  const cwd = process.cwd();
+  const here = path.resolve(cwd, 'yesod.db');
+  if (fs.existsSync(here)) return `file:${here}`;
+  const nested = path.resolve(cwd, 'yesod-platform', 'yesod.db');
+  if (fs.existsSync(nested)) return `file:${nested}`;
+  return `file:${here}`;
+}
+
+const url = getDbUrl();
+const authToken = process.env.TURSO_AUTH_TOKEN?.trim() || undefined;
 
 const client = createClient({ url, authToken });
 
