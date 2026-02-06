@@ -175,7 +175,7 @@ export default function AdminInvitesPage() {
                   'rounded-2xl border p-4 md:p-6 text-left transition-colors',
                   'bg-[rgba(255,255,255,0.02)]',
                   deliveryMethod === 'email'
-                    ? 'border-[rgba(212,175,55,0.75)] shadow-[0_0_0_1px_rgba(212,175,55,0.35),0_18px_60px_-45px_rgba(212,175,55,0.35)]'
+                    ? 'border-[rgba(255,43,214,0.65)] shadow-[0_0_0_1px_rgba(255,43,214,0.30),0_18px_60px_-45px_rgba(255,43,214,0.35)]'
                     : 'border-[var(--border-subtle)] hover:border-[rgba(255,255,255,0.16)]',
                 ].join(' ')}
                 onClick={() => setDeliveryMethod('email')}
@@ -186,7 +186,7 @@ export default function AdminInvitesPage() {
                       className={[
                         'h-10 w-10 rounded-xl flex items-center justify-center border',
                         deliveryMethod === 'email'
-                          ? 'bg-[rgba(212,175,55,0.14)] border-[rgba(212,175,55,0.35)] text-[var(--color-gold)]'
+                          ? 'bg-[rgba(255,43,214,0.14)] border-[rgba(255,43,214,0.35)] text-[rgba(255,43,214,0.95)]'
                           : 'bg-[rgba(255,255,255,0.03)] border-[var(--border-subtle)] text-[var(--text-secondary)]',
                       ].join(' ')}
                     >
@@ -196,11 +196,6 @@ export default function AdminInvitesPage() {
                       <div className="text-lg font-semibold">Email Invite</div>
                       <div className="text-sm text-[var(--text-tertiary)]">Send immediately</div>
                     </div>
-                  </div>
-                  <div className={deliveryMethod === 'email' ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'}>
-                    <span className="inline-block h-4 w-4 rounded-full border border-current relative">
-                      {deliveryMethod === 'email' ? <span className="absolute inset-1 rounded-full bg-current" /> : null}
-                    </span>
                   </div>
                 </div>
               </button>
@@ -213,7 +208,7 @@ export default function AdminInvitesPage() {
                   'rounded-2xl border p-4 md:p-6 text-left transition-colors',
                   'bg-[rgba(255,255,255,0.02)]',
                   deliveryMethod === 'copy'
-                    ? 'border-[rgba(212,175,55,0.75)] shadow-[0_0_0_1px_rgba(212,175,55,0.35),0_18px_60px_-45px_rgba(212,175,55,0.35)]'
+                    ? 'border-[rgba(255,43,214,0.65)] shadow-[0_0_0_1px_rgba(255,43,214,0.30),0_18px_60px_-45px_rgba(255,43,214,0.35)]'
                     : 'border-[var(--border-subtle)] hover:border-[rgba(255,255,255,0.16)]',
                 ].join(' ')}
                 onClick={() => setDeliveryMethod('copy')}
@@ -224,7 +219,7 @@ export default function AdminInvitesPage() {
                       className={[
                         'h-10 w-10 rounded-xl flex items-center justify-center border',
                         deliveryMethod === 'copy'
-                          ? 'bg-[rgba(212,175,55,0.14)] border-[rgba(212,175,55,0.35)] text-[var(--color-gold)]'
+                          ? 'bg-[rgba(255,43,214,0.14)] border-[rgba(255,43,214,0.35)] text-[rgba(255,43,214,0.95)]'
                           : 'bg-[rgba(255,255,255,0.03)] border-[var(--border-subtle)] text-[var(--text-secondary)]',
                       ].join(' ')}
                     >
@@ -235,17 +230,12 @@ export default function AdminInvitesPage() {
                       <div className="text-sm text-[var(--text-tertiary)]">Share manually</div>
                     </div>
                   </div>
-                  <div className={deliveryMethod === 'copy' ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'}>
-                    <span className="inline-block h-4 w-4 rounded-full border border-current relative">
-                      {deliveryMethod === 'copy' ? <span className="absolute inset-1 rounded-full bg-current" /> : null}
-                    </span>
-                  </div>
                 </div>
               </button>
             </div>
 
-            <div className="mt-3 rounded-xl border border-[rgba(212,175,55,0.22)] bg-[rgba(212,175,55,0.08)] p-3 text-sm text-[var(--text-secondary)] flex items-start gap-2">
-              <Sparkles className="mt-0.5 text-[var(--color-gold)]" size={16} />
+            <div className="mt-3 rounded-xl border border-[rgba(255,43,214,0.22)] bg-[rgba(255,43,214,0.08)] p-3 text-sm text-[var(--text-secondary)] flex items-start gap-2">
+              <Sparkles className="mt-0.5 text-[rgba(255,43,214,0.95)]" size={16} />
               <div>
                 {deliveryMethod === 'email'
                   ? 'When the code is created, an invite email is sent immediately (via Mailgun). You can still copy/share the link after creation.'
