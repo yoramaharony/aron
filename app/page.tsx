@@ -84,23 +84,22 @@ export default function LandingPage() {
           </span>
         </div>
 
-        <Link href="/auth/login">
-          <Button
-            variant="ghost"
-            className="text-sm font-semibold px-6 rounded-sm text-[var(--text-primary)]
-              bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]
-              border border-[rgba(255,255,255,0.14)]
-              shadow-[0_18px_60px_-40px_rgba(0,0,0,0.75)]
-              hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.12),rgba(255,255,255,0.02))]
-              hover:border-[rgba(255,43,214,0.45)]
-              hover:shadow-[0_22px_70px_-42px_rgba(255,43,214,0.35)]
-              active:translate-y-[1px]
-              focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22),0_18px_60px_-40px_rgba(0,0,0,0.75)]
-              transition-[background,border-color,box-shadow,transform] duration-300"
-          >
-            Member Login
-          </Button>
-        </Link>
+        <Button
+          asChild
+          variant="ghost"
+          className="text-sm font-semibold px-6 rounded-sm text-[var(--text-primary)]
+            bg-[linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))]
+            border border-[rgba(255,255,255,0.14)]
+            shadow-[0_18px_60px_-40px_rgba(0,0,0,0.75)]
+            hover:bg-[linear-gradient(180deg,rgba(255,43,214,0.12),rgba(255,255,255,0.02))]
+            hover:border-[rgba(255,43,214,0.45)]
+            hover:shadow-[0_22px_70px_-42px_rgba(255,43,214,0.35)]
+            active:translate-y-[1px]
+            focus-visible:shadow-[0_0_0_3px_rgba(255,43,214,0.22),0_18px_60px_-40px_rgba(0,0,0,0.75)]
+            transition-[background,border-color,box-shadow,transform] duration-300"
+        >
+          <Link href="/auth/login">Member Login</Link>
+        </Button>
       </header>
 
       <main className="flex-1">
@@ -429,11 +428,16 @@ export default function LandingPage() {
             <p className="text-sm text-[var(--text-secondary)] mb-4">
               For demo purposes: Login to the Grant Inquiry Portal to submit a request.
             </p>
-            <Link href="/requester">
-              <Button variant="outline" size="sm" className="w-full border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-white transition-colors">
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="w-full border-[var(--color-gold)] text-[var(--color-gold)] hover:bg-[var(--color-gold)] hover:text-white transition-colors"
+            >
+              <Link href="/requester">
                 Access Requester Portal <ArrowRight size={14} className="ml-2" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </section>
       </main>

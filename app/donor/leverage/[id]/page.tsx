@@ -118,9 +118,9 @@ export default function LeverageFlow({ params }: { params: { id: string } }) {
                             <div><strong>Status:</strong> <span className="text-[var(--accent-gold)]">PENDING APPROVAL</span></div>
                         </div>
 
-                        <Link href="/donor">
-                            <Button variant="outline" className="w-full">Return to Opportunities</Button>
-                        </Link>
+                        <Button asChild variant="outline" className="w-full">
+                            <Link href="/donor">Return to Opportunities</Link>
+                        </Button>
                     </div>
                 )}
             </Card>

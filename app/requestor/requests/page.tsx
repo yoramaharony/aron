@@ -36,18 +36,18 @@ export default function MyRequestsPage() {
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">My Requests</h1>
                     <p className="text-secondary">Manage your active and drafted funding opportunities.</p>
                 </div>
-                <Link href="/requestor">
-                    <Button leftIcon={<PlusCircle size={16} />}>Create New</Button>
-                </Link>
+                <Button asChild leftIcon={<PlusCircle size={16} />}>
+                    <Link href="/requestor">Create New</Link>
+                </Button>
             </header>
 
             {requests.length === 0 ? (
                 <Card className="text-center py-16">
                     <h3 className="text-lg font-medium mb-2">No Requests Yet</h3>
                     <p className="text-secondary mb-6">Start your first funding request to get noticed by our donor network.</p>
-                    <Link href="/requestor">
-                        <Button variant="gold">Create Request</Button>
-                    </Link>
+                    <Button asChild variant="gold">
+                        <Link href="/requestor">Create Request</Link>
+                    </Button>
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 gap-4">

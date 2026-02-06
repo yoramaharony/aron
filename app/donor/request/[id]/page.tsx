@@ -92,14 +92,14 @@ export default function RequestDetail({ params }: { params: { id: string } }) {
                                 <span>${Math.min(100000, req.fundingGap).toLocaleString()}+</span>
                             </Button>
 
-                            <Link href={`/donor/leverage/${req.id}`}>
-                                <Button variant="gold" className="w-full justify-between group" size="lg">
+                            <Button asChild variant="gold" className="w-full justify-between group" size="lg">
+                                <Link href={`/donor/leverage/${req.id}`}>
                                     <div className="flex items-center">
                                         <Zap className="w-5 h-5 mr-2 text-black" />
                                         <span>Activate Leverage</span>
                                     </div>
-                                </Button>
-                            </Link>
+                                </Link>
+                            </Button>
                             <p className="text-xs text-[var(--text-tertiary)] text-center">
                                 Trigger a 2x match or challenge grant
                             </p>
