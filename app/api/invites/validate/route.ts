@@ -35,6 +35,7 @@ export async function POST(request: Request) {
     valid: true,
     intendedRole: invite.intendedRole,
     expiresAt: invite.expiresAt,
+    recipientEmail: invite.recipientEmail ?? null,
   });
 }
 

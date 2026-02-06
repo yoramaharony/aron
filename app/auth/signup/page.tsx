@@ -43,6 +43,10 @@ export default function SignupPage() {
                         setRole(r);
                         setRoleLock(r);
                     }
+                    const invitedEmail = typeof j?.recipientEmail === 'string' ? j.recipientEmail : '';
+                    if (invitedEmail) {
+                        setFormData((prev) => (prev.email ? prev : { ...prev, email: invitedEmail }));
+                    }
                 })
                 .catch(() => {});
         }
