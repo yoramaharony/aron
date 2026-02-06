@@ -168,7 +168,7 @@ export default function LandingClient() {
                 ) : null}
                 <div className="flex justify-between items-center mt-2 px-1">
                   <span className="text-xs text-[var(--text-secondary)] italic">Access is limited.</span>
-                  <Link href="#" className="text-xs font-medium text-[var(--text-secondary)] underline decoration-[var(--color-gold)] underline-offset-4 hover:text-[var(--text-primary)]">
+                  <Link href="/request-invitation" className="text-xs font-medium text-[var(--text-secondary)] underline decoration-[var(--color-gold)] underline-offset-4 hover:text-[var(--text-primary)]">
                     Request an invitation
                   </Link>
                 </div>
@@ -387,7 +387,7 @@ export default function LandingClient() {
               </Button>
             </div>
             <div className="text-center mt-6">
-              <Link href="#" className="text-sm font-medium text-[var(--color-gold)] hover:text-[var(--text-primary)] transition-colors">Request an invitation</Link>
+              <Link href="/request-invitation" className="text-sm font-medium text-[var(--color-gold)] hover:text-[var(--text-primary)] transition-colors">Request an invitation</Link>
             </div>
           </div>
         </section>
@@ -455,7 +455,11 @@ export default function LandingClient() {
           </div>
 
           <p className="text-[var(--text-secondary)] mb-16">
-            Or <a href="#" className="text-[var(--text-primary)] font-medium underline decoration-[var(--color-gold)] underline-offset-4">request an invitation</a>. Our concierge reviews referrals discreetly.
+            Or{' '}
+            <Link href="/request-invitation" className="text-[var(--text-primary)] font-medium underline decoration-[var(--color-gold)] underline-offset-4">
+              request an invitation
+            </Link>
+            . Our concierge reviews referrals discreetly.
           </p>
 
           <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-[0.25em] max-w-lg mx-auto leading-loose">

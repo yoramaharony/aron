@@ -52,6 +52,18 @@ export const inviteCodes = sqliteTable('invite_codes', {
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
+// Donor invitation requests (public, donor-only)
+export const invitationRequests = sqliteTable('invitation_requests', {
+    id: text('id').primaryKey(), // UUID
+    name: text('name').notNull(),
+    email: text('email').notNull(),
+    message: text('message'),
+    status: text('status').notNull().default('new'), // new | contacted | approved | ignored
+    userAgent: text('user_agent'),
+    ip: text('ip'),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Email templates (DB-backed so admin can edit copy without code changes)
 export const emailTemplates = sqliteTable('email_templates', {
     key: text('key').primaryKey(), // e.g. 'invite_donor', 'invite_requestor', 'forgot_password'

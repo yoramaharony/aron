@@ -24,6 +24,22 @@ async function main() {
     `CREATE INDEX IF NOT EXISTS users_email_idx ON users(email);`,
 
     `
+    CREATE TABLE IF NOT EXISTS invitation_requests (
+      id TEXT PRIMARY KEY NOT NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      message TEXT,
+      status TEXT NOT NULL DEFAULT 'new',
+      user_agent TEXT,
+      ip TEXT,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS invitation_requests_email_idx ON invitation_requests(email);`,
+    `CREATE INDEX IF NOT EXISTS invitation_requests_status_idx ON invitation_requests(status);`,
+    `CREATE INDEX IF NOT EXISTS invitation_requests_created_at_idx ON invitation_requests(created_at);`,
+
+    `
     CREATE TABLE IF NOT EXISTS requests (
       id TEXT PRIMARY KEY NOT NULL,
       title TEXT NOT NULL,

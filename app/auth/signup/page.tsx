@@ -9,7 +9,8 @@ import { UserPlus } from 'lucide-react';
 
 export default function SignupPage() {
     const router = useRouter();
-    const [role, setRole] = useState<'donor' | 'requestor'>('requestor');
+    // Default to donor: orgs/requestors must come via an invite (or explicit role= requestor link).
+    const [role, setRole] = useState<'donor' | 'requestor'>('donor');
     const [roleLock, setRoleLock] = useState<'donor' | 'requestor' | null>(null);
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
     const [inviteCode, setInviteCode] = useState('');
@@ -145,7 +146,12 @@ export default function SignupPage() {
                         <div className="mt-1 text-xs text-[var(--text-tertiary)]">
                             {role === 'requestor'
                                 ? 'Nonprofits require a one-time invite code.'
-                                : 'Donors require an invite code (except the very first donor in a fresh dev DB).'}
+                                : (
+                                  <span>
+                                    Donors require an invite code (except the very first donor in a fresh dev DB). If you don’t have one,{' '}
+                                    <Link href="/request-invitation" className="text-gold hover:underline">request an invitation</Link>.
+                                  </span>
+                                )}
                         </div>
                     </div>
                     <div>
