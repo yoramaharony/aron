@@ -29,6 +29,7 @@ export default function DonorInvitesPage() {
   const [maxUses, setMaxUses] = useState<number>(1);
   const [note, setNote] = useState<string>('');
   const [recipientEmail, setRecipientEmail] = useState<string>('');
+  const [deliveryMethod, setDeliveryMethod] = useState<'copy' | 'email'>('copy');
 
   const refresh = async () => {
     const res = await fetch('/api/invites');
@@ -46,6 +47,9 @@ export default function DonorInvitesPage() {
     setCreatedCode(null);
     setCreatedEmailStatus(null);
     try {
+      if (deliveryMethod === 'email' && !recipientEmail.trim()) {
+        throw new Error('Recipient email is required when "Email invite" is selected.');
+      }
       const res = await fetch('/api/invites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -55,7 +59,8 @@ export default function DonorInvitesPage() {
           expiresInDays,
           maxUses,
           note: note.trim() ? note.trim() : null,
-          recipientEmail: recipientEmail.trim() ? recipientEmail.trim() : null,
+          recipientEmail:
+            deliveryMethod === 'email' && recipientEmail.trim() ? recipientEmail.trim() : null,
         }),
       });
       const data = await res.json();
@@ -143,7 +148,79 @@ export default function DonorInvitesPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
+            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">Delivery</div>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className={[
+                  'rounded-lg border px-3 py-2 text-sm text-left transition-colors',
+                  deliveryMethod === 'email'
+                    ? 'border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]'
+                    : 'border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
+                ].join(' ')}
+                onClick={() => setDeliveryMethod('email')}
+              >
+                <div className="font-medium">Email invite</div>
+                <div className="text-[11px] text-[var(--text-tertiary)]">Send immediately</div>
+              </button>
+              <button
+                type="button"
+                className={[
+                  'rounded-lg border px-3 py-2 text-sm text-left transition-colors',
+                  deliveryMethod === 'copy'
+                    ? 'border-[rgba(255,43,214,0.25)] bg-[rgba(255,43,214,0.10)] text-[var(--text-primary)]'
+                    : 'border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]',
+                ].join(' ')}
+                onClick={() => setDeliveryMethod('copy')}
+              >
+                <div className="font-medium">Copy link</div>
+                <div className="text-[11px] text-[var(--text-tertiary)]">Share manually</div>
+              </button>
+            </div>
+            <div className="mt-2 text-xs text-[var(--text-tertiary)]">
+              If you choose email, you can still copy/share the link after creating the code.
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">Note (optional)</div>
+          <input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            className="input-field"
+            placeholder={
+              intendedRole === 'requestor'
+                ? 'e.g. "Nonprofit: Bikur Cholim (pilot)"'
+                : 'e.g. "Donor: Lakewood chevra referral"'
+            }
+          />
+        </div>
+
+        {deliveryMethod === 'email' ? (
+          <div className="space-y-2">
+            <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+              Recipient email
+            </div>
+            <input
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+              className="input-field"
+              placeholder="e.g. someone@example.com"
+              required
+            />
+            <div className="text-xs text-[var(--text-tertiary)]">
+              When the code is created, an invite email is sent immediately (via Mailgun).
+            </div>
+          </div>
+        ) : null}
+
+        <details className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
+          <summary className="cursor-pointer select-none text-sm text-[var(--text-secondary)]">
+            Advanced
+          </summary>
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
                 Expires (days)
@@ -174,36 +251,7 @@ export default function DonorInvitesPage() {
               <div className="text-xs text-[var(--text-tertiary)]">Usually 1 (one-time)</div>
             </div>
           </div>
-        </div>
-
-        <div className="space-y-2">
-          <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">Note (optional)</div>
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            className="input-field"
-            placeholder={
-              intendedRole === 'requestor'
-                ? 'e.g. "Nonprofit: Bikur Cholim (pilot)"'
-                : 'e.g. "Donor: Lakewood chevra referral"'
-            }
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-            Recipient email (optional)
-          </div>
-          <input
-            value={recipientEmail}
-            onChange={(e) => setRecipientEmail(e.target.value)}
-            className="input-field"
-            placeholder="e.g. someone@example.com"
-          />
-          <div className="text-xs text-[var(--text-tertiary)]">
-            If provided, we will email the invite link via Mailgun (B&quot;H included).
-          </div>
-        </div>
+        </details>
 
         {createdCode ? (
           <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--bg-surface)] p-4">

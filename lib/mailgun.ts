@@ -2,12 +2,14 @@ type MailgunConfig = {
   apiKey: string;
   domain: string;
   from: string;
+  baseUrl: string;
 };
 
 function getMailgunConfig(): MailgunConfig {
   const apiKey = process.env.MAILGUN_API_KEY || '';
   const domain = process.env.MAILGUN_DOMAIN || '';
   const from = process.env.MAILGUN_FROM || '';
+  const baseUrl = (process.env.MAILGUN_API_BASE_URL || 'https://api.mailgun.net').replace(/\/+$/, '');
 
   const missing: string[] = [];
   if (!apiKey) missing.push('MAILGUN_API_KEY');
@@ -21,14 +23,16 @@ function getMailgunConfig(): MailgunConfig {
       'Example:\n' +
       'MAILGUN_API_KEY=key-...\n' +
       'MAILGUN_DOMAIN=mg.yourdomain.com\n' +
-      'MAILGUN_FROM="Aron <no-reply@mg.yourdomain.com>"';
+      'MAILGUN_FROM="Aron <no-reply@mg.yourdomain.com>"\n' +
+      '# If your Mailgun account is EU region:\n' +
+      'MAILGUN_API_BASE_URL=https://api.eu.mailgun.net';
     const err = new Error(`${msg}\n${hint}`);
     // @ts-expect-error attach hint for callers
     err.hint = hint;
     throw err;
   }
 
-  return { apiKey, domain, from };
+  return { apiKey, domain, from, baseUrl };
 }
 
 export async function sendMailgunEmail(input: {
@@ -40,7 +44,7 @@ export async function sendMailgunEmail(input: {
 }): Promise<{ id?: string; message?: string }> {
   const cfg = getMailgunConfig();
 
-  const url = `https://api.mailgun.net/v3/${encodeURIComponent(cfg.domain)}/messages`;
+  const url = `${cfg.baseUrl}/v3/${encodeURIComponent(cfg.domain)}/messages`;
   const auth = Buffer.from(`api:${cfg.apiKey}`).toString('base64');
 
   const params = new URLSearchParams();
