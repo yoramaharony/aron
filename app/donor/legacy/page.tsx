@@ -167,11 +167,25 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
 
                     {/* Demo Prompt Helper */}
                     <div className="absolute -top-12 left-0 right-0 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                        <button onClick={() => setInput("Saving children, quiet giving, Israel + emerging markets, $3M over 3 years.")} className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-white transition-colors">
-                            Demo Script: "Saving children..."
+                        <button
+                            onClick={() =>
+                                setInput(
+                                    "Hachnasas Kallah (Chesed): discreet matching + wedding essentials in Yerushalayim and Bnei Brak. Target $2M over 24 months; measure families supported and cost per kallah."
+                                )
+                            }
+                            className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-black transition-colors"
+                        >
+                            Demo Script: "Hachnasas Kallah..."
                         </button>
-                        <button onClick={() => setInput("Clean water infrastructure in Africa, focus on sustainability.")} className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-white transition-colors">
-                            Demo Script: "Clean Water..."
+                        <button
+                            onClick={() =>
+                                setInput(
+                                    "Yeshiva ketana growth fund: sponsor dorm beds, meals, and rebbeim stipends. Focus: Lakewood + Monsey. Budget $250K this year; success = 120 bochurim supported with stable monthly overhead."
+                                )
+                            }
+                            className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-black transition-colors"
+                        >
+                            Demo Script: "Yeshiva fund..."
                         </button>
                     </div>
                 </div>
