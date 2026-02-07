@@ -16,8 +16,10 @@ export default function ImpactVisionStudioPage() {
             </div>
 
             {/* RIGHT: Dynamic Canvas (60%) */}
-            <div className="w-[60%] bg-[var(--bg-surface)] p-8 overflow-y-auto">
-                <LegacyCanvas refreshKey={refreshKey} />
+            <div className="w-[60%] p-6 md:p-8 overflow-y-auto bg-[var(--bg-app)]">
+                <div className="impact-vision-pane min-h-full">
+                    <LegacyCanvas refreshKey={refreshKey} />
+                </div>
             </div>
         </div>
     );
@@ -253,8 +255,8 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                 </div>
             </div>
 
-            {/* Visuals Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Visuals (stacked: 1 column, match Figma) */}
+            <div className="grid grid-cols-1 gap-6">
 
                 {/* 1. Impact Forecast */}
                 <Card className="p-6">
