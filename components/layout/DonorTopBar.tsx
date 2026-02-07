@@ -51,7 +51,7 @@ export function DonorTopBar() {
         'px-4 py-2',
         'md:px-8 md:py-2',
         'border-b border-[rgba(255,255,255,0.08)]',
-        'bg-[rgba(10,10,14,0.78)]',
+        'textured-background',
       ].join(' ')}
     >
       <div className="w-full flex items-center justify-between gap-4">
@@ -59,14 +59,14 @@ export function DonorTopBar() {
           <button
             type="button"
             onClick={toggleSidebar}
-            className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+            className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-lg icon-tile-gold"
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {sidebarCollapsed ? (
-              <PanelLeftOpen size={18} className="text-[var(--text-secondary)]" />
+              <PanelLeftOpen size={18} className="text-[var(--color-gold)]" />
             ) : (
-              <PanelLeftClose size={18} className="text-[var(--text-secondary)]" />
+              <PanelLeftClose size={18} className="text-[var(--color-gold)]" />
             )}
           </button>
 

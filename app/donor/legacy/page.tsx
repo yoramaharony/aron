@@ -97,32 +97,6 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
 
     return (
         <div className="flex flex-col h-full font-sans">
-            {/* Chat Header (match Figma Black Card) */}
-            <div className="px-6 py-5 border-b border-[rgba(var(--silver-rgb),0.15)] shadow-[0_2px_20px_rgba(0,0,0,0.5)] bg-[linear-gradient(135deg,#1A1A1A_0%,#0A0A0A_100%)] bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(255,255,255,0.05)_2px,rgba(255,255,255,0.05)_3px)]">
-                <div className="flex items-center justify-between relative z-10">
-                    <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-lg flex items-center justify-center relative bg-[linear-gradient(135deg,#2A2A2A_0%,#404040_100%)] border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_4px_20px_rgba(var(--accent-rgb),0.30),inset_0_1px_0_rgba(var(--accent-rgb),0.20)]">
-                            <span className="material-symbols-outlined text-[20px] text-[var(--color-gold)]">
-                                auto_awesome
-                            </span>
-                            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[#1A1A1A] bg-[linear-gradient(135deg,#D4AF37_0%,#E5C158_100%)] shadow-[0_0_6px_rgba(var(--accent-rgb),0.30)]" />
-                        </div>
-                        <div>
-                            <div className="text-lg font-light tracking-wide text-[var(--text-primary)]">Concierge AI</div>
-                            <div className="flex items-center gap-2 text-xs">
-                                <div className="w-2 h-2 rounded-full bg-[linear-gradient(135deg,#D4AF37_0%,#E5C158_100%)] shadow-[0_0_6px_rgba(var(--accent-rgb),0.30)]" />
-                                <span className="font-light text-[var(--text-secondary)]">Available 24/7</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[20px] text-[var(--color-gold)]">workspace_premium</span>
-                        <span className="text-sm font-light tracking-wide text-[var(--color-gold)]">Elite Access</span>
-                    </div>
-                </div>
-            </div>
-
             {/* Messages area (radial + subtle stripes, match Figma) */}
             <div
                 className="flex-1 overflow-y-auto p-6 space-y-6"

@@ -50,30 +50,30 @@ export function AdminTopBar() {
   })();
 
   return (
-    <div className="sticky top-0 z-50 px-4 py-2 md:px-8 md:py-2 border-b border-[rgba(255,255,255,0.08)] bg-[rgba(10,10,14,0.78)]">
+    <div className="sticky top-0 z-50 px-4 py-2 md:px-8 md:py-2 border-b border-[rgba(255,255,255,0.08)] textured-background">
       <div className="w-full flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <button
             type="button"
             onClick={() => setMobileNavOpen(true)}
-            className="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+            className="md:hidden inline-flex items-center justify-center w-10 h-10 rounded-lg icon-tile-gold"
             aria-label="Open menu"
             title="Menu"
           >
-            <Menu size={18} className="text-[var(--text-secondary)]" />
+            <Menu size={18} className="text-[var(--color-gold)]" />
           </button>
 
           <button
             type="button"
             onClick={toggleSidebar}
-            className="hidden md:inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+            className="hidden md:inline-flex items-center justify-center w-10 h-10 rounded-lg icon-tile-gold"
             aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {sidebarCollapsed ? (
-              <PanelLeftOpen size={18} className="text-[var(--text-secondary)]" />
+              <PanelLeftOpen size={18} className="text-[var(--color-gold)]" />
             ) : (
-              <PanelLeftClose size={18} className="text-[var(--text-secondary)]" />
+              <PanelLeftClose size={18} className="text-[var(--color-gold)]" />
             )}
           </button>
 
@@ -133,10 +133,10 @@ export function AdminTopBar() {
               <button
                 type="button"
                 onClick={() => setMobileNavOpen(false)}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-[rgba(255,255,255,0.12)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+                className="inline-flex items-center justify-center w-10 h-10 rounded-lg icon-tile-gold"
                 aria-label="Close menu"
               >
-                <X size={18} className="text-[var(--text-secondary)]" />
+                <X size={18} className="text-[var(--color-gold)]" />
               </button>
             </div>
 
