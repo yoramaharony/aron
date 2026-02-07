@@ -18,7 +18,7 @@ export default function ImpactVisionStudioPage() {
             </div>
 
             {/* RIGHT: Dynamic Canvas (60%) */}
-            <div className="impact-vision-pane-bg w-full md:w-[360px] lg:w-[420px] xl:w-[480px] shrink-0 p-5 md:p-6 overflow-y-auto">
+            <div className="impact-vision-pane-bg w-full md:w-[270px] lg:w-[315px] xl:w-[360px] shrink-0 p-5 md:p-6 overflow-y-auto">
                 <LegacyCanvas refreshKey={refreshKey} />
             </div>
         </div>
