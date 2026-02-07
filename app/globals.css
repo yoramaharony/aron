@@ -287,6 +287,10 @@ body {
   z-index: 0;
 }
 
+.card.no-halo::before {
+  display: none;
+}
+
 .card > * {
   position: relative;
   z-index: 1;

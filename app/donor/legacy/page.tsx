@@ -97,24 +97,49 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
 
     return (
         <div className="flex flex-col h-full font-sans">
-            <div className="p-6 border-b border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)]">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[var(--bg-app)] border border-[var(--color-gold)] flex items-center justify-center">
-                        <span className="material-symbols-outlined text-[18px] text-[var(--color-gold)]">
-                            auto_awesome
-                        </span>
-                    </div>
-                    <div>
-                        <h2 className="text-lg font-semibold text-[var(--text-primary)]">Concierge AI</h2>
-                        <div className="text-xs text-[var(--color-green)] flex items-center gap-1">
-                            <span className="w-2 h-2 rounded-full bg-[var(--color-green)] animate-pulse" />
-                            Online
+            {/* Chat Header (match Figma Black Card) */}
+            <div className="px-6 py-5 border-b border-[rgba(var(--silver-rgb),0.15)] shadow-[0_2px_20px_rgba(0,0,0,0.5)] bg-[linear-gradient(135deg,#1A1A1A_0%,#0A0A0A_100%)] bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(255,255,255,0.05)_2px,rgba(255,255,255,0.05)_3px)]">
+                <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-lg flex items-center justify-center relative bg-[linear-gradient(135deg,#2A2A2A_0%,#404040_100%)] border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_4px_20px_rgba(var(--accent-rgb),0.30),inset_0_1px_0_rgba(var(--accent-rgb),0.20)]">
+                            <span className="material-symbols-outlined text-[20px] text-[var(--color-gold)]">
+                                auto_awesome
+                            </span>
+                            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[#1A1A1A] bg-[linear-gradient(135deg,#D4AF37_0%,#E5C158_100%)] shadow-[0_0_6px_rgba(var(--accent-rgb),0.30)]" />
                         </div>
+                        <div>
+                            <div className="text-lg font-light tracking-wide text-[var(--text-primary)]">Concierge AI</div>
+                            <div className="flex items-center gap-2 text-xs">
+                                <div className="w-2 h-2 rounded-full bg-[linear-gradient(135deg,#D4AF37_0%,#E5C158_100%)] shadow-[0_0_6px_rgba(var(--accent-rgb),0.30)]" />
+                                <span className="font-light text-[var(--text-secondary)]">Available 24/7</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[20px] text-[var(--color-gold)]">workspace_premium</span>
+                        <span className="text-sm font-light tracking-wide text-[var(--color-gold)]">Elite Access</span>
                     </div>
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[var(--bg-app)]" ref={scrollRef}>
+            {/* Messages area (radial + subtle stripes, match Figma) */}
+            <div
+                className="flex-1 overflow-y-auto p-6 space-y-6"
+                style={{
+                    backgroundImage: `
+                        radial-gradient(ellipse at top right, #1A1A1A 0%, #0A0A0A 50%),
+                        repeating-linear-gradient(
+                          90deg,
+                          transparent,
+                          transparent 2px,
+                          rgba(255, 255, 255, 0.04) 2px,
+                          rgba(255, 255, 255, 0.04) 4px
+                        )
+                      `,
+                }}
+                ref={scrollRef}
+            >
                 {messages.map((msg, idx) => (
                     <motion.div
                         key={idx}
@@ -123,17 +148,47 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                         className={`flex gap-4 ${msg.role === 'donor' ? 'flex-row-reverse' : ''}`}
                     >
                         <div
-                            className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center ${msg.role === 'assistant'
-                                ? 'bg-[rgba(var(--accent-rgb), 0.08)] border border-[rgba(var(--accent-rgb), 0.35)] text-[var(--color-gold)]'
-                                : 'bg-[rgba(255,255,255,0.05)] border border-[var(--border-subtle)] text-[var(--text-secondary)]'
-                                }`}
+                            className={msg.role === 'assistant'
+                                ? 'w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center bg-[linear-gradient(135deg,#2A2A2A_0%,#404040_100%)] border border-[rgba(var(--silver-rgb),0.30)] shadow-[0_4px_20px_rgba(0,0,0,0.30),inset_0_1px_0_rgba(255,255,255,0.10)]'
+                                : 'w-12 h-12 rounded-xl flex-shrink-0 flex items-center justify-center bg-[linear-gradient(135deg,#2A2A2A_0%,#1A1A1A_100%)] border border-[rgba(var(--silver-rgb),0.15)] shadow-[0_4px_20px_rgba(0,0,0,0.20),inset_0_1px_0_rgba(255,255,255,0.06)]'
+                            }
                         >
-                            {msg.role === 'assistant' ? <Bot size={16} /> : <User size={16} />}
+                            {msg.role === 'assistant' ? (
+                                <Bot size={20} className="text-[rgba(var(--silver-rgb),0.95)]" />
+                            ) : (
+                                <User size={20} className="text-[var(--text-secondary)]" />
+                            )}
                         </div>
-                        <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${msg.role === 'assistant'
-                                ? 'bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-[var(--text-secondary)] rounded-tl-none'
-                                : 'bg-[rgba(var(--accent-rgb), 0.18)] border border-[rgba(var(--accent-rgb), 0.30)] text-[var(--text-primary)] rounded-tr-none'
-                            }`}>
+                        <div
+                            className={msg.role === 'assistant'
+                                ? 'flex-1 p-5 rounded-xl relative overflow-hidden border border-[rgba(var(--silver-rgb),0.15)] shadow-[0_4px_16px_rgba(0,0,0,0.30)] text-[var(--text-primary)] font-light leading-relaxed bg-[linear-gradient(135deg,#1A1A1A_0%,#2A2A2A_100%)]'
+                                : 'flex-1 p-5 rounded-xl relative overflow-hidden border border-[rgba(var(--accent-rgb),0.25)] shadow-[0_6px_18px_rgba(var(--accent-rgb),0.14)] text-[var(--text-primary)] font-light leading-relaxed bg-[linear-gradient(135deg,#2A2A2A_0%,#1A1A1A_100%)]'}
+                            style={{
+                                backgroundImage:
+                                    msg.role === 'assistant'
+                                        ? `
+                                          linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%),
+                                          repeating-linear-gradient(
+                                            -45deg,
+                                            transparent,
+                                            transparent 2px,
+                                            rgba(255, 255, 255, 0.04) 2px,
+                                            rgba(255, 255, 255, 0.04) 3px
+                                          )
+                                        `
+                                        : undefined,
+                                backgroundBlendMode: 'normal',
+                            }}
+                        >
+                            <div
+                                className="absolute top-0 right-0 w-32 h-32 opacity-[0.05] pointer-events-none"
+                                style={{
+                                    background:
+                                        msg.role === 'assistant'
+                                            ? 'radial-gradient(circle at top right, #C0C0C0 0%, transparent 70%)'
+                                            : 'radial-gradient(circle at top right, #D4AF37 0%, transparent 70%)',
+                                }}
+                            />
                             {msg.content}
                         </div>
                     </motion.div>
@@ -155,7 +210,8 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                 )}
             </div>
 
-            <div className="p-4 bg-[rgba(255,255,255,0.02)] border-t border-[var(--border-subtle)]">
+            {/* Input (match Figma) */}
+            <div className="p-6 border-t border-[rgba(var(--silver-rgb),0.15)] shadow-[0_-2px_20px_rgba(0,0,0,0.5)] bg-[linear-gradient(135deg,#1A1A1A_0%,#0A0A0A_100%)] bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(255,255,255,0.05)_2px,rgba(255,255,255,0.05)_3px)]">
                 <div className="relative">
                     <input
                         type="text"
@@ -163,14 +219,14 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                         placeholder="Describe your impact vision..."
-                        className="w-full pl-4 pr-12 py-4 bg-[rgba(255,255,255,0.03)] border border-[var(--border-strong)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
+                        className="w-full pl-5 pr-14 py-4 rounded-lg outline-none transition-all font-light bg-[linear-gradient(135deg,#2A2A2A_0%,#1A1A1A_100%)] border border-[rgba(var(--silver-rgb),0.15)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.30)] focus:border-[rgba(var(--accent-rgb),0.35)]"
                     />
                     <button
                         onClick={() => sendMessage()}
                         disabled={!input.trim() || isTyping}
-                        className="absolute right-2 top-2 p-2 bg-[rgba(var(--accent-rgb), 0.35)] border border-[rgba(var(--accent-rgb), 0.35)] text-[var(--text-primary)] rounded-lg hover:bg-[rgba(var(--accent-rgb), 0.45)] disabled:opacity-50 transition-colors"
+                        className="absolute right-2 top-2 px-6 py-3.5 rounded-lg transition-all hover:scale-105 disabled:opacity-50 bg-[linear-gradient(135deg,#2A2A2A_0%,#404040_100%)] text-[rgba(var(--silver-rgb),0.95)] border border-[rgba(var(--silver-rgb),0.30)] shadow-[0_6px_20px_rgba(0,0,0,0.30),inset_0_1px_0_rgba(255,255,255,0.10)]"
                     >
-                        <Send size={18} />
+                        <Send size={22} strokeWidth={1.5} />
                     </button>
 
                     {/* Demo Prompt Helper */}
@@ -235,7 +291,22 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
         <div className="w-full max-w-none mx-auto space-y-4 pb-16">
 
             {/* Header / Title (compact, match Figma proportions) */}
-            <Card className="p-5 border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_6px_20px_rgba(var(--accent-rgb),0.18)] bg-[linear-gradient(135deg,rgba(42,42,42,0.95),rgba(26,26,26,0.95))] relative overflow-hidden">
+            <Card
+                className="no-halo p-5 rounded-xl relative overflow-hidden border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_6px_20px_rgba(var(--accent-rgb),0.18),inset_0_1px_0_rgba(var(--accent-rgb),0.15)] bg-[linear-gradient(135deg,rgba(42,42,42,0.95),rgba(26,26,26,0.95))]"
+                style={{
+                    backgroundImage: `
+                      linear-gradient(135deg, rgba(42,42,42,0.95), rgba(26,26,26,0.95)),
+                      repeating-linear-gradient(
+                        -45deg,
+                        transparent,
+                        transparent 1.5px,
+                        rgba(212, 175, 55, 0.02) 1.5px,
+                        rgba(212, 175, 55, 0.02) 3px
+                      )
+                    `,
+                    backgroundBlendMode: 'normal',
+                }}
+            >
                 <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />
                 <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
@@ -275,50 +346,98 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
             <div className="grid grid-cols-1 gap-4">
 
                 {/* 1. Impact Forecast */}
-                <Card className="p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Globe size={16} className="text-[var(--color-gold)]" />
-                        <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-secondary)]">Impact Forecast</h3>
+                <Card
+                    className="no-halo p-6 rounded-xl relative overflow-hidden border border-[rgba(var(--silver-rgb),0.15)] shadow-[0_4px_16px_rgba(0,0,0,0.30)]"
+                    style={{
+                        backgroundImage: `
+                          linear-gradient(135deg, #1A1A1A 0%, #2A2A2A 100%),
+                          repeating-linear-gradient(
+                            90deg,
+                            transparent,
+                            transparent 1.5px,
+                            rgba(255, 255, 255, 0.05) 1.5px,
+                            rgba(255, 255, 255, 0.05) 2.5px
+                          )
+                        `,
+                        backgroundBlendMode: 'normal',
+                    }}
+                >
+                    <div className="flex items-center gap-2 mb-5 relative">
+                        <div className="p-1.5 rounded bg-[linear-gradient(135deg,#D4AF37_0%,#E5C158_100%)] shadow-[0_2px_8px_rgba(var(--accent-rgb),0.30)]">
+                            <Globe size={16} className="text-[#0A0A0A]" strokeWidth={2} />
+                        </div>
+                        <div className="text-xs tracking-[0.2em] font-light text-[var(--color-gold)]">IMPACT FORECAST</div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-6">
-                        <div>
-                            <div className="text-3xl font-semibold text-[var(--text-primary)] mb-1">
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                        <div className="p-4 rounded-lg relative overflow-hidden bg-[linear-gradient(135deg,#2A2A2A_0%,#404040_100%)] border border-[rgba(var(--accent-rgb),0.30)] shadow-[inset_0_1px_0_rgba(var(--accent-rgb),0.15)]">
+                            <div className="absolute top-0 right-0 w-16 h-16 opacity-[0.05]" style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />
+                            <div className="text-4xl mb-2 font-light relative text-[var(--color-gold)]">
                                 <CountUp end={vision?.pillars?.length ? 1200 + (vision.pillars.length * 900) : 2400} duration={2} />
                             </div>
-                            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-[0.2em]">Est. Lives Impacted</div>
+                            <div className="text-xs tracking-wide font-light text-[var(--text-secondary)]">EST. LIVES IMPACTED</div>
                         </div>
-                        <div>
-                            <div className="text-3xl font-semibold text-[var(--color-green)] mb-1">
+                        <div className="p-4 rounded-lg relative overflow-hidden bg-[linear-gradient(135deg,#2A2A2A_0%,#404040_100%)] border border-[rgba(var(--silver-rgb),0.15)] shadow-[inset_0_1px_0_rgba(var(--silver-rgb),0.15)]">
+                            <div className="absolute top-0 right-0 w-16 h-16 opacity-[0.05]" style={{ background: 'radial-gradient(circle, #C0C0C0 0%, transparent 70%)' }} />
+                            <div className="text-4xl mb-2 font-light relative text-[rgba(var(--silver-rgb),0.95)]">
                                 {vision?.pillars?.[0] === 'Impact Discovery' ? 72 : 88}%
                             </div>
-                            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-[0.2em]">Execution Confidence</div>
+                            <div className="text-xs tracking-wide font-light text-[var(--text-secondary)]">EXECUTION CONFIDENCE</div>
                         </div>
                     </div>
 
-                    <div className="mt-5 pt-5 border-t border-[var(--border-subtle)]">
-                        <div className="flex justify-between text-[10px] text-[var(--text-secondary)] mb-2 uppercase tracking-[0.18em]">
-                            <span>Overhead Exposure</span>
-                            <span className="font-semibold text-[var(--color-gold)]">Low (4.2%)</span>
+                    <div className="space-y-3 relative">
+                        <div className="flex justify-between text-xs font-light text-[var(--text-secondary)]">
+                            <span className="tracking-wide">Overhead Exposure</span>
+                            <span className="text-[var(--color-gold)]">Low (4.2%)</span>
                         </div>
-                        <div className="w-full bg-[rgba(255,255,255,0.06)] h-2 rounded-full overflow-hidden">
-                            <div className="bg-[var(--color-green)] h-full w-[4%]" />
+                        <div className="w-full h-2.5 rounded-full relative overflow-hidden bg-[#1A1A1A] border border-[rgba(var(--silver-rgb),0.15)]">
+                            <div
+                                className="h-full rounded-full relative"
+                                style={{
+                                    width: '15%',
+                                    background:
+                                        'linear-gradient(90deg, #B8941F 0%, #D4AF37 50%, #E5C158 100%)',
+                                    boxShadow:
+                                        '0 0 12px rgba(212, 175, 55, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.30)',
+                                }}
+                            />
                         </div>
                     </div>
                 </Card>
 
                 {/* 2. Budget Allocation */}
-                <Card className="p-5 flex flex-col">
-                    <div className="flex items-center gap-2 mb-4">
-                        <BarChart3 size={16} className="text-[var(--color-gold)]" />
-                        <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-secondary)]">Focus</h3>
+                <Card className="no-halo p-6 rounded-xl relative overflow-hidden border border-[rgba(var(--silver-rgb),0.15)] shadow-[0_4px_16px_rgba(0,0,0,0.30)] bg-[linear-gradient(135deg,#1A1A1A_0%,#2A2A2A_100%)]">
+                    <div className="flex items-center gap-2 mb-5">
+                        <div className="p-1.5 rounded bg-[linear-gradient(135deg,#C0C0C0_0%,#D8D8D8_100%)] shadow-[0_2px_8px_rgba(var(--silver-rgb),0.20)]">
+                            <BarChart3 size={16} className="text-[#0A0A0A]" strokeWidth={2} />
+                        </div>
+                        <div className="text-xs tracking-[0.2em] font-light text-[rgba(var(--silver-rgb),0.95)]">FOCUS</div>
                     </div>
 
-                    <div className="flex-1 space-y-3">
+                    <div className="space-y-5">
                         {(board?.focus ?? []).map((f: any, i: number) => (
-                            <div key={i} className="rounded-lg border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-3.5">
-                                <div className="text-[10px] uppercase tracking-[0.22em] text-[var(--text-tertiary)]">{f.label}</div>
-                                <div className="text-sm text-[var(--text-primary)] mt-1">{f.value}</div>
+                            <div
+                                key={i}
+                                className="pb-4 border-b last:border-b-0"
+                                style={{ borderColor: 'rgba(192,192,192,0.15)' }}
+                            >
+                                <div className="text-xs mb-2 tracking-wider font-light text-[var(--text-secondary)]">
+                                    {String(f.label ?? '').toUpperCase()}
+                                </div>
+                                <div
+                                    className="text-lg font-light"
+                                    style={{
+                                        color:
+                                            String(f.label ?? '').toLowerCase() === 'status' ||
+                                            String(f.label ?? '').toLowerCase().includes('time') ||
+                                            String(f.label ?? '').toLowerCase().includes('12')
+                                                ? '#D4AF37'
+                                                : '#C0C0C0',
+                                    }}
+                                >
+                                    {f.value}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -326,22 +445,44 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
             </div>
 
             {/* 3. Timeline / Activation */}
-            <Card className="p-8 border-[var(--color-gold)]/20 bg-[var(--bg-ivory)] shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-                    <ShieldCheck size={120} />
+            <Card
+                className="no-halo p-6 rounded-xl relative overflow-hidden border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_8px_30px_rgba(var(--accent-rgb),0.30),inset_0_1px_0_rgba(var(--accent-rgb),0.20)]"
+                style={{
+                    backgroundImage: `
+                      linear-gradient(135deg, #2A2A2A 0%, #1A1A1A 100%),
+                      repeating-linear-gradient(
+                        -45deg,
+                        transparent,
+                        transparent 1.5px,
+                        rgba(212, 175, 55, 0.06) 1.5px,
+                        rgba(212, 175, 55, 0.06) 2.5px
+                      )
+                    `,
+                    backgroundBlendMode: 'normal',
+                }}
+            >
+                <div className="absolute top-0 left-0 w-full h-full opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle at center, #D4AF37 0%, transparent 70%)' }} />
+                <div className="flex items-center gap-2 mb-3 relative">
+                    <ShieldCheck size={20} className="text-[var(--color-gold)]" />
+                    <h3 className="text-xl font-light tracking-wide text-[var(--color-gold)]">Ready to Activate?</h3>
                 </div>
-
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div>
-                        <h3 className="text-2xl font-semibold text-[var(--text-primary)] mb-2">Ready to Activate?</h3>
-                        <p className="text-[var(--text-secondary)] max-w-md">
-                            Your vision is now saved. Next, shortlist or pass opportunities, and create leverage offers when you’re ready.
-                        </p>
-                    </div>
-                    <Button variant="gold" size="lg" asChild className="min-w-[200px] shadow-xl shadow-gold/20">
-                        <a href="/donor">Go to Opportunities <ChevronRight size={18} className="ml-2" /></a>
-                    </Button>
-                </div>
+                <p className="text-sm mb-5 relative font-light leading-relaxed text-[rgba(var(--silver-rgb),0.95)]">
+                    Your vision is now saved. Next, shortlist or pass opportunities, and create leverage offers when you’re ready.
+                </p>
+                <a
+                    href="/donor"
+                    className="w-full px-6 py-4 rounded-lg flex items-center justify-between transition-all relative overflow-hidden hover:scale-[1.02]"
+                    style={{
+                        background: 'linear-gradient(135deg, #D4AF37 0%, #E5C158 100%)',
+                        color: '#0A0A0A',
+                        border: '1px solid #D4AF37',
+                        boxShadow: '0 6px 25px rgba(212,175,55,0.30), inset 0 1px 0 rgba(255,255,255,0.30)',
+                        fontSize: '16px',
+                    }}
+                >
+                    <span className="font-medium tracking-wide">Go to Opportunities</span>
+                    <ChevronRight size={22} strokeWidth={2} />
+                </a>
             </Card>
 
         </div>
