@@ -349,19 +349,34 @@ body {
 /* Impact Vision "pane" (Legacy canvas right side) — textured BACKGROUND (not a giant card) */
 .impact-vision-pane-bg {
   position: relative;
+  /* Match Figma Black Card: right panel is a textured slab with an outer shadow */
+  border-left: 1px solid rgba(var(--silver-rgb), 0.15);
+  box-shadow: -4px 0 40px rgba(0, 0, 0, 0.5);
   background:
-    radial-gradient(1200px 800px at 18% 12%, rgba(var(--accent-rgb), 0.06), transparent 58%),
-    linear-gradient(135deg, rgba(42, 42, 42, 0.92), rgba(10, 10, 10, 0.92)),
-    var(--tex-diagonal-weave);
+    linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 1px,
+      rgba(255, 255, 255, 0.05) 1px,
+      rgba(255, 255, 255, 0.05) 2px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(255, 255, 255, 0.025) 1px,
+      rgba(255, 255, 255, 0.025) 2px
+    );
 }
 
 .impact-vision-pane-bg::before {
   content: '';
   position: absolute;
-  inset: -120px;
-  background: radial-gradient(circle at 22% 10%, rgba(var(--accent-rgb), 0.14), transparent 62%);
-  filter: blur(34px);
-  opacity: 0.65;
+  inset: -140px;
+  background: radial-gradient(circle at 22% 10%, rgba(var(--accent-rgb), 0.10), transparent 62%);
+  filter: blur(38px);
+  opacity: 0.55;
   pointer-events: none;
 }
 

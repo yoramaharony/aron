@@ -18,7 +18,7 @@ export default function ImpactVisionStudioPage() {
             </div>
 
             {/* RIGHT: Dynamic Canvas (60%) */}
-            <div className="impact-vision-pane-bg w-full md:w-[270px] lg:w-[315px] xl:w-[360px] shrink-0 p-5 md:p-6 overflow-y-auto">
+            <div className="impact-vision-pane-bg w-full md:w-[360px] lg:w-[420px] xl:w-[480px] shrink-0 p-5 md:p-6 overflow-y-auto">
                 <LegacyCanvas refreshKey={refreshKey} />
             </div>
         </div>
@@ -235,7 +235,8 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
         <div className="w-full max-w-none mx-auto space-y-4 pb-16">
 
             {/* Header / Title (compact, match Figma proportions) */}
-            <Card className="p-5">
+            <Card className="p-5 border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_6px_20px_rgba(var(--accent-rgb),0.18)] bg-[linear-gradient(135deg,rgba(42,42,42,0.95),rgba(26,26,26,0.95))] relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />
                 <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
                         <h1 className="text-2xl font-semibold text-[var(--color-gold)] leading-tight">
@@ -247,7 +248,11 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                                 .map((pillar: string, i: number) => (
                                     <span
                                         key={i}
-                                        className="px-3 py-1 bg-[rgba(255,255,255,0.03)] border border-[rgba(var(--accent-rgb),0.55)] text-[var(--color-gold)] text-[10px] font-semibold uppercase tracking-[0.14em] rounded-full"
+                                        className={`px-3 py-1.5 rounded-full text-xs font-light tracking-[0.14em] border shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] bg-[linear-gradient(135deg,rgba(64,64,64,0.92),rgba(42,42,42,0.92))] ${
+                                            i % 2 === 0
+                                                ? 'text-[var(--color-gold)] border-[rgba(var(--accent-rgb),0.30)]'
+                                                : 'text-[rgba(var(--silver-rgb),0.95)] border-[rgba(var(--silver-rgb),0.15)]'
+                                        }`}
                                     >
                                         {pillar}
                                     </span>
