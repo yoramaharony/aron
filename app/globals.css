@@ -272,10 +272,78 @@ body {
   box-shadow: var(--shadow-md);
   padding: var(--spacing-card-p);
   overflow: hidden;
+  position: relative;
+}
+
+.card::before {
+  /* "Backlight" halo behind cards (Centurion feel) */
+  content: '';
+  position: absolute;
+  inset: -48px;
+  background: radial-gradient(circle at 22% 18%, rgba(var(--accent-rgb), 0.14), transparent 55%);
+  filter: blur(22px);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .card.no-padding {
   padding: 0;
+}
+
+/* Nav backlight (active item) */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item-active {
+  border: 1px solid rgba(var(--accent-rgb), 0.28);
+  box-shadow:
+    0 0 0 1px rgba(var(--accent-rgb), 0.16),
+    0 18px 60px -45px rgba(var(--accent-rgb), 0.55);
+}
+
+.nav-item-active::after {
+  /* Soft halo */
+  content: '';
+  position: absolute;
+  inset: -60px;
+  background: radial-gradient(circle at 18% 50%, rgba(var(--accent-rgb), 0.22), transparent 58%);
+  filter: blur(26px);
+  opacity: 0.75;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nav-item-active::before {
+  /* Left gold edge highlight */
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--accent-rgb), 0) 0%,
+    rgba(var(--accent-rgb), 0.95) 50%,
+    rgba(var(--accent-rgb), 0) 100%
+  );
+  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.35);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.nav-item > * {
+  position: relative;
+  z-index: 2;
 }
 
 /* Utilities */

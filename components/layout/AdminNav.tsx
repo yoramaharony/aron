@@ -50,10 +50,10 @@ export function AdminNav() {
               href={item.href}
               title={sidebarCollapsed ? item.label : undefined}
               className={clsx(
-                'flex items-center p-3 rounded-lg transition-all duration-200',
+                'nav-item flex items-center p-3 rounded-lg transition-all duration-200',
                 sidebarCollapsed ? 'justify-center gap-0' : 'gap-3',
                 isActive
-                  ? 'bg-[rgba(var(--accent-rgb), 0.10)] text-[var(--color-gold)] font-medium shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)]'
+                  ? 'nav-item-active bg-[rgba(var(--accent-rgb), 0.08)] text-[var(--color-gold)] font-medium'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
               )}
             >
