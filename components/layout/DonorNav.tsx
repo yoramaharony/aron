@@ -45,7 +45,7 @@ export function DonorNav() {
                                 sidebarCollapsed && 'sidebar-tagline-collapsed'
                             )}
                         >
-                            CENTURION
+                            Channel Your Impact
                         </p>
                     </div>
                 </div>

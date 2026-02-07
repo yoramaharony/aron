@@ -265,7 +265,8 @@ body {
 @layer components {
   .card {
     background:
-      radial-gradient(1200px 800px at 20% 0%, rgba(var(--accent-rgb), 0.05), transparent 55%),
+      /* Neutralize the default "wash" so cards don't turn overly yellow in dark mode */
+      radial-gradient(1200px 800px at 20% 0%, rgba(var(--silver-rgb), 0.045), transparent 55%),
       linear-gradient(135deg, rgba(42, 42, 42, 0.88), rgba(26, 26, 26, 0.88)),
       var(--tex-carbon-fiber);
     border: 1px solid var(--border-subtle);
@@ -281,9 +282,10 @@ body {
     content: '';
     position: absolute;
     inset: -48px;
-    background: radial-gradient(circle at 22% 18%, rgba(var(--accent-rgb), 0.14), transparent 55%);
+    /* Default halo should be platinum/neutral; gold should be a deliberate accent */
+    background: radial-gradient(circle at 22% 18%, rgba(var(--silver-rgb), 0.11), transparent 58%);
     filter: blur(22px);
-    opacity: 0.75;
+    opacity: 0.55;
     pointer-events: none;
     z-index: 0;
   }
@@ -555,7 +557,7 @@ body {
   flex: 1;
   width: 100%;
   background:
-    radial-gradient(900px 600px at 25% 0%, rgba(var(--accent-rgb), 0.03), transparent 55%),
+    radial-gradient(900px 600px at 25% 0%, rgba(var(--silver-rgb), 0.03), transparent 55%),
     linear-gradient(180deg, rgba(26, 26, 26, 1), rgba(10, 10, 10, 1)),
     var(--tex-micro-grid);
   background-size: auto, auto, 22px 22px;
