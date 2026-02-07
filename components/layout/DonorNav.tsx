@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
-import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound, Link2 } from 'lucide-react';
+import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound, Link2, Zap } from 'lucide-react';
 import { AronLogo } from '@/components/layout/AronLogo';
 import { useDonorUi } from '@/components/providers/DonorUiContext';
 
@@ -27,7 +27,7 @@ export function DonorNav() {
             {/* Desktop Sidebar */}
             <aside className={clsx('sidebar p-6 pt-4', sidebarCollapsed && 'sidebar-collapsed')}>
                 {/* Top: logo */}
-                <div className="pb-4">
+                <div className="pb-4 border-b border-[rgba(var(--silver-rgb),0.15)]">
                     <div className={clsx('flex flex-col', sidebarCollapsed ? 'items-center' : 'items-start')}>
                         <div className={clsx('flex items-center gap-3 mb-1', sidebarCollapsed ? 'justify-center' : 'justify-start')}>
                             <AronLogo
@@ -40,12 +40,12 @@ export function DonorNav() {
                         </div>
                         <p
                             className={clsx(
-                                'sidebar-tagline text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase',
+                                'sidebar-tagline text-[10px] tracking-[0.3em] text-[rgba(var(--silver-rgb),0.95)] font-light uppercase text-center w-full',
                                 sidebarCollapsed ? 'text-center' : 'text-left',
                                 sidebarCollapsed && 'sidebar-tagline-collapsed'
                             )}
                         >
-                            Channel Your Impact
+                            CENTURION
                         </p>
                     </div>
                 </div>
@@ -62,8 +62,8 @@ export function DonorNav() {
                                     'nav-item flex items-center p-3 rounded-lg transition-all duration-200',
                                     sidebarCollapsed ? 'justify-center gap-0' : 'gap-3',
                                     isActive
-                                        ? 'nav-item-active bg-[rgba(var(--accent-rgb), 0.08)] text-[var(--color-gold)] font-medium'
-                                        : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.04)]'
+                                        ? 'nav-item-active text-[rgba(var(--silver-rgb),0.95)] font-light'
+                                        : 'text-[var(--text-secondary)] font-light'
                                 )}
                             >
                                 <item.icon
@@ -75,7 +75,7 @@ export function DonorNav() {
                                 />
                                 <span
                                     className={clsx(
-                                        'sidebar-label min-w-0',
+                                        'sidebar-label min-w-0 tracking-wide',
                                         sidebarCollapsed && 'sidebar-label-collapsed'
                                     )}
                                 >
@@ -85,6 +85,27 @@ export function DonorNav() {
                         );
                     })}
                 </nav>
+
+                {/* Bottom badge (Figma) */}
+                <div className="pt-4 border-t border-[rgba(var(--accent-rgb),0.30)]">
+                    <div className={clsx('flex items-center gap-2 px-3 py-2 rounded-lg', sidebarCollapsed && 'justify-center px-2')}>
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg w-full"
+                            style={{
+                                background: 'linear-gradient(135deg, #2A2A2A 0%, #1A1A1A 100%)',
+                                border: '1px solid rgba(212,175,55,0.30)',
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.30), inset 0 1px 0 rgba(212,175,55,0.20)',
+                            }}
+                        >
+                            <Zap size={16} className="text-[var(--color-gold)] shrink-0" />
+                            {sidebarCollapsed ? null : (
+                                <div className="min-w-0">
+                                    <div className="text-xs font-light tracking-wide text-[var(--color-gold)]">Centurion</div>
+                                    <div className="text-xs font-light text-[rgba(var(--silver-rgb),0.95)]">Limitless</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </aside>
         </>
     );

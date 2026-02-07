@@ -396,19 +396,83 @@ body {
 }
 
 .sidebar {
-  width: 240px;
+  width: 256px; /* match Figma (w-64) */
   border-right: 1px solid var(--border-subtle);
   height: 100vh;
   position: sticky;
   top: 0;
   background:
-    linear-gradient(135deg, rgba(42, 42, 42, 0.94), rgba(10, 10, 10, 0.94)),
-    var(--tex-brushed-metal);
+    linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 1px,
+      rgba(255, 255, 255, 0.06) 1px,
+      rgba(255, 255, 255, 0.06) 2px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(255, 255, 255, 0.03) 1px,
+      rgba(255, 255, 255, 0.03) 2px
+    );
+  box-shadow: 4px 0 40px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
   /* Smooth "wall slides" collapse/expand */
   transition: width 260ms cubic-bezier(0.2, 0.9, 0.2, 1);
   will-change: width;
+}
+
+.sidebar::before {
+  /* Subtle platinum shimmer strip */
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  opacity: 0.4;
+  background: linear-gradient(90deg, #d4af37 0%, #c0c0c0 50%, #d4af37 100%);
+  pointer-events: none;
+}
+
+/* Ensure shimmer strip positions correctly */
+.sidebar {
+  position: sticky;
+}
+
+/* Sidebar nav items (Figma-like) */
+.sidebar .nav-item {
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.sidebar .nav-item:hover:not(.nav-item-active) {
+  background: linear-gradient(90deg, rgba(64, 64, 64, 0.32) 0%, transparent 100%);
+  color: var(--text-primary);
+}
+
+.sidebar .nav-item-active {
+  background: linear-gradient(90deg, #2a2a2a 0%, #1a1a1a 100%);
+  border: 1px solid rgba(var(--silver-rgb), 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Tighten the generic halo for sidebar active items */
+.sidebar .nav-item-active::after {
+  opacity: 0.35;
+  filter: blur(22px);
+}
+
+.sidebar .nav-item-active::before {
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(180deg, #d4af37, #e5c158, #d4af37);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.30);
 }
 
 .sidebar.sidebar-collapsed {
