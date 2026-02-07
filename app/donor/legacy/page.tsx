@@ -13,12 +13,12 @@ export default function ImpactVisionStudioPage() {
     return (
         <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-app)]">
             {/* LEFT: Chat Interface (40%) */}
-            <div className="md:w-[56%] border-b md:border-b-0 md:border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col shadow-xl z-10">
+            <div className="flex-1 border-b md:border-b-0 md:border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col shadow-xl z-10">
                 <LegacyChat onUpdated={() => setRefreshKey((v) => v + 1)} />
             </div>
 
             {/* RIGHT: Dynamic Canvas (60%) */}
-            <div className="md:w-[44%] p-6 md:p-8 overflow-y-auto bg-[var(--bg-app)]">
+            <div className="w-full md:w-[360px] lg:w-[420px] xl:w-[480px] shrink-0 p-5 md:p-6 overflow-y-auto bg-[var(--bg-app)]">
                 <div className="impact-vision-pane min-h-full">
                     <LegacyCanvas refreshKey={refreshKey} />
                 </div>
@@ -234,7 +234,7 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
     }
 
     return (
-        <div className="max-w-[640px] mx-auto space-y-6 pb-20">
+        <div className="w-full max-w-none mx-auto space-y-6 pb-20">
 
             {/* Header / Title */}
             <div className="flex justify-between items-start">
