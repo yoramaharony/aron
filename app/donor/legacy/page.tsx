@@ -234,55 +234,69 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
     }
 
     return (
-        <div className="w-full max-w-none mx-auto space-y-6 pb-20">
+        <div className="w-full max-w-none mx-auto space-y-4 pb-16">
 
-            {/* Header / Title */}
-            <div className="flex justify-between items-start">
-                <div>
-                    <h1 className="text-4xl font-semibold text-[var(--text-primary)] mb-2">Impact Vision</h1>
-                    <div className="flex gap-2">
-                        {(vision?.pillars ?? board?.pillars?.map((p: any) => p.title) ?? []).slice(0, 6).map((pillar: string, i: number) => (
-                            <span key={i} className="px-3 py-1 bg-[var(--bg-ivory)] border border-[var(--color-gold)] text-[var(--color-gold)] text-xs font-bold uppercase tracking-wider rounded-full">
-                                {pillar}
-                            </span>
-                        ))}
+            {/* Header / Title (compact, match Figma proportions) */}
+            <Card className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <h1 className="text-2xl font-semibold text-[var(--color-gold)] leading-tight">
+                            Impact Vision
+                        </h1>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                            {(vision?.pillars ?? board?.pillars?.map((p: any) => p.title) ?? [])
+                                .slice(0, 6)
+                                .map((pillar: string, i: number) => (
+                                    <span
+                                        key={i}
+                                        className="px-3 py-1 bg-[rgba(255,255,255,0.03)] border border-[rgba(var(--accent-rgb),0.55)] text-[var(--color-gold)] text-[10px] font-semibold uppercase tracking-[0.14em] rounded-full"
+                                    >
+                                        {pillar}
+                                    </span>
+                                ))}
+                        </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                        <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-[0.22em]">
+                            Last updated
+                        </div>
+                        <div className="text-xs text-[var(--text-secondary)] mt-1">
+                            {vision?.lastUpdatedAt ? new Date(vision.lastUpdatedAt).toLocaleString() : '—'}
+                        </div>
                     </div>
                 </div>
-                <div className="text-right">
-                    <div className="text-xs text-[var(--text-tertiary)] uppercase tracking-widest">Last updated</div>
-                    <div className="text-sm text-[var(--text-secondary)]">{vision?.lastUpdatedAt ? new Date(vision.lastUpdatedAt).toLocaleString() : '—'}</div>
-                </div>
-            </div>
+            </Card>
 
             {/* Visuals (stacked: 1 column, match Figma) */}
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-4">
 
                 {/* 1. Impact Forecast */}
-                <Card className="p-6">
-                    <div className="flex items-center gap-2 mb-6">
-                        <Globe size={18} className="text-[var(--color-gold)]" />
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Impact Forecast</h3>
+                <Card className="p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                        <Globe size={16} className="text-[var(--color-gold)]" />
+                        <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-secondary)]">Impact Forecast</h3>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-8">
+                    <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <div className="text-4xl font-semibold text-[var(--text-primary)] mb-1">
+                            <div className="text-3xl font-semibold text-[var(--text-primary)] mb-1">
                                 <CountUp end={vision?.pillars?.length ? 1200 + (vision.pillars.length * 900) : 2400} duration={2} />
                             </div>
-                            <div className="text-xs text-[var(--text-tertiary)] uppercase">Est. Lives Impacted</div>
+                            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-[0.2em]">Est. Lives Impacted</div>
                         </div>
                         <div>
-                            <div className="text-4xl font-semibold text-[var(--color-green)] mb-1">
+                            <div className="text-3xl font-semibold text-[var(--color-green)] mb-1">
                                 {vision?.pillars?.[0] === 'Impact Discovery' ? 72 : 88}%
                             </div>
-                            <div className="text-xs text-[var(--text-tertiary)] uppercase">Execution Confidence</div>
+                            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-[0.2em]">Execution Confidence</div>
                         </div>
                     </div>
 
-                    <div className="mt-6 pt-6 border-t border-[var(--border-subtle)]">
-                        <div className="flex justify-between text-xs text-[var(--text-secondary)] mb-2">
+                    <div className="mt-5 pt-5 border-t border-[var(--border-subtle)]">
+                        <div className="flex justify-between text-[10px] text-[var(--text-secondary)] mb-2 uppercase tracking-[0.18em]">
                             <span>Overhead Exposure</span>
-                            <span className="font-bold text-[var(--text-primary)]">Low (4.2%)</span>
+                            <span className="font-semibold text-[var(--color-gold)]">Low (4.2%)</span>
                         </div>
                         <div className="w-full bg-[rgba(255,255,255,0.06)] h-2 rounded-full overflow-hidden">
                             <div className="bg-[var(--color-green)] h-full w-[4%]" />
@@ -291,16 +305,16 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                 </Card>
 
                 {/* 2. Budget Allocation */}
-                <Card className="p-6 flex flex-col">
-                    <div className="flex items-center gap-2 mb-6">
-                        <BarChart3 size={18} className="text-[var(--color-gold)]" />
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)]">Focus</h3>
+                <Card className="p-5 flex flex-col">
+                    <div className="flex items-center gap-2 mb-4">
+                        <BarChart3 size={16} className="text-[var(--color-gold)]" />
+                        <h3 className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-secondary)]">Focus</h3>
                     </div>
 
-                    <div className="flex-1 space-y-4">
+                    <div className="flex-1 space-y-3">
                         {(board?.focus ?? []).map((f: any, i: number) => (
-                            <div key={i} className="rounded-lg border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
-                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">{f.label}</div>
+                            <div key={i} className="rounded-lg border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-3.5">
+                                <div className="text-[10px] uppercase tracking-[0.22em] text-[var(--text-tertiary)]">{f.label}</div>
                                 <div className="text-sm text-[var(--text-primary)] mt-1">{f.value}</div>
                             </div>
                         ))}
