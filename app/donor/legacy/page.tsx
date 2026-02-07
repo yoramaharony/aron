@@ -195,14 +195,14 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                         placeholder="Describe your impact vision..."
-                        className="w-full pl-5 pr-14 py-4 rounded-lg outline-none transition-all font-light bg-[linear-gradient(135deg,#2A2A2A_0%,#1A1A1A_100%)] border border-[rgba(var(--silver-rgb),0.15)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.30)] focus:border-[rgba(var(--accent-rgb),0.35)]"
+                        className="w-full pl-5 pr-20 py-4 rounded-lg outline-none transition-all font-light bg-[linear-gradient(135deg,#2A2A2A_0%,#1A1A1A_100%)] border border-[rgba(var(--silver-rgb),0.15)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.30)] focus:border-[rgba(var(--accent-rgb),0.35)]"
                     />
                     <button
                         onClick={() => sendMessage()}
                         disabled={!input.trim() || isTyping}
-                        className="absolute right-2 top-2 px-6 py-3.5 rounded-lg transition-all hover:scale-105 disabled:opacity-50 bg-[linear-gradient(135deg,#2A2A2A_0%,#404040_100%)] text-[rgba(var(--silver-rgb),0.95)] border border-[rgba(var(--silver-rgb),0.30)] shadow-[0_6px_20px_rgba(0,0,0,0.30),inset_0_1px_0_rgba(255,255,255,0.10)]"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-lg icon-tile-gold disabled:opacity-50 flex items-center justify-center"
                     >
-                        <Send size={22} strokeWidth={1.5} />
+                        <Send size={20} strokeWidth={1.75} className="text-[var(--color-gold)]" />
                     </button>
 
                     {/* Demo Prompt Helper */}
