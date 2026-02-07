@@ -61,6 +61,59 @@
   --shadow-xl: 0 14px 60px rgba(0, 0, 0, 0.75);
   --glow-magenta-sm: 0 0 0 3px rgba(var(--accent-rgb), 0.12);
   --glow-magenta-md: 0 0 0 3px rgba(var(--accent-rgb), 0.12), 0 0 24px rgba(var(--accent-rgb), 0.18);
+
+  /* Black Card textures (very subtle by default) */
+  --tex-brushed-metal:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 1px,
+      rgba(var(--silver-rgb), 0.028) 1px,
+      rgba(var(--silver-rgb), 0.028) 2px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 1px,
+      rgba(0, 0, 0, 0.42) 1px,
+      rgba(0, 0, 0, 0.42) 2px
+    );
+
+  --tex-diagonal-weave:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(var(--silver-rgb), 0.022) 2px,
+      rgba(var(--silver-rgb), 0.022) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.55) 2px,
+      rgba(0, 0, 0, 0.55) 4px
+    );
+
+  --tex-carbon-fiber:
+    repeating-linear-gradient(
+      -30deg,
+      transparent,
+      transparent 1px,
+      rgba(var(--silver-rgb), 0.016) 1px,
+      rgba(var(--silver-rgb), 0.016) 2px
+    ),
+    repeating-linear-gradient(
+      30deg,
+      transparent,
+      transparent 1px,
+      rgba(0, 0, 0, 0.38) 1px,
+      rgba(0, 0, 0, 0.38) 2px
+    );
+
+  --tex-micro-grid:
+    linear-gradient(rgba(var(--silver-rgb), 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(var(--silver-rgb), 0.022) 1px, transparent 1px);
 }
 
 body {
@@ -211,8 +264,9 @@ body {
 
 .card {
   background:
-    radial-gradient(1200px 800px at 20% 0%, rgba(var(--accent-rgb), 0.06), transparent 55%),
-    linear-gradient(135deg, rgba(58, 58, 58, 0.55), rgba(26, 26, 26, 0.55));
+    radial-gradient(1200px 800px at 20% 0%, rgba(var(--accent-rgb), 0.05), transparent 55%),
+    linear-gradient(135deg, rgba(42, 42, 42, 0.88), rgba(26, 26, 26, 0.88)),
+    var(--tex-carbon-fiber);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-md);
@@ -236,7 +290,9 @@ body {
   height: 100vh;
   position: sticky;
   top: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.02));
+  background:
+    linear-gradient(135deg, rgba(42, 42, 42, 0.94), rgba(10, 10, 10, 0.94)),
+    var(--tex-brushed-metal);
   display: flex;
   flex-direction: column;
   /* Smooth "wall slides" collapse/expand */
@@ -293,7 +349,11 @@ body {
 .main-content {
   flex: 1;
   width: 100%;
-  background: var(--bg-surface);
+  background:
+    radial-gradient(900px 600px at 25% 0%, rgba(var(--accent-rgb), 0.03), transparent 55%),
+    linear-gradient(180deg, rgba(26, 26, 26, 1), rgba(10, 10, 10, 1)),
+    var(--tex-micro-grid);
+  background-size: auto, auto, 22px 22px;
   padding: 2rem;
   overflow-y: auto;
 }
