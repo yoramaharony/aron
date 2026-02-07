@@ -11,14 +11,14 @@ type ConciergeSuggestion = { label: string; content: string };
 export default function ImpactVisionStudioPage() {
     const [refreshKey, setRefreshKey] = useState(0);
     return (
-        <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-app)]">
+        <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-app)]">
             {/* LEFT: Chat Interface (40%) */}
-            <div className="w-[40%] border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col shadow-xl z-10">
+            <div className="md:w-[56%] border-b md:border-b-0 md:border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col shadow-xl z-10">
                 <LegacyChat onUpdated={() => setRefreshKey((v) => v + 1)} />
             </div>
 
             {/* RIGHT: Dynamic Canvas (60%) */}
-            <div className="w-[60%] p-6 md:p-8 overflow-y-auto bg-[var(--bg-app)]">
+            <div className="md:w-[44%] p-6 md:p-8 overflow-y-auto bg-[var(--bg-app)]">
                 <div className="impact-vision-pane min-h-full">
                     <LegacyCanvas refreshKey={refreshKey} />
                 </div>
@@ -234,7 +234,7 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
     }
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-32">
+        <div className="max-w-[640px] mx-auto space-y-6 pb-20">
 
             {/* Header / Title */}
             <div className="flex justify-between items-start">

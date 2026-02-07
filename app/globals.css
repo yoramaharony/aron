@@ -384,7 +384,7 @@ body {
 }
 
 .sidebar {
-  width: 280px;
+  width: 240px;
   border-right: 1px solid var(--border-subtle);
   height: 100vh;
   position: sticky;
