@@ -40,7 +40,7 @@ export default function DonorVault() {
             </div>
 
             <Card noPadding className="overflow-hidden">
-                <div className="p-4 border-b border-[var(--border-subtle)] flex gap-4 items-center bg-[rgba(255,255,255,0.03)]">
+                <div className="p-4 border-b border-[var(--border-subtle)] flex gap-4 items-center bg-[linear-gradient(180deg,rgba(26,26,26,0.92),rgba(10,10,10,0.92))]">
                     <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] ml-2">Filter by:</span>
                     {['All', 'Legal', 'Tax', 'Strategy', 'Offers'].map(f => (
                         <button
@@ -59,7 +59,7 @@ export default function DonorVault() {
                     {allDocs.map((doc) => (
                         <div
                             key={doc.id}
-                            className={`p-4 flex items-center gap-4 transition-colors group hover:bg-[rgba(255,255,255,0.04)] ${doc.isNew ? 'bg-[rgba(var(--accent-rgb), 0.06)]' : ''}`}
+                            className={`p-4 flex items-center gap-4 transition-colors group hover:bg-[rgba(255,255,255,0.04)] ${doc.isNew ? 'bg-[rgba(255,255,255,0.02)] border-l-2 border-[rgba(var(--accent-rgb),0.55)]' : ''}`}
                         >
                             <div className="w-10 h-10 rounded bg-[rgba(255,255,255,0.04)] border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
                                 <FileText size={20} className={doc.isNew ? 'text-[var(--color-gold)]' : 'text-[var(--text-tertiary)]'} />

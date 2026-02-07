@@ -266,8 +266,8 @@ body {
   .card {
     background:
       /* Neutralize the default "wash" so cards don't turn overly yellow in dark mode */
-      radial-gradient(1200px 800px at 20% 0%, rgba(var(--silver-rgb), 0.045), transparent 55%),
-      linear-gradient(135deg, rgba(42, 42, 42, 0.88), rgba(26, 26, 26, 0.88)),
+      radial-gradient(900px 700px at 50% 0%, rgba(var(--silver-rgb), 0.03), transparent 62%),
+      linear-gradient(180deg, rgba(36, 36, 36, 0.92), rgba(16, 16, 16, 0.92)),
       var(--tex-carbon-fiber);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-card);
@@ -283,7 +283,7 @@ body {
     position: absolute;
     inset: -48px;
     /* Default halo should be platinum/neutral; gold should be a deliberate accent */
-    background: radial-gradient(circle at 22% 18%, rgba(var(--silver-rgb), 0.11), transparent 58%);
+    background: radial-gradient(circle at 50% 0%, rgba(var(--silver-rgb), 0.10), transparent 62%);
     filter: blur(22px);
     opacity: 0.55;
     pointer-events: none;
@@ -308,14 +308,15 @@ body {
 .textured-background {
   /* Use shorthand so nothing accidentally wipes out background-image via later rules */
   background:
-    radial-gradient(1200px 220px at 20% 0%, rgba(212, 175, 55, 0.10), transparent 60%),
+    /* Keep it dark + premium: reduce highlight, remove obvious "left is brighter" */
+    radial-gradient(1200px 220px at 50% 0%, rgba(var(--silver-rgb), 0.05), transparent 62%),
     linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%),
     repeating-linear-gradient(
       45deg,
       transparent,
       transparent 2px,
-      rgba(255, 255, 255, 0.08) 2px,
-      rgba(255, 255, 255, 0.08) 3px
+      rgba(255, 255, 255, 0.06) 2px,
+      rgba(255, 255, 255, 0.06) 3px
     );
   background-color: #0A0A0A;
 }
@@ -557,10 +558,12 @@ body {
   flex: 1;
   width: 100%;
   background:
-    radial-gradient(900px 600px at 25% 0%, rgba(var(--silver-rgb), 0.03), transparent 55%),
+    /* Balanced + subtle: avoid an obvious bright sweep from one side */
+    radial-gradient(900px 600px at 50% 0%, rgba(var(--silver-rgb), 0.02), transparent 60%),
+    radial-gradient(900px 600px at 50% 100%, rgba(0, 0, 0, 0.30), transparent 60%),
     linear-gradient(180deg, rgba(26, 26, 26, 1), rgba(10, 10, 10, 1)),
     var(--tex-micro-grid);
-  background-size: auto, auto, 22px 22px;
+  background-size: auto, auto, auto, 22px 22px;
   padding: 2rem;
   overflow-y: auto;
 }
