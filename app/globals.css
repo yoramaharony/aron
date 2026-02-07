@@ -298,16 +298,18 @@ body {
 
 /* Reusable: Figma-style diagonal texture header background */
 .textured-background {
-  background-image:
+  /* Use shorthand so nothing accidentally wipes out background-image via later rules */
+  background:
+    radial-gradient(1200px 220px at 20% 0%, rgba(212, 175, 55, 0.10), transparent 60%),
     linear-gradient(135deg, #1A1A1A 0%, #0A0A0A 100%),
     repeating-linear-gradient(
       45deg,
       transparent,
       transparent 2px,
-      rgba(255, 255, 255, 0.05) 2px,
-      rgba(255, 255, 255, 0.05) 3px
+      rgba(255, 255, 255, 0.08) 2px,
+      rgba(255, 255, 255, 0.08) 3px
     );
-  background-blend-mode: normal;
+  background-color: #0A0A0A;
 }
 
 /* Reusable: gold "glorified" icon tile */
