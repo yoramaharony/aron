@@ -268,7 +268,7 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
 
             {/* Header / Title (compact, match Figma proportions) */}
             <Card
-                className="no-halo p-5 rounded-xl relative overflow-hidden border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_6px_20px_rgba(var(--accent-rgb),0.18),inset_0_1px_0_rgba(var(--accent-rgb),0.15)] bg-[linear-gradient(135deg,rgba(42,42,42,0.95),rgba(26,26,26,0.95))]"
+                className="no-halo min-h-0 px-5 py-4 rounded-xl relative overflow-hidden border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_6px_20px_rgba(var(--accent-rgb),0.18),inset_0_1px_0_rgba(var(--accent-rgb),0.15)] bg-[linear-gradient(135deg,rgba(42,42,42,0.95),rgba(26,26,26,0.95))]"
                 style={{
                     backgroundImage: `
                       linear-gradient(135deg, rgba(42,42,42,0.95), rgba(26,26,26,0.95)),
@@ -286,16 +286,16 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                 <div className="absolute top-0 right-0 w-32 h-32 opacity-[0.05] pointer-events-none" style={{ background: 'radial-gradient(circle, #D4AF37 0%, transparent 70%)' }} />
                 <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0">
-                        <h1 className="text-2xl font-semibold text-[var(--color-gold)] leading-tight">
+                        <h1 className="text-xl md:text-2xl font-semibold text-[var(--color-gold)] leading-tight">
                             Impact Vision
                         </h1>
-                        <div className="mt-3 flex flex-wrap gap-2">
+                        <div className="mt-2 flex flex-wrap gap-2">
                             {(vision?.pillars ?? board?.pillars?.map((p: any) => p.title) ?? [])
                                 .slice(0, 6)
                                 .map((pillar: string, i: number) => (
                                     <span
                                         key={i}
-                                        className={`px-3 py-1.5 rounded-full text-xs font-light tracking-[0.14em] border shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] bg-[linear-gradient(135deg,rgba(64,64,64,0.92),rgba(42,42,42,0.92))] ${
+                                        className={`px-3 py-1 rounded-full text-[11px] font-light tracking-[0.12em] border shadow-[inset_0_1px_0_rgba(255,255,255,0.10)] bg-[linear-gradient(135deg,rgba(64,64,64,0.92),rgba(42,42,42,0.92))] ${
                                             i % 2 === 0
                                                 ? 'text-[var(--color-gold)] border-[rgba(var(--accent-rgb),0.30)]'
                                                 : 'text-[rgba(var(--silver-rgb),0.95)] border-[rgba(var(--silver-rgb),0.15)]'
@@ -311,7 +311,7 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                         <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-[0.22em]">
                             Last updated
                         </div>
-                        <div className="text-xs text-[var(--text-secondary)] mt-1">
+                        <div className="text-xs text-[var(--text-secondary)] mt-1 leading-snug">
                             {vision?.lastUpdatedAt ? new Date(vision.lastUpdatedAt).toLocaleString() : '—'}
                         </div>
                     </div>
