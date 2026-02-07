@@ -200,7 +200,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                     <button
                         onClick={() => sendMessage()}
                         disabled={!input.trim() || isTyping}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-lg icon-tile-gold disabled:opacity-50 flex items-center justify-center"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-lg icon-tile-gold transition-transform hover:scale-[1.03] disabled:opacity-50 flex items-center justify-center"
                     >
                         <Send size={20} strokeWidth={1.75} className="text-[var(--color-gold)]" />
                     </button>
@@ -268,7 +268,7 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
 
             {/* Header / Title (compact, match Figma proportions) */}
             <Card
-                className="no-halo min-h-0 px-5 py-4 rounded-xl relative overflow-hidden border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_6px_20px_rgba(var(--accent-rgb),0.18),inset_0_1px_0_rgba(var(--accent-rgb),0.15)] bg-[linear-gradient(135deg,rgba(42,42,42,0.95),rgba(26,26,26,0.95))]"
+                className="no-halo min-h-0 px-5 pt-3.5 pb-4 rounded-xl relative overflow-hidden border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_6px_20px_rgba(var(--accent-rgb),0.18),inset_0_1px_0_rgba(var(--accent-rgb),0.15)] bg-[linear-gradient(135deg,rgba(42,42,42,0.95),rgba(26,26,26,0.95))]"
                 style={{
                     backgroundImage: `
                       linear-gradient(135deg, rgba(42,42,42,0.95), rgba(26,26,26,0.95)),
