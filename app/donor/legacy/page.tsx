@@ -6,6 +6,8 @@ import { Card } from '@/components/ui/Card';
 import { Send, User, Bot, ChevronRight, BarChart3, Globe, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+type ConciergeSuggestion = { label: string; content: string };
+
 export default function ImpactVisionStudioPage() {
     const [refreshKey, setRefreshKey] = useState(0);
     return (
@@ -32,6 +34,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
     const [messages, setMessages] = useState<{ role: 'donor' | 'assistant'; content: string }[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [error, setError] = useState('');
+    const [suggestions, setSuggestions] = useState<ConciergeSuggestion[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -39,6 +42,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
             .then((r) => r.json())
             .then((data) => {
                 const thread = Array.isArray(data?.messages) ? data.messages : [];
+                setSuggestions(Array.isArray(data?.suggestions) ? data.suggestions : []);
                 if (thread.length === 0) {
                     setMessages([
                         {
@@ -61,10 +65,11 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
         }
     }, [messages, isTyping]);
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
+    const sendMessage = async (userMsgRaw?: string) => {
+        const userMsg = (typeof userMsgRaw === 'string' ? userMsgRaw : input).trim();
+        if (!userMsg) return;
+        if (isTyping) return;
 
-        const userMsg = input;
         setInput('');
         setMessages(prev => [...prev, { role: 'donor', content: userMsg }]);
         setIsTyping(true);
@@ -80,6 +85,9 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
             if (!res.ok) throw new Error(data?.error || 'Failed to send');
             if (data?.message?.content) {
                 setMessages(prev => [...prev, { role: 'assistant', content: data.message.content }]);
+            }
+            if (Array.isArray(data?.suggestions)) {
+                setSuggestions(data.suggestions);
             }
             onUpdated();
         } catch (e: any) {
@@ -155,12 +163,12 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                         type="text"
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                         placeholder="Describe your impact vision..."
                         className="w-full pl-4 pr-12 py-4 bg-[rgba(255,255,255,0.03)] border border-[var(--border-strong)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-gold)] focus:border-transparent transition-all"
                     />
                     <button
-                        onClick={handleSend}
+                        onClick={() => sendMessage()}
                         disabled={!input.trim() || isTyping}
                         className="absolute right-2 top-2 p-2 bg-[rgba(var(--accent-rgb), 0.35)] border border-[rgba(var(--accent-rgb), 0.35)] text-[var(--text-primary)] rounded-lg hover:bg-[rgba(var(--accent-rgb), 0.45)] disabled:opacity-50 transition-colors"
                     >
@@ -169,26 +177,17 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
 
                     {/* Demo Prompt Helper */}
                     <div className="absolute -top-12 left-0 right-0 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
-                        <button
-                            onClick={() =>
-                                setInput(
-                                    "Hachnasas Kallah (Chesed): discreet matching + wedding essentials in Yerushalayim and Bnei Brak. Target $2M over 24 months; measure families supported and cost per kallah."
-                                )
-                            }
-                            className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-black transition-colors"
-                        >
-                            Demo Script: "Hachnasas Kallah..."
-                        </button>
-                        <button
-                            onClick={() =>
-                                setInput(
-                                    "Yeshiva ketana growth fund: sponsor dorm beds, meals, and rebbeim stipends. Focus: Lakewood + Monsey. Budget $250K this year; success = 120 bochurim supported with stable monthly overhead."
-                                )
-                            }
-                            className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-black transition-colors"
-                        >
-                            Demo Script: "Yeshiva fund..."
-                        </button>
+                        {(suggestions ?? []).slice(0, 4).map((s, idx) => (
+                            <button
+                                key={`${s.label}-${idx}`}
+                                onClick={() => sendMessage(s.content)}
+                                disabled={isTyping}
+                                className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-black transition-colors disabled:opacity-60"
+                                title={s.content}
+                            >
+                                {s.label}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </div>

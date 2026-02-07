@@ -31,6 +31,11 @@ export type VisionBoard = {
   signals: { label: string; value: string }[];
 };
 
+export type DemoSuggestion = {
+  label: string;
+  content: string;
+};
+
 function uniq(arr: string[]) {
   return Array.from(new Set(arr.filter(Boolean)));
 }
@@ -233,6 +238,104 @@ export function nextBestQuestionKey(vision: ImpactVision): QuestionKey {
   if (!vision.updateCadence) return 'update_cadence';
   if (!vision.verificationLevel) return 'verification_level';
   return 'confirm';
+}
+
+function hasPillar(v: ImpactVision, needle: string) {
+  return (v.pillars ?? []).some((p) => p.toLowerCase().includes(needle.toLowerCase()));
+}
+
+export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[] {
+  const key = vision.stage === 'confirm' ? 'confirm' : nextBestQuestionKey(vision);
+
+  const prefersIsrael = (vision.geoFocus ?? []).some((g) =>
+    ['israel', 'jerusalem', 'yerushalayim', 'bnei brak'].some((k) => g.toLowerCase().includes(k))
+  );
+  const isKallah = hasPillar(vision, 'Hachnasas Kallah');
+  const isTorah = hasPillar(vision, 'Torah') || hasPillar(vision, 'Chinuch') || hasPillar(vision, 'Yeshiva');
+
+  switch (key) {
+    case 'outcome12m':
+      return [
+        {
+          label: '12-month outcome (kallah)',
+          content:
+            'In 12 months: 120 kallahs matched discreetly, with audited receipts and a clear cost-per-kallah report.',
+        },
+        {
+          label: '12-month outcome (yeshiva)',
+          content:
+            'In 12 months: stabilize monthly overhead for 120 bochurim (beds + meals + rebbeim), with quarterly reporting.',
+        },
+        {
+          label: '12-month outcome (hatzalah)',
+          content:
+            'In 12 months: 2 new ambulances equipped + volunteer coverage expanded, with response-time targets.',
+        },
+      ];
+    case 'budget':
+      return [
+        { label: '$25k–$100k / year', content: '$100k / year' },
+        { label: '$100k–$500k / year', content: '$250k / year' },
+        { label: '$500k–$3M / year', content: isKallah ? '$2M over 24 months' : '$1M / year' },
+      ];
+    case 'horizon':
+      return [
+        { label: '12 months', content: '12 months' },
+        { label: '24 months', content: '24 months' },
+        { label: '3 years', content: '3 years' },
+      ];
+    case 'geo':
+      return [
+        {
+          label: prefersIsrael ? 'Israel (Jerusalem + Bnei Brak)' : 'Jerusalem + Bnei Brak',
+          content: 'Jerusalem (Yerushalayim) + Bnei Brak',
+        },
+        { label: 'Lakewood + Monsey', content: 'Lakewood + Monsey' },
+        { label: 'Boro Park + NYC', content: 'Boro Park + NYC' },
+      ];
+    case 'constraints':
+      return [
+        { label: 'Privacy / quiet giving', content: 'privacy (quiet giving; no public recognition)' },
+        { label: 'Verification required', content: 'verification (concierge-reviewed + receipts)' },
+        { label: 'Overhead cap', content: 'overhead cap: keep overhead under 5%' },
+      ];
+    case 'update_cadence':
+      return [
+        { label: 'Monthly', content: 'monthly' },
+        { label: 'Quarterly', content: 'quarterly' },
+        { label: 'Annual', content: 'annual' },
+      ];
+    case 'verification_level':
+      return [
+        { label: 'Concierge reviewed', content: 'concierge reviewed' },
+        { label: '3rd party verified', content: '3rd party verified' },
+        { label: 'Audited financials', content: 'audited financials' },
+      ];
+    case 'confirm':
+      return [
+        { label: 'Confirm (happy path)', content: 'confirm' },
+        { label: 'Change geo focus', content: prefersIsrael ? 'Add Lakewood too' : 'Israel only (Jerusalem)' },
+        { label: 'Change budget', content: isTorah ? '$250k / year' : '$1M / year' },
+      ];
+    case 'activated':
+      return [
+        { label: 'Go to Opportunities', content: 'Open Opportunities next.' },
+        { label: 'Set quarterly updates', content: 'quarterly' },
+      ];
+    default:
+      return [
+        {
+          label: 'Demo: Hachnasas Kallah',
+          content:
+            'Hachnasas Kallah (Chesed): discreet matching + wedding essentials in Yerushalayim and Bnei Brak. Target $2M over 24 months.',
+        },
+        {
+          label: 'Demo: Yeshiva fund',
+          content:
+            'Yeshiva ketana growth fund: sponsor dorm beds, meals, and rebbeim stipends. Focus: Lakewood + Monsey. Budget $250K this year.',
+        },
+      ];
+  }
 }
 
 function questionText(key: QuestionKey): string {

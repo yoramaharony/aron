@@ -4,7 +4,7 @@ import { conciergeMessages, donorProfiles } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { buildBoard, composeAssistantReply, extractVision } from '@/lib/vision-extract';
+import { buildBoard, composeAssistantReply, demoSuggestionsForVision, extractVision } from '@/lib/vision-extract';
 
 export async function GET() {
   const session = await getSession();
@@ -20,6 +20,17 @@ export async function GET() {
 
   const profile = await db.select().from(donorProfiles).where(eq(donorProfiles.donorId, session.userId)).get();
 
+  const vision = profile?.visionJson ? JSON.parse(profile.visionJson) : null;
+  const suggestions = demoSuggestionsForVision(
+    vision ??
+      extractVision(
+        msgs
+          .slice()
+          .reverse()
+          .map((m) => ({ role: m.role, content: m.content }))
+      )
+  );
+
   return NextResponse.json({
     messages: msgs
       .slice()
@@ -30,8 +41,9 @@ export async function GET() {
         content: m.content,
         createdAt: m.createdAt,
       })),
-    vision: profile?.visionJson ? JSON.parse(profile.visionJson) : null,
+    vision,
     board: profile?.boardJson ? JSON.parse(profile.boardJson) : null,
+    suggestions,
   });
 }
 
@@ -68,6 +80,7 @@ export async function POST(request: Request) {
   const vision = extractVision(recent.map((r) => ({ role: r.role, content: r.content })).reverse());
   const { reply: assistantReply } = composeAssistantReply(vision, content, { prevVision });
   const board = buildBoard(vision);
+  const suggestions = demoSuggestionsForVision(vision);
 
   const assistantMsgId = uuidv4();
   await db.insert(conciergeMessages).values({
@@ -102,6 +115,7 @@ export async function POST(request: Request) {
     message: { id: assistantMsgId, role: 'assistant', content: assistantReply },
     vision,
     board,
+    suggestions,
   });
 }
 
