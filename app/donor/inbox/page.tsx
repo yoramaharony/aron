@@ -93,18 +93,18 @@ export default function DonorInbox() {
             </div>
 
             <Card noPadding className="overflow-hidden min-h-[600px] flex flex-col">
-                <div className="p-4 border-b border-[var(--border-subtle)] flex gap-4 bg-[rgba(255,255,255,0.02)]">
+                <div className="p-4 border-b border-[var(--border-subtle)] flex gap-4 bg-[linear-gradient(180deg,rgba(26,26,26,0.92),rgba(10,10,10,0.92))]">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)]" size={18} />
                         <input
                             type="text"
                             placeholder="Search messages..."
-                            className="w-full pl-10 pr-4 py-2 bg-[rgba(255,255,255,0.03)] border border-[var(--border-strong)] rounded-lg text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-gold)]"
+                            className="w-full pl-10 pr-4 py-2 rounded-lg text-sm font-light text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] bg-[linear-gradient(180deg,rgba(26,26,26,0.82),rgba(10,10,10,0.82))] border border-[rgba(var(--silver-rgb),0.15)] shadow-[inset_0_2px_6px_rgba(0,0,0,0.40)] focus:outline-none focus:border-[rgba(var(--accent-rgb),0.35)]"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
                     </div>
-                    <button className="p-2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.06)] rounded-lg border border-[var(--border-subtle)]">
+                    <button className="p-2 text-[var(--text-tertiary)] hover:text-[var(--text-primary)] rounded-lg border border-[rgba(var(--silver-rgb),0.15)] bg-[linear-gradient(180deg,rgba(26,26,26,0.75),rgba(10,10,10,0.75))] hover:bg-[linear-gradient(180deg,rgba(42,42,42,0.65),rgba(10,10,10,0.80))] transition-colors">
                         <Filter size={18} />
                     </button>
                 </div>
