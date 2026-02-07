@@ -572,10 +572,19 @@ body {
   padding-bottom: 80px; /* space for mobile bottom nav */
 }
 
+/* Allow specific donor pages to opt into edge-to-edge content within the shell padding. */
+.donor-shell .donor-content-wrap > .donor-full-bleed {
+  margin: -1rem;
+}
+
 @media (min-width: 768px) {
   .donor-shell .donor-content-wrap {
     padding: 2rem;
     padding-bottom: 2rem;
+  }
+
+  .donor-shell .donor-content-wrap > .donor-full-bleed {
+    margin: -2rem;
   }
 }
 

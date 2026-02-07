@@ -11,15 +11,17 @@ type ConciergeSuggestion = { label: string; content: string };
 export default function ImpactVisionStudioPage() {
     const [refreshKey, setRefreshKey] = useState(0);
     return (
-        <div className="flex flex-col md:flex-row h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-app)]">
-            {/* LEFT: Chat Interface (40%) */}
-            <div className="flex-1 border-b md:border-b-0 md:border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col shadow-xl z-10">
-                <LegacyChat onUpdated={() => setRefreshKey((v) => v + 1)} />
-            </div>
+        <div className="donor-full-bleed">
+            <div className="flex flex-col md:flex-row h-[calc(100vh-64px-80px)] md:h-[calc(100vh-64px)] overflow-hidden bg-[var(--bg-app)]">
+                {/* LEFT: Chat Interface (flex) */}
+                <div className="flex-1 border-b md:border-b-0 md:border-r border-[var(--border-subtle)] bg-[var(--bg-surface)] flex flex-col shadow-xl z-10">
+                    <LegacyChat onUpdated={() => setRefreshKey((v) => v + 1)} />
+                </div>
 
-            {/* RIGHT: Dynamic Canvas (60%) */}
-            <div className="impact-vision-pane-bg w-full md:w-[360px] lg:w-[420px] xl:w-[480px] shrink-0 p-5 md:p-6 overflow-y-auto">
-                <LegacyCanvas refreshKey={refreshKey} />
+                {/* RIGHT: Dynamic Canvas (fixed width on desktop) */}
+                <div className="impact-vision-pane-bg w-full md:w-[360px] lg:w-[420px] xl:w-[480px] shrink-0 p-5 md:p-6 overflow-y-auto">
+                    <LegacyCanvas refreshKey={refreshKey} />
+                </div>
             </div>
         </div>
     );
