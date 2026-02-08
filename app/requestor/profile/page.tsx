@@ -153,7 +153,7 @@ export default function RequestorProfileSettingsPage() {
         </div>
         <div className="mt-5 flex justify-end">
           <Button
-            variant="outline"
+            variant="gold"
             onClick={changePassword}
             isLoading={pwSaving}
             disabled={!currentPassword || !newPassword || !confirmPassword}
