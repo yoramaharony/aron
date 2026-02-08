@@ -10,6 +10,7 @@ export function RequestorTopBar() {
   const { sidebarCollapsed, toggleSidebar } = useRequestorUi();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [me, setMe] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -21,6 +22,15 @@ export function RequestorTopBar() {
     window.addEventListener('mousedown', onDown);
     return () => window.removeEventListener('mousedown', onDown);
   }, [menuOpen]);
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.name && d?.email) setMe({ name: String(d.name), email: String(d.email) });
+      })
+      .catch(() => {});
+  }, []);
 
   const signOut = async () => {
     try {
@@ -34,8 +44,16 @@ export function RequestorTopBar() {
     if (pathname === '/requestor') return 'Create Request';
     if (pathname === '/requestor/requests') return 'My Requests';
     if (pathname === '/requestor/campaigns') return 'Campaigns';
+    if (pathname === '/requestor/profile') return 'Profile settings';
     if (pathname?.startsWith('/requestor/')) return 'Requestor';
     return 'Nonprofit Portal';
+  })();
+
+  const initials = (() => {
+    const base = (me?.name || me?.email || 'NP').trim();
+    const parts = base.split(/\s+/g).filter(Boolean);
+    if (parts.length >= 2) return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase();
+    return (base.slice(0, 2) || 'NP').toUpperCase();
   })();
 
   return (
@@ -79,7 +97,7 @@ export function RequestorTopBar() {
             aria-expanded={menuOpen}
             aria-label="Account menu"
           >
-            NP
+            {initials}
           </button>
 
           {menuOpen ? (
@@ -89,8 +107,22 @@ export function RequestorTopBar() {
             >
               <div className="px-5 py-4 border-b border-[rgba(255,255,255,0.08)]">
                 <div className="text-xs font-bold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">Signed in</div>
-                <div className="text-base font-semibold text-[var(--text-primary)] mt-2">Nonprofit User</div>
+                <div className="text-base font-semibold text-[var(--text-primary)] mt-2">{me?.name || 'Organization'}</div>
+                {me?.email ? (
+                  <div className="text-xs text-[var(--text-tertiary)] mt-1 font-mono truncate">{me.email}</div>
+                ) : null}
               </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  window.location.href = '/requestor/profile';
+                }}
+                className="w-full text-left px-5 py-4 text-sm font-semibold text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.06)] transition-colors border-b border-[rgba(255,255,255,0.08)]"
+              >
+                Profile settings
+              </button>
               <button
                 type="button"
                 role="menuitem"

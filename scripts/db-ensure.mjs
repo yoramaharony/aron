@@ -319,6 +319,17 @@ async function main() {
       1
     WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE key='request_more_info');
     `,
+    `
+    INSERT INTO email_templates (key, name, subject, text_body, html_body, enabled)
+    SELECT
+      'admin_new_password',
+      'Admin: New Password',
+      'B\"H — Your Aron password has been reset',
+      'B\"H\\n\\nHello {{user_name}},\\n\\nAn admin has reset your Aron password.\\n\\nTemporary password:\\n{{new_password}}\\n\\nLogin here:\\n{{login_url}}\\n\\nFor security, please change your password in Profile settings after logging in.\\n\\nThank you,\\nAron',
+      '<div style=\"font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5\"><div style=\"margin-bottom:12px\">B&quot;H</div><p>Hello <strong>{{user_name}}</strong>,</p><p>An admin has reset your Aron password.</p><p style=\"margin:14px 0\"><strong>Temporary password:</strong><br/><code style=\"font-size:16px\">{{new_password}}</code></p><p><a href=\"{{login_url}}\">Login to Aron</a></p><p style=\"color:#666\">For security, please change your password in <strong>Profile settings</strong> after logging in.</p><p>Thank you,<br/>Aron</p></div>',
+      1
+    WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE key='admin_new_password');
+    `,
   ];
 
   for (const sql of statements) {

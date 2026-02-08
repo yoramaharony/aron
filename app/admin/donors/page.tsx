@@ -18,6 +18,7 @@ export default function AdminDonorsPage() {
   const [rows, setRows] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [query, setQuery] = useState('');
 
   const [createOpen, setCreateOpen] = useState(false);
@@ -61,6 +62,7 @@ export default function AdminDonorsPage() {
     if (!pw) return;
     setLoading(true);
     setError('');
+    setNotice('');
     try {
       const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
         method: 'PATCH',
@@ -69,6 +71,29 @@ export default function AdminDonorsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || 'Failed');
+      setNotice('Password updated.');
+    } catch (e: any) {
+      setError(String(e?.message || 'Failed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendNewPassword = async (u: AdminUser) => {
+    const ok = window.confirm(`Send a new password to ${u.email}?\n\nThis will replace their current password.`);
+    if (!ok) return;
+    setLoading(true);
+    setError('');
+    setNotice('');
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_new_password' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed');
+      setNotice(`New password emailed to ${data?.sentTo || u.email}.`);
     } catch (e: any) {
       setError(String(e?.message || 'Failed'));
     } finally {
@@ -138,6 +163,7 @@ export default function AdminDonorsPage() {
         </div>
 
         {error ? <div className="text-sm text-red-300">{error}</div> : null}
+        {notice ? <div className="text-sm text-green-200">{notice}</div> : null}
 
         {createOpen ? (
           <div className="rounded-xl border border-[rgba(var(--accent-rgb), 0.22)] bg-[rgba(var(--accent-rgb), 0.08)] p-4">
@@ -220,8 +246,11 @@ export default function AdminDonorsPage() {
                     </td>
                     <td className="py-3 text-right">
                       <div className="inline-flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => sendNewPassword(u)} disabled={loading}>
+                          Send new PW
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => resetPassword(u)} disabled={loading}>
-                          Reset PW
+                          Set PW
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => toggleDisable(u)} disabled={loading}>
                           {u.disabledAt ? 'Enable' : 'Disable'}
@@ -267,8 +296,17 @@ export default function AdminDonorsPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => sendNewPassword(u)}
+                    disabled={loading}
+                    className="flex-1"
+                  >
+                    Send new PW
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => resetPassword(u)} disabled={loading} className="flex-1">
-                    Reset PW
+                    Set PW
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => toggleDisable(u)} disabled={loading} className="flex-1">
                     {u.disabledAt ? 'Enable' : 'Disable'}

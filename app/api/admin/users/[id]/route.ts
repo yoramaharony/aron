@@ -3,6 +3,9 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { getSession, hashPassword } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
+import crypto from 'crypto';
+import { renderEmailFromTemplate } from '@/lib/email-templates';
+import { sendMailgunEmail } from '@/lib/mailgun';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -17,6 +20,26 @@ function sanitizeUser(u: any) {
     disabledAt: u.disabledAt,
     createdAt: u.createdAt,
   };
+}
+
+function generateStrongPassword(len = 16) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  // Ensure at least one of each: upper, lower, digit
+  const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lower = 'abcdefghijkmnopqrstuvwxyz';
+  const digits = '23456789';
+
+  const pick = (set: string) => set[crypto.randomInt(0, set.length)];
+  let out = pick(upper) + pick(lower) + pick(digits);
+  while (out.length < len) out += pick(chars);
+
+  // Shuffle
+  const arr = out.split('');
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.join('');
 }
 
 export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
@@ -52,6 +75,37 @@ export async function PATCH(request: NextRequest, context: { params: Promise<{ i
     const hashed = await hashPassword(password);
     await db.update(users).set({ password: hashed }).where(eq(users.id, id));
     return NextResponse.json({ success: true });
+  }
+
+  if (action === 'send_new_password') {
+    if (existing.role !== 'donor') {
+      return NextResponse.json({ error: 'This action is only supported for donors (MVP).' }, { status: 400 });
+    }
+    const newPassword = generateStrongPassword(16);
+    const hashed = await hashPassword(newPassword);
+    await db.update(users).set({ password: hashed }).where(eq(users.id, id));
+
+    const origin = new URL(request.url).origin;
+    const loginUrl = `${origin}/auth/login`;
+
+    const rendered = await renderEmailFromTemplate({
+      key: 'admin_new_password',
+      vars: {
+        user_name: existing.name || existing.email,
+        new_password: newPassword,
+        login_url: loginUrl,
+      },
+    });
+
+    await sendMailgunEmail({
+      to: existing.email,
+      subject: rendered.subject,
+      text: rendered.text,
+      html: rendered.html,
+      from: rendered.from,
+    });
+
+    return NextResponse.json({ success: true, sentTo: existing.email });
   }
 
   // default update: name/email/role

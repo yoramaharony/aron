@@ -20,7 +20,7 @@ export async function getEmailTemplate(key: string) {
 }
 
 export async function renderEmailFromTemplate(opts: {
-  key: 'invite_donor' | 'invite_requestor' | 'forgot_password' | 'request_more_info';
+  key: 'invite_donor' | 'invite_requestor' | 'forgot_password' | 'request_more_info' | 'admin_new_password';
   vars: Record<string, string>;
 }) {
   const tpl = await getEmailTemplate(opts.key);

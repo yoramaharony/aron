@@ -10,6 +10,7 @@ export function DonorTopBar() {
   const { sidebarCollapsed, toggleSidebar } = useDonorUi();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const [me, setMe] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -21,6 +22,15 @@ export function DonorTopBar() {
     window.addEventListener('mousedown', onDown);
     return () => window.removeEventListener('mousedown', onDown);
   }, [menuOpen]);
+
+  useEffect(() => {
+    fetch('/api/profile')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.name && d?.email) setMe({ name: String(d.name), email: String(d.email) });
+      })
+      .catch(() => {});
+  }, []);
 
   const signOut = async () => {
     try {
@@ -39,8 +49,16 @@ export function DonorTopBar() {
     if (pathname === '/donor/legacy') return 'Concierge AI';
     if (pathname === '/donor/invites') return 'Invites';
     if (pathname === '/donor/submission-links') return 'Submission Links';
+    if (pathname === '/donor/profile') return 'Profile settings';
     if (pathname?.startsWith('/donor/')) return 'Opportunity';
     return 'Donor';
+  })();
+
+  const initials = (() => {
+    const base = (me?.name || me?.email || 'JD').trim();
+    const parts = base.split(/\s+/g).filter(Boolean);
+    if (parts.length >= 2) return `${parts[0][0] || ''}${parts[1][0] || ''}`.toUpperCase();
+    return (base.slice(0, 2) || 'JD').toUpperCase();
   })();
 
   return (
@@ -87,7 +105,7 @@ export function DonorTopBar() {
             aria-expanded={menuOpen}
             aria-label="Account menu"
           >
-            JD
+            {initials}
           </button>
 
           {menuOpen ? (
@@ -100,9 +118,23 @@ export function DonorTopBar() {
                   Signed in
                 </div>
                 <div className="text-base font-semibold text-[var(--text-primary)] mt-2">
-                  John Doe
+                  {me?.name || 'Donor'}
                 </div>
+                {me?.email ? (
+                  <div className="text-xs text-[var(--text-tertiary)] mt-1 font-mono truncate">{me.email}</div>
+                ) : null}
               </div>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  window.location.href = '/donor/profile';
+                }}
+                className="w-full text-left px-5 py-4 text-sm font-semibold text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.06)] transition-colors border-b border-[rgba(255,255,255,0.08)]"
+              >
+                Profile settings
+              </button>
               <button
                 type="button"
                 role="menuitem"
