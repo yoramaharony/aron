@@ -304,6 +304,37 @@ body {
   }
 }
 
+@layer components {
+  /* Premium gold highlight for larger selectable surfaces (like invite delivery cards) */
+  .gold-surface-selected {
+    border-color: rgba(var(--accent-rgb), 0.40) !important;
+    background:
+      radial-gradient(420px 260px at 18% 18%, rgba(var(--accent-rgb), 0.10), transparent 60%),
+      linear-gradient(180deg, rgba(42, 42, 42, 0.86), rgba(16, 16, 16, 0.88));
+    box-shadow:
+      0 0 0 1px rgba(var(--accent-rgb), 0.20),
+      0 14px 55px -40px rgba(var(--accent-rgb), 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+
+  .gold-callout {
+    border-color: rgba(var(--accent-rgb), 0.28) !important;
+    background:
+      radial-gradient(560px 220px at 14% 10%, rgba(var(--accent-rgb), 0.08), transparent 62%),
+      linear-gradient(180deg, rgba(26, 26, 26, 0.88), rgba(10, 10, 10, 0.92)),
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.04) 2px,
+        rgba(255, 255, 255, 0.04) 3px
+      );
+    box-shadow:
+      0 10px 35px -32px rgba(var(--accent-rgb), 0.35),
+      inset 0 1px 0 rgba(var(--accent-rgb), 0.14);
+  }
+}
+
 /* Reusable: Figma-style diagonal texture header background */
 .textured-background {
   /* Use shorthand so nothing accidentally wipes out background-image via later rules */

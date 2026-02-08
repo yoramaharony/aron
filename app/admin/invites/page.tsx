@@ -162,7 +162,7 @@ export default function AdminInvitesPage() {
                   'rounded-2xl border p-4 md:p-6 text-left transition-colors',
                   'bg-[rgba(255,255,255,0.02)]',
                   deliveryMethod === 'email'
-                    ? 'border-[rgba(var(--accent-rgb), 0.65)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.30),0_18px_60px_-45px_rgba(var(--accent-rgb), 0.35)]'
+                    ? 'gold-surface-selected'
                     : 'border-[var(--border-subtle)] hover:border-[rgba(255,255,255,0.16)]',
                 ].join(' ')}
                 onClick={() => setDeliveryMethod('email')}
@@ -195,7 +195,7 @@ export default function AdminInvitesPage() {
                   'rounded-2xl border p-4 md:p-6 text-left transition-colors',
                   'bg-[rgba(255,255,255,0.02)]',
                   deliveryMethod === 'copy'
-                    ? 'border-[rgba(var(--accent-rgb), 0.65)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.30),0_18px_60px_-45px_rgba(var(--accent-rgb), 0.35)]'
+                    ? 'gold-surface-selected'
                     : 'border-[var(--border-subtle)] hover:border-[rgba(255,255,255,0.16)]',
                 ].join(' ')}
                 onClick={() => setDeliveryMethod('copy')}
@@ -221,7 +221,7 @@ export default function AdminInvitesPage() {
               </button>
             </div>
 
-            <div className="mt-3 rounded-xl border border-[rgba(var(--accent-rgb), 0.22)] bg-[rgba(var(--accent-rgb), 0.08)] p-3 text-sm text-[var(--text-secondary)]">
+            <div className="mt-3 rounded-xl border p-3 text-sm text-[var(--text-secondary)] gold-callout">
               {deliveryMethod === 'email'
                 ? 'When the code is created, an invite email is sent immediately (via Mailgun). You can still copy/share the link after creation.'
                 : 'Create the code and share the link manually. (You can always resend by switching to Email and creating another code.)'}
