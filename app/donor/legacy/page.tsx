@@ -292,8 +292,9 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                         >
                             <Send
                                 size={20}
-                                strokeWidth={1.75}
-                                className="relative z-10 text-[var(--color-gold)] drop-shadow-[0_0_10px_rgba(212,175,55,0.45)] transition-transform duration-150 ease-out group-hover:translate-x-[1px] group-active:-translate-x-[2px] group-active:translate-y-[2px] group-active:rotate-[-8deg]"
+                                strokeWidth={1.5}
+                                fill="currentColor"
+                                className="relative z-10 text-[var(--color-gold)] drop-shadow-[0_0_12px_rgba(212,175,55,0.55)] transition-transform duration-150 ease-out group-hover:translate-x-[1px] group-active:-translate-x-[2px] group-active:translate-y-[2px] group-active:rotate-[-8deg]"
                             />
                         </button>
                     </div>
