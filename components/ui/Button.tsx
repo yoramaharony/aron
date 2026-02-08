@@ -35,7 +35,7 @@ export function Button({
     `btn-${variant}`,
     `btn-${size}`,
     {
-      'opacity-50 cursor-not-allowed': disabled || isLoading,
+      'btn-disabled cursor-not-allowed': disabled || isLoading,
     },
     className
   );
