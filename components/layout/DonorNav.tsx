@@ -28,8 +28,8 @@ export function DonorNav() {
             <aside className={clsx('sidebar p-6 pt-4', sidebarCollapsed && 'sidebar-collapsed')}>
                 {/* Top: logo */}
                 <div className="pb-4 border-b border-[rgba(var(--silver-rgb),0.15)]">
-                    <div className={clsx('flex flex-col', sidebarCollapsed ? 'items-center' : 'items-start')}>
-                        <div className={clsx('flex items-center gap-3 mb-1', sidebarCollapsed ? 'justify-center' : 'justify-start')}>
+                    <div className="flex flex-col items-center text-center">
+                        <div className="flex items-center justify-center gap-3 mb-1 w-full">
                             <AronLogo
                                 variant={sidebarCollapsed ? 'mark' : 'full'}
                                 imgClassName={clsx(
@@ -41,7 +41,6 @@ export function DonorNav() {
                         <p
                             className={clsx(
                                 'sidebar-tagline text-[10px] tracking-[0.3em] text-[rgba(var(--silver-rgb),0.95)] font-light uppercase text-center w-full',
-                                sidebarCollapsed ? 'text-center' : 'text-left',
                                 sidebarCollapsed && 'sidebar-tagline-collapsed'
                             )}
                         >

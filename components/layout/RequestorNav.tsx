@@ -24,8 +24,8 @@ export function RequestorNav() {
             {/* Desktop Sidebar */}
             <aside className={clsx('sidebar p-6 pt-4', sidebarCollapsed && 'sidebar-collapsed')}>
                 <div className="pb-4">
-                    <div className={clsx('flex flex-col', sidebarCollapsed ? 'items-center' : 'items-start')}>
-                        <div className={clsx('flex items-center gap-3 mb-1', sidebarCollapsed ? 'justify-center' : 'justify-start')}>
+                    <div className="flex flex-col items-center text-center">
+                        <div className="flex items-center justify-center gap-3 mb-1 w-full">
                             <AronLogo
                                 variant={sidebarCollapsed ? 'mark' : 'full'}
                                 imgClassName={clsx('aron-logo w-auto object-contain', sidebarCollapsed ? 'h-[34px]' : 'h-[35px]')}
@@ -34,7 +34,6 @@ export function RequestorNav() {
                         <p
                             className={clsx(
                                 'sidebar-tagline text-[10px] tracking-[0.2em] text-[var(--color-gold)] font-medium uppercase',
-                                sidebarCollapsed ? 'text-center' : 'text-left',
                                 sidebarCollapsed && 'sidebar-tagline-collapsed'
                             )}
                         >
