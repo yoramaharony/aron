@@ -67,6 +67,31 @@ export function AdminNav() {
           );
         })}
       </nav>
+
+      {/* Bottom badge (portal identifier) */}
+      <div className="pt-4 border-t border-[rgba(var(--accent-rgb),0.30)]">
+        <div className={clsx('flex items-center gap-2 px-3 py-2 rounded-lg', sidebarCollapsed && 'justify-center px-2')}>
+          <div
+            className="flex items-center gap-2 px-3 py-2 rounded-lg w-full"
+            style={{
+              background: 'linear-gradient(135deg, #2A2A2A 0%, #1A1A1A 100%)',
+              border: '1px solid rgba(212,175,55,0.30)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.30), inset 0 1px 0 rgba(212,175,55,0.20)',
+            }}
+          >
+            {sidebarCollapsed ? (
+              <div className="w-7 h-7 rounded-lg border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(var(--accent-rgb),0.10)] text-[var(--color-gold)] flex items-center justify-center text-xs font-semibold">
+                A
+              </div>
+            ) : (
+              <div className="min-w-0">
+                <div className="text-xs font-light tracking-wide text-[var(--color-gold)]">Admin</div>
+                <div className="text-xs font-light text-[rgba(var(--silver-rgb),0.95)]">Console</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }

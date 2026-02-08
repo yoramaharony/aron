@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
-import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound, Link2, Zap } from 'lucide-react';
+import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound, Link2 } from 'lucide-react';
 import { AronLogo } from '@/components/layout/AronLogo';
 import { useDonorUi } from '@/components/providers/DonorUiContext';
 
@@ -95,11 +95,14 @@ export function DonorNav() {
                                 boxShadow: '0 2px 8px rgba(0,0,0,0.30), inset 0 1px 0 rgba(212,175,55,0.20)',
                             }}
                         >
-                            <Zap size={16} className="text-[var(--color-gold)] shrink-0" />
-                            {sidebarCollapsed ? null : (
+                            {sidebarCollapsed ? (
+                                <div className="w-7 h-7 rounded-lg border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(var(--accent-rgb),0.10)] text-[var(--color-gold)] flex items-center justify-center text-xs font-semibold">
+                                    D
+                                </div>
+                            ) : (
                                 <div className="min-w-0">
-                                    <div className="text-xs font-light tracking-wide text-[var(--color-gold)]">Centurion</div>
-                                    <div className="text-xs font-light text-[rgba(var(--silver-rgb),0.95)]">Limitless</div>
+                                    <div className="text-xs font-light tracking-wide text-[var(--color-gold)]">Donor</div>
+                                    <div className="text-xs font-light text-[rgba(var(--silver-rgb),0.95)]">Dashboard</div>
                                 </div>
                             )}
                         </div>
