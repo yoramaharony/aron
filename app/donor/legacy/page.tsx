@@ -284,7 +284,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                             onClick={() => sendMessage()}
                             disabled={!input.trim() || isTyping || resetting}
                             aria-label="Send message"
-                            className="group relative z-20 w-12 h-12 rounded-lg icon-tile-gold disabled:opacity-50 flex items-center justify-center transition-all hover:scale-[1.03] hover:brightness-110 active:scale-[0.95] active:brightness-125"
+                            className="group relative z-20 w-12 h-12 rounded-lg icon-tile-gold flex items-center justify-center transition-all hover:scale-[1.03] hover:brightness-110 active:scale-[0.95] active:brightness-125 disabled:opacity-100 disabled:cursor-not-allowed disabled:brightness-90 disabled:saturate-50"
                             style={{
                                 boxShadow:
                                     '0 14px 34px rgba(212,175,55,0.28), 0 0 22px rgba(212,175,55,0.18), 0 0 0 1px rgba(212,175,55,0.34), inset 0 1px 0 rgba(255,255,255,0.22)',
