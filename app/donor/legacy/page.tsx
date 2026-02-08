@@ -284,7 +284,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                             onClick={() => sendMessage()}
                             disabled={!input.trim() || isTyping || resetting}
                             aria-label="Send message"
-                            className="group w-12 h-12 rounded-lg icon-tile-gold disabled:opacity-50 flex items-center justify-center transition-all hover:scale-[1.03] hover:brightness-110 active:scale-[0.95] active:brightness-125"
+                            className="group relative z-20 w-12 h-12 rounded-lg icon-tile-gold disabled:opacity-50 flex items-center justify-center transition-all hover:scale-[1.03] hover:brightness-110 active:scale-[0.95] active:brightness-125"
                             style={{
                                 boxShadow:
                                     '0 14px 34px rgba(212,175,55,0.28), 0 0 22px rgba(212,175,55,0.18), 0 0 0 1px rgba(212,175,55,0.34), inset 0 1px 0 rgba(255,255,255,0.22)',
@@ -293,7 +293,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                             <Send
                                 size={20}
                                 strokeWidth={1.75}
-                                className="text-[var(--color-gold)] transition-transform duration-150 ease-out group-hover:translate-x-[1px] group-active:-translate-x-[2px] group-active:translate-y-[2px] group-active:rotate-[-8deg]"
+                                className="relative z-10 text-[var(--color-gold)] drop-shadow-[0_0_10px_rgba(212,175,55,0.45)] transition-transform duration-150 ease-out group-hover:translate-x-[1px] group-active:-translate-x-[2px] group-active:translate-y-[2px] group-active:rotate-[-8deg]"
                             />
                         </button>
                     </div>
