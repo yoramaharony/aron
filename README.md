@@ -55,6 +55,23 @@ Optional legacy seed endpoint (local only):
 
 Admin landing: `http://localhost:3000/admin/invites`
 
+## Azure App Service (recommended deployment)
+
+### Fix for `Could not find a production build in the '.next' directory`
+Azure must have a built `.next` folder before running `next start`.
+
+This repo includes a GitHub Actions workflow at `yesod-platform/.github/workflows/azure-deploy.yml` that:
+- runs `npm ci`
+- runs `npm run build` (produces `.next`)
+- prunes dev deps
+- deploys a zip package to Azure
+
+To use it:
+- Azure Portal → your Web App → **Get publish profile** (downloads an XML)
+- GitHub → repo → Settings → Secrets and variables → Actions → **New repository secret**
+  - Name: `AZURE_WEBAPP_PUBLISH_PROFILE`
+  - Value: paste the publish profile XML contents
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
