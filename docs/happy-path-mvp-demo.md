@@ -13,8 +13,32 @@ Goal: Run a clean, end-to-end demo of **what is implemented today** using the bu
 
 ```bash
 cd yesod-platform
-node scripts/db-ensure.mjs
+npm run db:ensure
 ```
+
+Note: `npm run dev` already runs `npm run db:ensure` automatically.
+
+### Mailgun (live email demo) (optional but recommended)
+
+If you want to demo **real email sending** (invites + forgot password), set:
+
+- `MAILGUN_API_KEY`
+- `MAILGUN_DOMAIN`
+- `MAILGUN_FROM`
+- (EU region only) `MAILGUN_API_BASE_URL=https://api.eu.mailgun.net`
+
+Quick verification steps:
+
+1. Go to `http://localhost:3000/admin/invites`
+2. Choose **Email Invite**
+3. Enter your email as the recipient and click **Generate Code**
+4. Expected: UI shows “Email sent to …” and you receive the email.
+
+Then test forgot password:
+
+1. Go to `http://localhost:3000/auth/forgot-password`
+2. Enter a known user email (e.g. demo donor below)
+3. Expected: reset email arrives; reset link loads; password can be changed.
 
 ### Reset + seed (Jewish-themed demo)
 
@@ -50,7 +74,7 @@ Then start the app again and run the **Soft reset** steps above.
   - Concierge “Impact Vision” conversation persisted in DB
   - Impact Vision Board + share actions (copy summary / share link / print)
   - Opportunities list + detail + actions + **history**
-  - Leverage offer creation (persisted)
+  - Leverage offer creation (persisted + appears in History)
   - Submission links: create/revoke/track + public intake
 - **Public intake**: `/submit/<token>` validates and accepts a lightweight submission
 - **Requestor (Nonprofit) portal**:
@@ -83,6 +107,7 @@ npm run db:ensure
 
 Expected:
 - You see confirmation + a list of links (donor dashboard, concierge, impact board, submit link, etc.).
+- Theme defaults to **Jewish causes** and seeds multiple Jewish-themed submissions (e.g. Bikur Cholim, Hatzolah, Kimcha d’Pischa, Chinuch, Mikveh, Yeshiva building, Gemach).
 
 ### A3) (Optional) Show admin chrome polish
 - Point out:
@@ -164,6 +189,9 @@ Expected:
 Expected:
 - History shows human-readable items (no underscores) and timestamps.
 - Duplicate actions don’t spam (consecutive duplicates collapsed).
+- For **Request more info**, the donor receives a `/more-info/<token>` link that is:
+  - copied to clipboard (best-effort), and
+  - visible in History as “Requested more info (copy link)”.
 
 ### D4) Create a leverage offer
 - Click **Leverage** and create an offer.
@@ -204,6 +232,17 @@ Expected:
 - Success state.
 - Back on `/donor/submission-links`, “opens” and “submissions” counts increase after refresh.
 - On donor `/donor`, the new submission appears as an opportunity.
+
+### E4) (Optional) Show “Request more info” public form
+
+- On `/donor`, open the seeded submission “Refuah / Bikur Cholim …”
+- Click **Request more info**
+- Open the copied link (or click “copy link” in History) → `/more-info/<token>`
+
+Expected:
+- Form loads (no login required).
+- “Complexity” label changes based on amount (Basic/Detailed/Comprehensive).
+- Submitting the form makes those details appear under **Due diligence** for that submission.
 
 ---
 
@@ -257,7 +296,7 @@ Expected:
   - Refresh once; ensure token copied fully.
   - If still invalid, open `/donor/submission-links` and re-copy the link, then try again.
 - **DB errors (“no such column…”)**:
-  - Run `node scripts/db-ensure.mjs` again.
+  - Run `npm run db:ensure` again (from `yesod-platform/`) and restart `npm run dev`.
 
 ---
 

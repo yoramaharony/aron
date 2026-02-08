@@ -21,26 +21,26 @@ Legend:
 
 ### Donor experience (core)
 - `[x]` **AI concierge conversation** (help donor articulate “Impact Vision” — not preferences)
-- `[~]` **Vision / Impact Board** output (visual, shareable inside app)
-- `[~]` **Opportunity dashboard** (email/inbox-style list view + right-pane detail + hover actions)
-- `[~]` **Opportunity actions + history** (New → Requested Info → Scheduled → Shortlisted → Passed → Leverage Flagged → Funded)
-- `[~]` **Leverage engine UI** (create catalytic offer / leverage terms)
+- `[x]` **Vision / Impact Board** output (visual, shareable inside app)
+- `[x]` **Opportunity dashboard** (email/inbox-style list view + right-pane detail + hover actions)
+- `[x]` **Opportunity actions + history** (New → Requested Info → Scheduled → Shortlisted → Passed → Leverage Flagged → Funded)
+- `[x]` **Leverage engine UI** (create catalytic offer / leverage terms)
 - `[x]` **Donor-to-donor matching (Level 2)** surfaced as opt-in insight (Phase 1: light UI + toggle; no automation)
 
 ### Requester/org experience (progressive disclosure)
 - `[x]` **Lightweight initial submission** (brief text + optional video link) via donor-generated link
-- `[ ]` **LLM auto-extraction** from video/text (cause, geo, amount, urgency, etc.) — Phase 1 can be stubbed with deterministic extraction
-- `[ ]` **“Request more info”** path (only after donor signals interest) → unlocks detailed form
-- `[ ]` **Dynamic complexity by amount** (small vs medium vs large ask)
-- `[ ]` **Scoring/completeness indicator** (use labels like “Basic / Detailed / Comprehensive”, not a % score)
+- `[x]` **LLM auto-extraction** from video/text (cause, geo, amount, urgency, etc.) — Phase 1 deterministic extraction
+- `[x]` **“Request more info”** path (only after donor signals interest) → unlocks detailed form
+- `[x]` **Dynamic complexity by amount** (small vs medium vs large ask)
+- `[x]` **Scoring/completeness indicator** (labels like “Basic / Detailed / Comprehensive”)
 
 ### Trust & verification (MVP-lite)
-- `[ ]` **Org KYC onboarding (one-time)** (Phase 1 can be “verified by concierge” toggle + placeholder UI)
-- `[ ]` **Promise vs Due Diligence separation** (two tabs/layers in detail view; hide “overhead” from promise layer)
+- `[x]` **Org KYC onboarding (one-time)** (Phase 1: “verified by concierge” toggle in admin)
+- `[x]` **Promise vs Due Diligence separation** (two tabs/layers in detail view; overhead/financials in Due diligence)
 
 ### Charidy integration (Phase 1: manual curation)
-- `[ ]` **Curated Charidy campaigns** appear as opportunities (manual list in code is OK for MVP)
-- `[ ]` **Context framing** for major gifts (naming opportunity, funding gap, outcomes)
+- `[x]` **Curated Charidy campaigns** appear as opportunities (manual list in code is OK for MVP)
+- `[x]` **Context framing** for major gifts (naming opportunity, funding gap, outcomes)
 
 ### UX / polish requirements (demo readiness)
 - `[~]` Dark mode-first, futuristic magenta accents, premium motion
@@ -70,16 +70,11 @@ Legend:
   - APIs: `POST /api/submission-links`, `GET /api/submission-links`, `GET /api/submission-links/public/<token>`, `POST /api/submissions`
 
 ### ✅ Implemented (Demo/UI-only)
-- “Concierge AI” chat + visual plan canvas (currently in `/donor/legacy`) — mock data
-- Donor opportunity feed + detail pages + shortlist/passed + leverage drawer — mock + client state
-- Inbox split view interaction — mock + client state
+- Inbox split view interaction — mostly UI (messages are mocked today)
+- Vault docs — mostly UI (static docs + “ripple” docs from leverage drafting)
 
 ### ❌ Missing vs refined MVP direction
-- “Request more info” progressive disclosure (after donor signals interest)
-- Opportunity dashboard should be email-list-first (not swipe-first)
-- Request lifecycle states persisted in DB (and shown in UI)
-- KYC verification model (even a “concierge verified” flag)
-- Charidy curated campaigns surfaced in donor dashboard
+- (If desired) Theme the curated Charidy list to Jewish causes for the religious-donor demo (currently includes a non-Jewish placeholder item)
 
 ---
 
