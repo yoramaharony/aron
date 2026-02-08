@@ -29,6 +29,13 @@ export default function DonorFeed() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [detailTab, setDetailTab] = useState<'promise' | 'diligence'>('promise');
+    const [moreInfoOpen, setMoreInfoOpen] = useState(false);
+    const [moreInfoUrl, setMoreInfoUrl] = useState<string | null>(null);
+    const [moreInfoNote, setMoreInfoNote] = useState('');
+    const [moreInfoSending, setMoreInfoSending] = useState(false);
+    const [moreInfoSentTo, setMoreInfoSentTo] = useState<string | null>(null);
+    const [moreInfoErr, setMoreInfoErr] = useState<string | null>(null);
+    const [moreInfoCopied, setMoreInfoCopied] = useState(false);
 
     const { openLeverageDrawer } = useLeverage();
 
@@ -110,7 +117,7 @@ export default function DonorFeed() {
         }
     };
 
-    const act = async (key: string, action: string) => {
+    const act = async (key: string, action: string, meta?: any) => {
         try {
             const listBefore = filterRows(rows, activeTab);
             const nextAfterBefore = nextKeyAfter(listBefore, key);
@@ -118,7 +125,7 @@ export default function DonorFeed() {
             const res = await fetch(`/api/opportunities/${encodeURIComponent(key)}/actions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action }),
+                body: JSON.stringify({ action, meta: meta || undefined }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || 'Failed');
@@ -169,6 +176,46 @@ export default function DonorFeed() {
 
     return (
         <div className="space-y-6">
+            <MoreInfoModal
+                open={moreInfoOpen}
+                onClose={() => setMoreInfoOpen(false)}
+                url={moreInfoUrl}
+                toEmail={(detail?.opportunity?.orgEmail || detail?.opportunity?.contactEmail || null) as string | null}
+                note={moreInfoNote}
+                setNote={setMoreInfoNote}
+                sending={moreInfoSending}
+                sentTo={moreInfoSentTo}
+                err={moreInfoErr}
+                copied={moreInfoCopied}
+                onCopy={async () => {
+                    if (!moreInfoUrl) return;
+                    try {
+                        await navigator.clipboard.writeText(moreInfoUrl);
+                        setMoreInfoCopied(true);
+                        window.setTimeout(() => setMoreInfoCopied(false), 1400);
+                    } catch {
+                        setMoreInfoErr('Copy failed. Please copy manually.');
+                    }
+                }}
+                onSendEmail={async () => {
+                    if (!detail?.opportunity?.key || !moreInfoUrl) return;
+                    setMoreInfoErr(null);
+                    setMoreInfoSending(true);
+                    try {
+                        const r = await act(detail.opportunity.key, 'request_info', {
+                            sendEmail: true,
+                            note: moreInfoNote,
+                        });
+                        const to = r?.emailSent?.to ? String(r.emailSent.to) : null;
+                        if (to) setMoreInfoSentTo(to);
+                        else setMoreInfoSentTo((detail?.opportunity?.orgEmail || detail?.opportunity?.contactEmail || null) as string | null);
+                    } catch (e: any) {
+                        setMoreInfoErr(String(e?.message || 'Failed to send email'));
+                    } finally {
+                        setMoreInfoSending(false);
+                    }
+                }}
+            />
             <header className="flex justify-between items-end gap-6">
                 <div>
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">Opportunities</h1>
@@ -311,14 +358,16 @@ export default function DonorFeed() {
                                         <Button
                                             variant="outline"
                                             onClick={async () => {
+                                                setMoreInfoErr(null);
+                                                setMoreInfoSentTo(null);
+                                                setMoreInfoCopied(false);
+                                                setMoreInfoNote('');
                                                 const r = await act(detail.opportunity.key, 'request_info');
                                                 if (r?.moreInfoUrl) {
-                                                    try {
-                                                        await navigator.clipboard.writeText(r.moreInfoUrl);
-                                                    } catch {
-                                                        // ignore
-                                                    }
-                                                    setError(`Request sent. Link copied: ${r.moreInfoUrl}`);
+                                                    setMoreInfoUrl(String(r.moreInfoUrl));
+                                                    setMoreInfoOpen(true);
+                                                } else {
+                                                    setError('Could not generate a request-more-info link.');
                                                 }
                                             }}
                                         >
@@ -592,6 +641,132 @@ export default function DonorFeed() {
                     </AnimatePresence>
                 </Card>
             </div>
+        </div>
+    );
+}
+
+function MoreInfoModal(props: {
+    open: boolean;
+    onClose: () => void;
+    url: string | null;
+    toEmail: string | null;
+    note: string;
+    setNote: (v: string) => void;
+    sending: boolean;
+    sentTo: string | null;
+    err: string | null;
+    copied: boolean;
+    onCopy: () => void;
+    onSendEmail: () => void;
+}) {
+    const {
+        open,
+        onClose,
+        url,
+        toEmail,
+        note,
+        setNote,
+        sending,
+        sentTo,
+        err,
+        copied,
+        onCopy,
+        onSendEmail,
+    } = props;
+
+    if (!open) return null;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+            <motion.div
+                initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                transition={{ duration: 0.22, ease: [0.2, 0.9, 0.2, 1] }}
+                className="relative w-full max-w-2xl"
+            >
+                <Card className="p-6 md:p-7 border border-[rgba(var(--silver-rgb),0.18)] shadow-[0_20px_80px_rgba(0,0,0,0.65)]">
+                    <div className="flex items-start justify-between gap-6">
+                        <div>
+                            <div className="text-xs tracking-[0.22em] uppercase text-[var(--text-tertiary)]">
+                                Request more info
+                            </div>
+                            <div className="text-xl md:text-2xl font-semibold text-[var(--text-primary)] mt-1">
+                                Share a secure form link
+                            </div>
+                            <div className="text-sm text-[var(--text-secondary)] mt-2">
+                                Send the organization a link to complete a more detailed diligence form. (MVP)
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="w-10 h-10 rounded-lg border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.03)] hover:bg-[rgba(255,255,255,0.05)] text-[var(--text-secondary)]"
+                            aria-label="Close"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-5">
+                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                                Link
+                            </div>
+                            <div className="text-sm text-[var(--text-secondary)] break-all">
+                                {url || '—'}
+                            </div>
+                            <div className="mt-4 flex gap-2">
+                                <Button variant="outline" onClick={onCopy} disabled={!url}>
+                                    {copied ? 'Copied' : 'Copy link'}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="rounded-2xl border border-[rgba(var(--accent-rgb),0.18)] bg-[rgba(var(--accent-rgb),0.06)] p-5">
+                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                                Email (Mailgun)
+                            </div>
+                            <div className="text-sm text-[var(--text-secondary)]">
+                                {toEmail ? (
+                                    <>
+                                        Will send to: <span className="text-[var(--text-primary)]">{toEmail}</span>
+                                    </>
+                                ) : (
+                                    <span className="text-[var(--text-tertiary)]">
+                                        No organization email on file for this submission.
+                                    </span>
+                                )}
+                            </div>
+                            <div className="mt-4">
+                                <label className="block text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                                    Optional note
+                                </label>
+                                <textarea
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                    rows={3}
+                                    placeholder="Add a short message (optional)…"
+                                    className="w-full rounded-lg px-4 py-3 bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:border-[rgba(var(--accent-rgb),0.35)] shadow-[inset_0_2px_6px_rgba(0,0,0,0.35)]"
+                                />
+                            </div>
+                            <div className="mt-4 flex gap-2">
+                                <Button variant="gold" onClick={onSendEmail} disabled={!toEmail || !url || sending}>
+                                    {sending ? 'Sending…' : 'Send email'}
+                                </Button>
+                            </div>
+                            {sentTo ? (
+                                <div className="mt-3 text-sm text-[var(--text-secondary)]">
+                                    Sent to <span className="text-[var(--text-primary)]">{sentTo}</span>.
+                                </div>
+                            ) : null}
+                        </div>
+                    </div>
+
+                    {err ? <div className="mt-4 text-sm text-red-300">{err}</div> : null}
+                </Card>
+            </motion.div>
         </div>
     );
 }

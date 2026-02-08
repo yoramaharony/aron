@@ -308,6 +308,17 @@ async function main() {
       1
     WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE key='forgot_password');
     `,
+    `
+    INSERT INTO email_templates (key, name, subject, text_body, html_body, enabled)
+    SELECT
+      'request_more_info',
+      'Request More Info (Submission)',
+      'B\"H — Request for additional details: {{opportunity_title}}',
+      'B\"H\\n\\nHello,\\n\\nA donor requested additional information for:\\n{{opportunity_title}}\\n\\nPlease complete this form:\\n{{more_info_url}}\\n{{note_block}}\\n\\nThank you,\\nAron',
+      '<div style=\"font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5\"><div style=\"margin-bottom:12px\">B&quot;H</div><p>Hello,</p><p>A donor requested additional information for:</p><p><strong>{{opportunity_title}}</strong></p><p><a href=\"{{more_info_url}}\">Complete the form</a></p>{{note_block_html}}<p>Thank you,<br/>Aron</p></div>',
+      1
+    WHERE NOT EXISTS (SELECT 1 FROM email_templates WHERE key='request_more_info');
+    `,
   ];
 
   for (const sql of statements) {

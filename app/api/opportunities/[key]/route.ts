@@ -50,6 +50,7 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ ke
       source,
       title: row.title || 'Submission',
       orgName: row.orgName || row.orgEmail || 'Unknown',
+      orgEmail: row.orgEmail ?? null,
       summary: row.summary,
       amountRequested: row.amountRequested ?? null,
       videoUrl: row.videoUrl ?? null,

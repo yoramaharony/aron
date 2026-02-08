@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState, submissionEntries } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, submissionEntries, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { renderEmailFromTemplate } from '@/lib/email-templates';
+import { sendMailgunEmail } from '@/lib/mailgun';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -38,6 +40,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
   const donorId = session.userId;
   const state = actionToState[action];
   let moreInfoUrl: string | null = null;
+  let emailSent: { to: string; id?: string } | null = null;
 
   // Upsert state row (via unique index donor+key)
   const existing = await db
@@ -77,12 +80,50 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
       }
       const origin = new URL(request.url).origin;
       moreInfoUrl = `${origin}/more-info/${token}`;
+
+      const meta = body?.meta && typeof body.meta === 'object' ? body.meta : null;
+      const sendEmail = Boolean((meta as any)?.sendEmail);
+      const note = typeof (meta as any)?.note === 'string' ? String((meta as any).note).trim() : '';
+
+      if (sendEmail) {
+        const to = (sub.orgEmail || sub.contactEmail || '').trim();
+        if (!to) {
+          return NextResponse.json(
+            { error: 'No organization email on file for this submission (orgEmail/contactEmail is missing).' },
+            { status: 400 }
+          );
+        }
+
+        const donor = await db.select().from(users).where(eq(users.id, donorId)).get();
+        const inviterName = donor?.name || 'A donor';
+
+        const rendered = await renderEmailFromTemplate({
+          key: 'request_more_info',
+          vars: {
+            inviter_name: inviterName,
+            opportunity_title: sub.title || 'Submission',
+            more_info_url: moreInfoUrl,
+            note,
+          },
+        });
+
+        const sent = await sendMailgunEmail({
+          to,
+          subject: rendered.subject,
+          text: rendered.text,
+          html: rendered.html,
+          from: rendered.from,
+        });
+
+        emailSent = { to, id: sent?.id };
+      }
     }
   }
 
   const metaObj = {
     ...(body?.meta && typeof body.meta === 'object' ? body.meta : {}),
     ...(moreInfoUrl ? { moreInfoUrl } : {}),
+    ...(emailSent ? { emailSentTo: emailSent.to, mailgunId: emailSent.id || null } : {}),
   };
 
   await db.insert(donorOpportunityEvents).values({
@@ -94,6 +135,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
     createdAt: new Date(),
   });
 
-  return NextResponse.json({ success: true, state, moreInfoUrl });
+  return NextResponse.json({ success: true, state, moreInfoUrl, emailSent });
 }
 
