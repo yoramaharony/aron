@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Zap } from 'lucide-react';
 import { useLeverage } from '@/components/providers/LeverageContext';
+import { AnimatePresence, motion } from 'framer-motion';
 
 type OpportunityRow = {
     key: string;
@@ -24,11 +25,28 @@ export default function DonorFeed() {
     const [rows, setRows] = useState<OpportunityRow[]>([]);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const [detail, setDetail] = useState<any>(null);
+    const [detailLoading, setDetailLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [detailTab, setDetailTab] = useState<'promise' | 'diligence'>('promise');
 
     const { openLeverageDrawer } = useLeverage();
+
+    const stateToTab = (s: string) => {
+        if (s === 'passed') return 'passed';
+        if (s === 'shortlisted') return 'shortlist';
+        return 'discover';
+    };
+
+    const filterRows = (all: OpportunityRow[], tab: 'discover' | 'shortlist' | 'passed') =>
+        all.filter((r) => stateToTab(r.state) === tab);
+
+    const nextKeyAfter = (list: OpportunityRow[], currentKey: string) => {
+        if (!list.length) return null;
+        const idx = list.findIndex((r) => r.key === currentKey);
+        if (idx < 0) return list[0].key;
+        return list[idx + 1]?.key ?? list[idx - 1]?.key ?? null;
+    };
 
     const refresh = async () => {
         setLoading(true);
@@ -37,9 +55,12 @@ export default function DonorFeed() {
             const res = await fetch('/api/opportunities');
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || 'Failed to load opportunities');
-            setRows(data.opportunities ?? []);
+            const next = (data.opportunities ?? []) as OpportunityRow[];
+            setRows(next);
+            return next;
         } catch (e: any) {
             setError(e?.message || 'Failed to load opportunities');
+            return null;
         } finally {
             setLoading(false);
         }
@@ -50,12 +71,7 @@ export default function DonorFeed() {
     }, []);
 
     const filtered = useMemo(() => {
-        const stateToTab = (s: string) => {
-            if (s === 'passed') return 'passed';
-            if (s === 'shortlisted') return 'shortlist';
-            return 'discover';
-        };
-        return rows.filter((r) => stateToTab(r.state) === activeTab);
+        return filterRows(rows, activeTab);
     }, [rows, activeTab]);
 
     const completenessLabel = (details: any) => {
@@ -82,17 +98,23 @@ export default function DonorFeed() {
         setSelectedKey(key);
         setDetailTab('promise');
         try {
+            setDetailLoading(true);
             const res = await fetch(`/api/opportunities/${encodeURIComponent(key)}`);
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || 'Failed to load');
             setDetail(data);
         } catch {
             setDetail(null);
+        } finally {
+            setDetailLoading(false);
         }
     };
 
     const act = async (key: string, action: string) => {
         try {
+            const listBefore = filterRows(rows, activeTab);
+            const nextAfterBefore = nextKeyAfter(listBefore, key);
+
             const res = await fetch(`/api/opportunities/${encodeURIComponent(key)}/actions`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -100,14 +122,50 @@ export default function DonorFeed() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || 'Failed');
-            await refresh();
-            if (selectedKey === key) await loadDetail(key);
+            const updated = (await refresh()) ?? rows;
+
+            // If the acted-on row was selected, advance selection to the next item in the left list.
+            // This prevents the right pane from showing a row that no longer exists in the active tab.
+            if (selectedKey === key) {
+                const listNow = filterRows(updated, activeTab);
+                const stillInTab = listNow.some((r) => r.key === key);
+                if (stillInTab) {
+                    await loadDetail(key);
+                } else {
+                    const candidate =
+                        (nextAfterBefore && listNow.some((r) => r.key === nextAfterBefore) ? nextAfterBefore : null) ??
+                        listNow[0]?.key ??
+                        null;
+                    if (candidate) {
+                        await loadDetail(candidate);
+                    } else {
+                        setSelectedKey(null);
+                        setDetail(null);
+                    }
+                }
+            }
             return data;
         } catch (e: any) {
             setError(e?.message || 'Action failed');
             return null;
         }
     };
+
+    // Keep selection in sync with the active tab/list.
+    useEffect(() => {
+        if (loading) return;
+        const list = filterRows(rows, activeTab);
+        if (!list.length) {
+            if (selectedKey !== null) setSelectedKey(null);
+            if (detail !== null) setDetail(null);
+            return;
+        }
+        if (!selectedKey || !list.some((r) => r.key === selectedKey)) {
+            // Auto-select the first item in the tab.
+            loadDetail(list[0].key).catch(() => {});
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, rows]);
 
     return (
         <div className="space-y-6">
@@ -176,10 +234,21 @@ export default function DonorFeed() {
                                     key={r.key}
                                     onClick={() => loadDetail(r.key)}
                                     className={[
-                                        'w-full text-left p-5 transition-colors',
-                                        selectedKey === r.key ? 'bg-[rgba(var(--accent-rgb), 0.10)]' : 'hover:bg-[rgba(255,255,255,0.04)]',
+                                        'relative w-full text-left p-5 transition-colors',
+                                        selectedKey === r.key
+                                            ? 'bg-[rgba(var(--accent-rgb), 0.10)]'
+                                            : 'hover:bg-[rgba(255,255,255,0.04)]',
                                     ].join(' ')}
                                 >
+                                    {selectedKey === r.key ? (
+                                        <span
+                                            className="pointer-events-none absolute left-0 top-3 bottom-3 w-[2px] rounded-full"
+                                            style={{
+                                                background: 'linear-gradient(180deg, rgba(212,175,55,0), rgba(212,175,55,0.95), rgba(212,175,55,0))',
+                                                boxShadow: '0 0 16px rgba(212,175,55,0.28)',
+                                            }}
+                                        />
+                                    ) : null}
                                     <div className="flex items-start justify-between gap-3">
                                         <div className="min-w-0">
                                             <div className="text-[var(--text-primary)] font-semibold truncate">{r.title}</div>
@@ -198,10 +267,27 @@ export default function DonorFeed() {
 
                 {/* RIGHT: detail */}
                 <Card className="p-6 lg:col-span-2">
-                    {!detail?.opportunity ? (
-                        <div className="text-sm text-[var(--text-tertiary)]">Select an opportunity to view details.</div>
-                    ) : (
-                        <div className="space-y-5">
+                    <AnimatePresence mode="wait">
+                        {!detail?.opportunity ? (
+                            <motion.div
+                                key="empty"
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={{ duration: 0.18 }}
+                                className="text-sm text-[var(--text-tertiary)]"
+                            >
+                                {detailLoading ? 'Loading…' : 'Select an opportunity to view details.'}
+                            </motion.div>
+                        ) : (
+                            <motion.div
+                                key={detail?.opportunity?.key ?? 'detail'}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -8 }}
+                                transition={{ duration: 0.22, ease: [0.2, 0.9, 0.2, 1] }}
+                                className="space-y-5"
+                            >
                             <div className="flex items-start justify-between gap-6">
                                 <div>
                                     <div className="text-2xl font-semibold text-[var(--text-primary)]">
@@ -501,8 +587,9 @@ export default function DonorFeed() {
                                     </div>
                                 )}
                             </div>
-                        </div>
-                    )}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </Card>
             </div>
         </div>
