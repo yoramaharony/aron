@@ -41,10 +41,55 @@ function uniq(arr: string[]) {
 }
 
 function extractMoney(text: string): string | null {
-  // very simple heuristic: "$3M", "$500k", "$2,000,000"
-  const m = text.match(/\$[\d,.]+\s*(m|mm|million|k|k\.|thousand)?/i);
-  if (!m) return null;
-  return m[0].replace(/\s+/g, '');
+  // Heuristic (MVP): prefer donor's *latest* meaningful budget signal.
+  // Examples: "$3M", "$500k", "$2,000,000", "$250k / year", "$2M over 24 months"
+
+  const t = String(text || '');
+  if (!t.trim()) return null;
+
+  const re = /\$[\d,.]+\s*(m|mm|million|k|k\.|thousand)?/gi;
+  const matches = Array.from(t.matchAll(re));
+  if (!matches.length) return null;
+
+  const qualify = (startIdx: number, endIdx: number) => {
+    const tail = t.slice(endIdx, Math.min(t.length, endIdx + 32));
+    const q =
+      tail.match(/^\s*(\/\s*(year|yr|month|mo))\b/i)?.[0] ||
+      tail.match(/^\s*(per\s*(year|yr|month|mo))\b/i)?.[0] ||
+      tail.match(/^\s*(over|for)\s*\d+\s*(months|month|years|year)\b/i)?.[0] ||
+      '';
+    return q ? q.replace(/\s+/g, ' ').trim() : '';
+  };
+
+  const score = (raw: string, qualifierText: string) => {
+    const s = raw.toLowerCase();
+    const hasSuffix = /(m|mm|million|k|k\.|thousand)\b/.test(s);
+    const hasQualifier = Boolean(qualifierText);
+    // Rough magnitude: commas imply >= 1,000; suffix implies bigger than $25 type values.
+    const hasComma = raw.includes(',');
+    return (hasSuffix ? 4 : 0) + (hasQualifier ? 2 : 0) + (hasComma ? 1 : 0);
+  };
+
+  // Prefer the best-scoring match; on tie prefer the last mention (most recent).
+  let best: { raw: string; q: string; score: number; idx: number } | null = null;
+  for (let i = 0; i < matches.length; i++) {
+    const m = matches[i];
+    const raw = String(m[0] || '');
+    const start = m.index ?? 0;
+    const end = start + raw.length;
+    const q = qualify(start, end);
+    const sc = score(raw, q);
+    const idx = start;
+    if (!best || sc > best.score || (sc === best.score && idx >= best.idx)) {
+      best = { raw, q, score: sc, idx };
+    }
+  }
+
+  if (!best) return null;
+
+  const amount = best.raw.replace(/\s+/g, '');
+  const q = best.q ? best.q.replace(/\s*\//g, ' /').replace(/\s+/g, ' ') : '';
+  return (amount + (q ? ` ${q}` : '')).trim();
 }
 
 function extractTimeHorizon(text: string): string | null {
@@ -92,7 +137,9 @@ export function extractVision(messages: { role: string; content: string }[]): Im
   if (lower.includes('monsey')) geo.push('Monsey');
   if (lower.includes('boro park') || lower.includes('borough park') || lower.includes('boropark')) geo.push('Boro Park');
 
-  const money = extractMoney(all);
+  // Budget should reflect what the donor said, not assistant suggestions.
+  const donorOnly = messages.filter((m) => m.role === 'donor').map((m) => m.content).join('\n');
+  const money = extractMoney(donorOnly) ?? extractMoney(all);
   const horizon = extractTimeHorizon(all);
 
   // Very small "outcome" detector: if donor mentions "in 12 months" or "12 months" store the sentence.
