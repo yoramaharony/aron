@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Send, User, Bot, ChevronRight, BarChart3, Globe, ShieldCheck } from 'lucide-react';
+import { Send, User, Bot, ChevronRight, BarChart3, Globe, ShieldCheck, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type ConciergeSuggestion = { label: string; content: string };
@@ -36,6 +36,7 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
     const [error, setError] = useState('');
     const [suggestions, setSuggestions] = useState<ConciergeSuggestion[]>([]);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [resetting, setResetting] = useState(false);
 
     useEffect(() => {
         fetch('/api/concierge')
@@ -94,6 +95,46 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
             setError(e?.message || 'Failed to send');
         } finally {
             setIsTyping(false);
+        }
+    };
+
+    const resetVision = async () => {
+        if (resetting || isTyping) return;
+        const ok = window.confirm(
+            'Reset Vision?\n\nThis clears your Concierge conversation and board, as if you just opened Aron for the first time.'
+        );
+        if (!ok) return;
+        setResetting(true);
+        setError('');
+        try {
+            const res = await fetch('/api/concierge/reset', { method: 'POST' });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Reset failed');
+
+            // Clear local thread immediately (feels instant), then re-fetch the new server state.
+            setMessages([
+                {
+                    role: 'assistant',
+                    content:
+                        "Welcome. I’m your concierge. Tell me what kind of impact you want to create—causes, geographies, and what “success” feels like.",
+                },
+            ]);
+            setSuggestions([]);
+            setInput('');
+            onUpdated();
+
+            fetch('/api/concierge')
+                .then((r) => r.json())
+                .then((d) => {
+                    const thread = Array.isArray(d?.messages) ? d.messages : [];
+                    setSuggestions(Array.isArray(d?.suggestions) ? d.suggestions : []);
+                    if (thread.length > 0) setMessages(thread);
+                })
+                .catch(() => {});
+        } catch (e: any) {
+            setError(e?.message || 'Reset failed');
+        } finally {
+            setResetting(false);
         }
     };
 
@@ -189,35 +230,64 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
             {/* Input (match Figma) */}
             <div className="p-6 border-t border-[rgba(var(--silver-rgb),0.15)] shadow-[0_-2px_20px_rgba(0,0,0,0.5)] bg-[linear-gradient(135deg,#1A1A1A_0%,#0A0A0A_100%)] bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,rgba(255,255,255,0.05)_2px,rgba(255,255,255,0.05)_3px)]">
                 <div className="relative">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                        placeholder="Describe your impact vision..."
-                        className="w-full pl-5 pr-20 py-4 rounded-lg outline-none transition-all font-light bg-[linear-gradient(135deg,#2A2A2A_0%,#1A1A1A_100%)] border border-[rgba(var(--silver-rgb),0.15)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.30)] focus:border-[rgba(var(--accent-rgb),0.35)]"
-                    />
-                    <button
-                        onClick={() => sendMessage()}
-                        disabled={!input.trim() || isTyping}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 rounded-lg icon-tile-gold transition-transform hover:scale-[1.03] disabled:opacity-50 flex items-center justify-center"
-                    >
-                        <Send size={20} strokeWidth={1.75} className="text-[var(--color-gold)]" />
-                    </button>
-
                     {/* Demo Prompt Helper */}
                     <div className="absolute -top-12 left-0 right-0 flex gap-2 overflow-x-auto pb-2 scrollbar-none">
                         {(suggestions ?? []).slice(0, 4).map((s, idx) => (
                             <button
                                 key={`${s.label}-${idx}`}
                                 onClick={() => sendMessage(s.content)}
-                                disabled={isTyping}
+                                disabled={isTyping || resetting}
                                 className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-black transition-colors disabled:opacity-60"
                                 title={s.content}
                             >
                                 {s.label}
                             </button>
                         ))}
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        {/* Reset Vision (Figma-style: rotating arrow + tooltip away from button) */}
+                        <button
+                            type="button"
+                            onClick={resetVision}
+                            disabled={isTyping || resetting}
+                            aria-label="Reset Vision"
+                            className="group relative w-12 h-12 rounded-lg icon-tile-gold disabled:opacity-50 flex items-center justify-center"
+                        >
+                            <RotateCcw
+                                size={20}
+                                strokeWidth={1.75}
+                                className="text-[var(--color-gold)] transition-transform duration-200 ease-out group-hover:rotate-45"
+                            />
+                            <div
+                                className="pointer-events-none absolute left-full ml-3 top-1/2 -translate-y-1/2 opacity-0 translate-x-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-150"
+                                role="tooltip"
+                            >
+                                <div className="px-3 py-1.5 rounded-md text-xs tracking-wide font-light whitespace-nowrap border border-[rgba(var(--accent-rgb),0.22)] bg-[linear-gradient(135deg,#1A1A1A_0%,#0A0A0A_100%)] shadow-[0_10px_28px_rgba(0,0,0,0.55),inset_0_1px_0_rgba(255,255,255,0.08)] text-[rgba(var(--silver-rgb),0.95)]">
+                                    Reset Vision
+                                </div>
+                            </div>
+                        </button>
+
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                            placeholder="Describe your impact vision..."
+                            className="flex-1 min-w-0 px-5 py-4 rounded-lg outline-none transition-all font-light bg-[linear-gradient(135deg,#2A2A2A_0%,#1A1A1A_100%)] border border-[rgba(var(--silver-rgb),0.15)] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] shadow-[inset_0_2px_4px_rgba(0,0,0,0.30)] focus:border-[rgba(var(--accent-rgb),0.35)]"
+                        />
+
+                        {/* Send (outside the input, like Figma) */}
+                        <button
+                            type="button"
+                            onClick={() => sendMessage()}
+                            disabled={!input.trim() || isTyping || resetting}
+                            aria-label="Send message"
+                            className="w-12 h-12 rounded-lg icon-tile-gold transition-transform hover:scale-[1.03] disabled:opacity-50 flex items-center justify-center"
+                        >
+                            <Send size={20} strokeWidth={1.75} className="text-[var(--color-gold)]" />
+                        </button>
                     </div>
                 </div>
             </div>

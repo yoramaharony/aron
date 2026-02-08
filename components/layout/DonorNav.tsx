@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import clsx from 'clsx';
 import { Heart, CreditCard, PieChart, Lock, Mail, Compass, KeyRound, Link2 } from 'lucide-react';
 import { AronLogo } from '@/components/layout/AronLogo';
@@ -20,24 +20,7 @@ const NAV_ITEMS = [
 
 export function DonorNav() {
     const pathname = usePathname();
-    // router kept available for future (soft refresh) but we currently hard-navigate after reset.
-    useRouter();
     const { sidebarCollapsed } = useDonorUi();
-    const resetImpactVision = async () => {
-        const ok = window.confirm(
-            'Reset Impact Vision?\n\nThis clears your Concierge conversation and board, as if you just opened Aron for the first time.'
-        );
-        if (!ok) return;
-        try {
-            const res = await fetch('/api/concierge/reset', { method: 'POST' });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data?.error || 'Reset failed');
-            // Bring the donor back to the concierge and reload the fresh state.
-            window.location.href = '/donor/legacy';
-        } catch (e: any) {
-            window.alert(String(e?.message || 'Reset failed'));
-        }
-    };
 
     return (
         <>
@@ -69,7 +52,6 @@ export function DonorNav() {
                 <nav className="flex flex-col gap-2 flex-1">
                     {NAV_ITEMS.map((item) => {
                         const isActive = pathname === item.href;
-                        const isImpactVision = item.href === '/donor/legacy';
                         const linkEl = (
                             <Link
                                 href={item.href}
@@ -101,25 +83,11 @@ export function DonorNav() {
                         );
 
                         return (
-                            <div key={item.href} className={clsx('flex items-center gap-2', sidebarCollapsed && 'justify-center')}>
+                            <div
+                                key={item.href}
+                                className={clsx('flex items-center', sidebarCollapsed ? 'justify-center' : '')}
+                            >
                                 {linkEl}
-                                {isImpactVision && !sidebarCollapsed ? (
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            e.stopPropagation();
-                                            resetImpactVision();
-                                        }}
-                                        title="Reset Impact Vision"
-                                        aria-label="Reset Impact Vision"
-                                        className="w-9 h-9 rounded-lg icon-tile-gold flex items-center justify-center border border-[rgba(var(--accent-rgb),0.22)] hover:brightness-110 transition-all"
-                                    >
-                                        <span className="material-symbols-outlined text-[18px] text-[var(--color-gold)]">
-                                            build
-                                        </span>
-                                    </button>
-                                ) : null}
                             </div>
                         );
                     })}
