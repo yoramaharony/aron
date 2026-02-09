@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { donorProfiles } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
+import { ShareImpactActions } from './ShareImpactActions';
 
 function fmtDate(v: any) {
   try {
@@ -77,16 +78,7 @@ export default async function ShareImpactPage({ params, searchParams }: { params
             >
               Back to dashboard
             </a>
-            <button
-              type="button"
-              className="btn btn-outline btn-sm"
-              onClick={() => {
-                if (typeof window === 'undefined') return;
-                window.print();
-              }}
-            >
-              Print / PDF
-            </button>
+            <ShareImpactActions isPrint={isPrint} />
           </div>
         </div>
 
