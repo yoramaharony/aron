@@ -342,6 +342,73 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
     return (
         <div className="w-full max-w-none mx-auto space-y-4 pb-16">
 
+            {/* Share actions (kept outside the header card so the card stays clean) */}
+            <div className="flex items-center justify-end gap-2 flex-wrap">
+                <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={async () => {
+                        if (!board) return;
+                        const summary = [
+                            'Impact Vision',
+                            ...(board.pillars ?? []).map((p: any) => `- ${p.title}: ${p.description}`),
+                            '',
+                            'Focus:',
+                            ...(board.focus ?? []).map((f: any) => `- ${f.label}: ${f.value}`),
+                            '',
+                            'Signals:',
+                            ...(board.signals ?? []).map((s: any) => `- ${s.label}: ${s.value}`),
+                        ].join('\n');
+                        try {
+                            await navigator.clipboard.writeText(summary);
+                            setSummaryCopied(true);
+                            window.setTimeout(() => setSummaryCopied(false), 1200);
+                        } catch {
+                            // ignore
+                        }
+                    }}
+                >
+                    {summaryCopied ? 'Copied' : 'Copy summary'}
+                </button>
+
+                <button
+                    type="button"
+                    className="btn btn-outline btn-sm"
+                    onClick={async () => {
+                        try {
+                            const res = await fetch('/api/impact/share');
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) throw new Error(data?.error || 'Failed to create share link');
+                            await navigator.clipboard.writeText(String(data.shareUrl || ''));
+                            setShareCopied(true);
+                            window.setTimeout(() => setShareCopied(false), 1200);
+                        } catch {
+                            // ignore
+                        }
+                    }}
+                >
+                    {shareCopied ? 'Link copied' : 'Share link'}
+                </button>
+
+                <button
+                    type="button"
+                    className="btn btn-gold btn-sm"
+                    onClick={async () => {
+                        try {
+                            const res = await fetch('/api/impact/share');
+                            const data = await res.json().catch(() => ({}));
+                            if (!res.ok) throw new Error(data?.error || 'Failed to create share link');
+                            const url = `${String(data.shareUrl)}?print=1`;
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                        } catch {
+                            // ignore
+                        }
+                    }}
+                >
+                    Print / PDF
+                </button>
+            </div>
+
             {/* Header / Title (compact, match Figma proportions) */}
             <Card
                 className="no-halo min-h-0 px-5 pt-3.5 pb-4 rounded-xl relative overflow-hidden border border-[rgba(var(--accent-rgb),0.30)] shadow-[0_6px_20px_rgba(var(--accent-rgb),0.18),inset_0_1px_0_rgba(var(--accent-rgb),0.15)] bg-[linear-gradient(135deg,rgba(42,42,42,0.95),rgba(26,26,26,0.95))]"
@@ -397,71 +464,6 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                         </div>
                         <div className="text-xs text-[var(--text-secondary)] mt-1 leading-snug">
                             {vision?.lastUpdatedAt ? new Date(vision.lastUpdatedAt).toLocaleString() : '—'}
-                        </div>
-                        <div className="mt-3 flex items-center justify-end gap-2">
-                            <button
-                                type="button"
-                                className="btn btn-outline btn-sm"
-                                onClick={async () => {
-                                    if (!board) return;
-                                    const summary = [
-                                        'Impact Vision',
-                                        ...(board.pillars ?? []).map((p: any) => `- ${p.title}: ${p.description}`),
-                                        '',
-                                        'Focus:',
-                                        ...(board.focus ?? []).map((f: any) => `- ${f.label}: ${f.value}`),
-                                        '',
-                                        'Signals:',
-                                        ...(board.signals ?? []).map((s: any) => `- ${s.label}: ${s.value}`),
-                                    ].join('\n');
-                                    try {
-                                        await navigator.clipboard.writeText(summary);
-                                        setSummaryCopied(true);
-                                        window.setTimeout(() => setSummaryCopied(false), 1200);
-                                    } catch {
-                                        // ignore
-                                    }
-                                }}
-                            >
-                                {summaryCopied ? 'Copied' : 'Copy'}
-                            </button>
-
-                            <button
-                                type="button"
-                                className="btn btn-outline btn-sm"
-                                onClick={async () => {
-                                    try {
-                                        const res = await fetch('/api/impact/share');
-                                        const data = await res.json().catch(() => ({}));
-                                        if (!res.ok) throw new Error(data?.error || 'Failed to create share link');
-                                        await navigator.clipboard.writeText(String(data.shareUrl || ''));
-                                        setShareCopied(true);
-                                        window.setTimeout(() => setShareCopied(false), 1200);
-                                    } catch {
-                                        // ignore
-                                    }
-                                }}
-                            >
-                                {shareCopied ? 'Link copied' : 'Share link'}
-                            </button>
-
-                            <button
-                                type="button"
-                                className="btn btn-gold btn-sm"
-                                onClick={async () => {
-                                    try {
-                                        const res = await fetch('/api/impact/share');
-                                        const data = await res.json().catch(() => ({}));
-                                        if (!res.ok) throw new Error(data?.error || 'Failed to create share link');
-                                        const url = `${String(data.shareUrl)}?print=1`;
-                                        window.open(url, '_blank', 'noopener,noreferrer');
-                                    } catch {
-                                        // ignore
-                                    }
-                                }}
-                            >
-                                Print
-                            </button>
                         </div>
                     </div>
                 </div>
