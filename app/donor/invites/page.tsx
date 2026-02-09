@@ -274,44 +274,58 @@ export default function DonorInvitesPage() {
           </div>
 
           {/* ADVANCED */}
-          {showAdvanced ? (
-            <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4">
-              <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase mb-3">
-                Advanced
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-                    Expires (days)
-                  </div>
-                  <input
-                    type="number"
-                    min={0}
-                    max={3650}
-                    value={expiresInDays}
-                    onChange={(e) => setExpiresInDays(e.target.value === '' ? 0 : Number(e.target.value))}
-                    className="input-field"
-                  />
-                  <div className="text-xs text-[var(--text-tertiary)]">0 = no expiry</div>
+          <div
+            className={[
+              'grid transition-[grid-template-rows] duration-300 ease-out',
+              showAdvanced ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+            ].join(' ')}
+          >
+            <div className="overflow-hidden">
+              <div
+                className={[
+                  'rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4',
+                  'transition-all duration-300 ease-out',
+                  showAdvanced ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none',
+                ].join(' ')}
+                aria-hidden={!showAdvanced}
+              >
+                <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase mb-3">
+                  Advanced
                 </div>
-
-                <div className="space-y-2">
-                  <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
-                    Max uses
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+                      Expires (days)
+                    </div>
+                    <input
+                      type="number"
+                      min={0}
+                      max={3650}
+                      value={expiresInDays}
+                      onChange={(e) => setExpiresInDays(e.target.value === '' ? 0 : Number(e.target.value))}
+                      className="input-field"
+                    />
+                    <div className="text-xs text-[var(--text-tertiary)]">0 = no expiry</div>
                   </div>
-                  <input
-                    type="number"
-                    min={1}
-                    max={1000}
-                    value={maxUses}
-                    onChange={(e) => setMaxUses(Number(e.target.value))}
-                    className="input-field"
-                  />
-                  <div className="text-xs text-[var(--text-tertiary)]">Usually 1 (one-time)</div>
+
+                  <div className="space-y-2">
+                    <div className="text-xs font-bold tracking-widest text-[var(--text-tertiary)] uppercase">
+                      Max uses
+                    </div>
+                    <input
+                      type="number"
+                      min={1}
+                      max={1000}
+                      value={maxUses}
+                      onChange={(e) => setMaxUses(Number(e.target.value))}
+                      className="input-field"
+                    />
+                    <div className="text-xs text-[var(--text-tertiary)]">Usually 1 (one-time)</div>
+                  </div>
                 </div>
               </div>
             </div>
-          ) : null}
+          </div>
 
           {/* ACTIONS (bottom) */}
           <div className="pt-2 flex items-center justify-between gap-3">
@@ -327,7 +341,13 @@ export default function DonorInvitesPage() {
               onClick={() => setShowAdvanced((v) => !v)}
               title="Advanced"
             >
-              {showAdvanced ? <ChevronUp className="mx-auto" size={18} /> : <ChevronDown className="mx-auto" size={18} />}
+              <ChevronDown
+                className={[
+                  'mx-auto transition-transform duration-300',
+                  showAdvanced ? 'rotate-180' : 'rotate-0',
+                ].join(' ')}
+                size={18}
+              />
             </button>
 
             <Button variant="gold" onClick={createInvite} isLoading={loading} className="min-w-[180px]">

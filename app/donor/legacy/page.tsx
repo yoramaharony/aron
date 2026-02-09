@@ -364,7 +364,15 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                             Impact Vision
                         </h1>
                         <div className="mt-2 flex flex-wrap gap-2">
-                            {(vision?.pillars ?? board?.pillars?.map((p: any) => p.title) ?? [])
+                            {(
+                                [
+                                    // Primary: pillars (causes / themes)
+                                    ...((vision?.pillars ?? board?.pillars?.map((p: any) => p.title) ?? [])
+                                        .filter((p: string) => p && p !== 'Impact Discovery')),
+                                    // Secondary: geo focus (explicitly labeled so it doesn't look like a "cause")
+                                    ...((vision?.geoFocus ?? []).map((g: string) => (g ? `Geo: ${g}` : ''))),
+                                ].filter(Boolean) as string[]
+                            )
                                 .slice(0, 6)
                                 .map((pillar: string, i: number) => (
                                     <span

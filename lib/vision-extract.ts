@@ -115,7 +115,6 @@ export function extractVision(messages: { role: string; content: string }[]): Im
   addIf(lower.includes('cancer') || lower.includes('oncology') || lower.includes('medical') || lower.includes('health'), 'Health & Healing');
   addIf(lower.includes('water'), 'Clean Water');
   addIf(lower.includes('education') || lower.includes('school') || lower.includes('stem'), 'Education & Mobility');
-  addIf(lower.includes('israel'), 'Israel');
   addIf(lower.includes('environment') || lower.includes('climate') || lower.includes('sustainab'), 'Environment');
   // Jewish / Yiddish common pillars (demo-friendly)
   addIf(lower.includes('tzedakah') || lower.includes('tzedaka') || lower.includes('kimcha') || lower.includes('maos chitim'), 'Tzedakah / Family assistance');
