@@ -337,7 +337,7 @@ export default function DonorFeed() {
                             >
                             <div className="space-y-4">
                                 {/* Actions row (full width) */}
-                                <div className="flex flex-wrap items-center justify-end gap-2">
+                                <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
                                     {detail.opportunity.source === 'submission' ? (
                                         <Button
                                             variant="outline"
