@@ -335,25 +335,9 @@ export default function DonorFeed() {
                                 transition={{ duration: 0.22, ease: [0.2, 0.9, 0.2, 1] }}
                                 className="space-y-5"
                             >
-                            <div className="flex items-start justify-between gap-6">
-                                <div>
-                                    <div className="text-2xl font-semibold text-[var(--text-primary)]">
-                                        {detail.opportunity.title}
-                                    </div>
-                                    <div className="text-sm text-[var(--text-secondary)] mt-1">
-                                        {detail.opportunity.orgName}
-                                        {detail.opportunity.location ? ` • ${detail.opportunity.location}` : null}
-                                        {detail.opportunity.category ? ` • ${detail.opportunity.category}` : null}
-                                    </div>
-                                    {detail.opportunity.details ? (
-                                        <div className="mt-2">
-                                            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
-                                                {completenessLabel(detail.opportunity.details)}
-                                            </span>
-                                        </div>
-                                    ) : null}
-                                </div>
-                                <div className="flex gap-2 shrink-0">
+                            <div className="space-y-4">
+                                {/* Actions row (full width) */}
+                                <div className="flex flex-wrap items-center justify-end gap-2">
                                     {detail.opportunity.source === 'submission' ? (
                                         <Button
                                             variant="outline"
@@ -374,8 +358,12 @@ export default function DonorFeed() {
                                             Request more info
                                         </Button>
                                     ) : null}
-                                    <Button variant="outline" onClick={() => act(detail.opportunity.key, 'pass')}>Pass</Button>
-                                    <Button variant="outline" onClick={() => act(detail.opportunity.key, 'save')}>Shortlist</Button>
+                                    <Button variant="outline" onClick={() => act(detail.opportunity.key, 'pass')}>
+                                        Pass
+                                    </Button>
+                                    <Button variant="outline" onClick={() => act(detail.opportunity.key, 'save')}>
+                                        Shortlist
+                                    </Button>
                                     <Button
                                         variant="gold"
                                         onClick={() => {
@@ -403,9 +391,21 @@ export default function DonorFeed() {
                                                 aiInsights: {
                                                     matchReason: [],
                                                     risks: [],
-                                                    leverageRecommendation: { anchorAmount: 50000, challengeGoal: 100000, deadline: new Date().toISOString().slice(0, 10), matchRatio: 1, verification: [] },
+                                                    leverageRecommendation: {
+                                                        anchorAmount: 50000,
+                                                        challengeGoal: 100000,
+                                                        deadline: new Date().toISOString().slice(0, 10),
+                                                        matchRatio: 1,
+                                                        verification: [],
+                                                    },
                                                 },
-                                                diligence: { financials: 'Pending', governance: 'Pending', budget: 'Pending', references: 'Pending', siteVisit: 'Pending' },
+                                                diligence: {
+                                                    financials: 'Pending',
+                                                    governance: 'Pending',
+                                                    budget: 'Pending',
+                                                    references: 'Pending',
+                                                    siteVisit: 'Pending',
+                                                },
                                             } as any);
                                         }}
                                     >
@@ -414,6 +414,29 @@ export default function DonorFeed() {
                                             Leverage
                                         </span>
                                     </Button>
+                                </div>
+
+                                {/* Title + subtitle (full width, no squish) */}
+                                <div>
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <div className="text-2xl font-semibold text-[var(--text-primary)] leading-tight">
+                                                {detail.opportunity.title}
+                                            </div>
+                                            <div className="text-sm text-[var(--text-secondary)] mt-1">
+                                                {detail.opportunity.orgName}
+                                                {detail.opportunity.location ? ` • ${detail.opportunity.location}` : null}
+                                                {detail.opportunity.category ? ` • ${detail.opportunity.category}` : null}
+                                            </div>
+                                        </div>
+                                        {detail.opportunity.details ? (
+                                            <div className="shrink-0 mt-0.5">
+                                                <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
+                                                    {completenessLabel(detail.opportunity.details)}
+                                                </span>
+                                            </div>
+                                        ) : null}
+                                    </div>
                                 </div>
                             </div>
 
