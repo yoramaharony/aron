@@ -32,8 +32,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
-      <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
+    <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Reset password</h1>
         {!done ? (
           <p className="text-sm text-[var(--text-secondary)] mt-2">
@@ -74,8 +73,7 @@ export default function ForgotPasswordPage() {
             </div>
           </form>
         )}
-      </Card>
-    </div>
+    </Card>
   );
 }
 

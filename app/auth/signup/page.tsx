@@ -83,8 +83,7 @@ export default function SignupPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
-            <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
+        <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
                 <div className="text-center mb-8">
                     <div className="mx-auto w-14 h-14 bg-[rgba(var(--accent-rgb), 0.10)] rounded-2xl flex items-center justify-center mb-6 text-gold shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.20)]">
                         <UserPlus size={28} />
@@ -196,7 +195,6 @@ export default function SignupPage() {
                 <div className="mt-6 text-center text-sm text-secondary">
                     Already have an account? <Link href="/auth/login" className="text-gold hover:underline">Log in</Link>
                 </div>
-            </Card>
-        </div>
+        </Card>
     );
 }

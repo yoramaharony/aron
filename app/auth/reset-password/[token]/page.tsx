@@ -37,8 +37,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
-      <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
+    <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Choose a new password</h1>
         <p className="text-sm text-[var(--text-secondary)] mt-2">This link expires automatically.</p>
 
@@ -64,8 +63,7 @@ export default function ResetPasswordPage() {
             </Button>
           </form>
         )}
-      </Card>
-    </div>
+    </Card>
   );
 }
 

@@ -9,7 +9,7 @@ import { Lock } from 'lucide-react';
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-[var(--bg-app)]" />}>
+        <Suspense fallback={null}>
             <LoginContent />
         </Suspense>
     );
@@ -64,8 +64,7 @@ function LoginContent() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[var(--bg-app)] p-4">
-            <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
+        <Card className="w-full max-w-md p-8 md:p-10 shadow-xl">
                 <div className="text-center mb-8">
                     <div className="mx-auto w-14 h-14 bg-[rgba(197,160,89,0.1)] rounded-2xl flex items-center justify-center mb-6 text-gold">
                         <Lock size={28} />
@@ -122,7 +121,6 @@ function LoginContent() {
                 <div className="mt-6 text-center text-sm text-secondary">
                     Don't have an account? <Link href="/auth/signup" className="text-gold hover:underline">Sign up</Link>
                 </div>
-            </Card>
-        </div>
+        </Card>
     );
 }
