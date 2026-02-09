@@ -305,6 +305,8 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
     const [board, setBoard] = useState<any>(null);
     const [vision, setVision] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [summaryCopied, setSummaryCopied] = useState(false);
+    const [shareCopied, setShareCopied] = useState(false);
 
     useEffect(() => {
         fetch('/api/concierge')
@@ -395,6 +397,71 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                         </div>
                         <div className="text-xs text-[var(--text-secondary)] mt-1 leading-snug">
                             {vision?.lastUpdatedAt ? new Date(vision.lastUpdatedAt).toLocaleString() : '—'}
+                        </div>
+                        <div className="mt-3 flex items-center justify-end gap-2">
+                            <button
+                                type="button"
+                                className="btn btn-outline btn-sm"
+                                onClick={async () => {
+                                    if (!board) return;
+                                    const summary = [
+                                        'Impact Vision',
+                                        ...(board.pillars ?? []).map((p: any) => `- ${p.title}: ${p.description}`),
+                                        '',
+                                        'Focus:',
+                                        ...(board.focus ?? []).map((f: any) => `- ${f.label}: ${f.value}`),
+                                        '',
+                                        'Signals:',
+                                        ...(board.signals ?? []).map((s: any) => `- ${s.label}: ${s.value}`),
+                                    ].join('\n');
+                                    try {
+                                        await navigator.clipboard.writeText(summary);
+                                        setSummaryCopied(true);
+                                        window.setTimeout(() => setSummaryCopied(false), 1200);
+                                    } catch {
+                                        // ignore
+                                    }
+                                }}
+                            >
+                                {summaryCopied ? 'Copied' : 'Copy'}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-outline btn-sm"
+                                onClick={async () => {
+                                    try {
+                                        const res = await fetch('/api/impact/share');
+                                        const data = await res.json().catch(() => ({}));
+                                        if (!res.ok) throw new Error(data?.error || 'Failed to create share link');
+                                        await navigator.clipboard.writeText(String(data.shareUrl || ''));
+                                        setShareCopied(true);
+                                        window.setTimeout(() => setShareCopied(false), 1200);
+                                    } catch {
+                                        // ignore
+                                    }
+                                }}
+                            >
+                                {shareCopied ? 'Link copied' : 'Share link'}
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-gold btn-sm"
+                                onClick={async () => {
+                                    try {
+                                        const res = await fetch('/api/impact/share');
+                                        const data = await res.json().catch(() => ({}));
+                                        if (!res.ok) throw new Error(data?.error || 'Failed to create share link');
+                                        const url = `${String(data.shareUrl)}?print=1`;
+                                        window.open(url, '_blank', 'noopener,noreferrer');
+                                    } catch {
+                                        // ignore
+                                    }
+                                }}
+                            >
+                                Print
+                            </button>
                         </div>
                     </div>
                 </div>
