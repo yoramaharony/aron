@@ -184,6 +184,34 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       }
     };
 
+    const tombstone = async (reason: string) => {
+      // Universal fallback when hard-delete is blocked by unknown FKs/constraints (common in production DBs).
+      // This removes access and anonymizes PII while preserving audit/history rows.
+      const newEmail = `deleted+${id}@aron.local`;
+      const newPassword = generateStrongPassword(24);
+      const hashed = await hashPassword(newPassword);
+
+      await bestEffort(() => db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id)));
+      await bestEffort(() => db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id)));
+      await bestEffort(() => db.update(passwordResets).set({ usedAt: new Date() }).where(eq(passwordResets.userId, id)));
+
+      await db
+        .update(users)
+        .set({
+          name: 'Deleted user',
+          email: newEmail,
+          password: hashed,
+          disabledAt: new Date(),
+        })
+        .where(eq(users.id, id));
+
+      return NextResponse.json({
+        success: true,
+        tombstoned: true,
+        reason,
+      });
+    };
+
     // Re-assign "ownership" rows to a known-existing user to satisfy FK + NOT NULL constraints.
     // Session cookies can be stale after DB resets, so don't assume session.userId exists in DB.
     let reassignToUserId: string | null = null;
@@ -265,13 +293,41 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     return NextResponse.json({ success: true });
   } catch (e: any) {
     const msg = String(e?.message ?? 'Failed to delete user');
-    // Provide a clear hint when this is a FK constraint.
-    if (msg.toLowerCase().includes('foreign key')) {
-      return NextResponse.json(
-        { error: `Cannot delete user due to related records (foreign key constraint). Try disabling instead, or contact support.` },
-        { status: 409 }
-      );
+    const lower = msg.toLowerCase();
+
+    // If hard-delete is blocked, fall back to tombstone (guaranteed to work across DB variants).
+    if (lower.includes('foreign key') || lower.includes('constraint') || lower.includes('failed query') || lower.includes('not null')) {
+      try {
+        const reason = `Hard delete blocked (${msg}). User was tombstoned instead.`;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return await (async () => {
+          // Re-enter tombstone via a tiny inline helper (keeps control flow simple here).
+          const newEmail = `deleted+${id}@aron.local`;
+          const newPassword = generateStrongPassword(24);
+          const hashed = await hashPassword(newPassword);
+
+          // best-effort detach optional refs
+          try { await db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id)); } catch {}
+          try { await db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id)); } catch {}
+          try { await db.update(passwordResets).set({ usedAt: new Date() }).where(eq(passwordResets.userId, id)); } catch {}
+
+          await db
+            .update(users)
+            .set({
+              name: 'Deleted user',
+              email: newEmail,
+              password: hashed,
+              disabledAt: new Date(),
+            })
+            .where(eq(users.id, id));
+
+          return NextResponse.json({ success: true, tombstoned: true, reason });
+        })();
+      } catch (tombErr: any) {
+        return NextResponse.json({ error: `Hard delete failed (${msg}). Tombstone also failed (${String(tombErr?.message ?? tombErr)})` }, { status: 500 });
+      }
     }
+
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

@@ -102,7 +102,9 @@ export default function AdminDonorsPage() {
   };
 
   const deleteUser = async (u: AdminUser) => {
-    const ok = window.confirm(`Delete user?\n\n${u.name} <${u.email}>\n\nThis is permanent. Are you sure?`);
+    const ok = window.confirm(
+      `Delete user?\n\n${u.name} <${u.email}>\n\nWe will remove access immediately. Some audit records may be retained.\n\nAre you sure?`
+    );
     if (!ok) return;
     setLoading(true);
     setError('');
@@ -112,7 +114,11 @@ export default function AdminDonorsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Failed to delete user');
       setRows((prev) => prev.filter((r) => r.id !== u.id));
-      setNotice(`Deleted ${u.email}.`);
+      if (data?.tombstoned) {
+        setNotice(`Deleted (tombstoned) ${u.email}.`);
+      } else {
+        setNotice(`Deleted ${u.email}.`);
+      }
     } catch (e: any) {
       setError(String(e?.message || 'Failed'));
     } finally {

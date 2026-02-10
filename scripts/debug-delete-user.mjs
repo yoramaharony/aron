@@ -1,6 +1,9 @@
 import { createClient } from '@libsql/client';
+import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+
+dotenv.config({ path: '.env' });
 
 // Usage:
 //   node scripts/debug-delete-user.mjs hello@restapp.ai
@@ -23,8 +26,10 @@ function getDbUrl() {
   return `file:${here}`;
 }
 
-const email = process.argv.find((a) => a.includes('@')) ?? '';
-const doDelete = process.argv.includes('--delete');
+const userArgs = process.argv.slice(2);
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const email = userArgs.find((a) => emailRegex.test(a)) ?? '';
+const doDelete = userArgs.includes('--delete');
 
 if (!email) {
   console.error('Missing email.\n\nExample:\n  node scripts/debug-delete-user.mjs hello@restapp.ai\n  node scripts/debug-delete-user.mjs hello@restapp.ai --delete');
