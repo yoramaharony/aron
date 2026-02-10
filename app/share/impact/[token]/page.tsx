@@ -6,8 +6,8 @@ import { eq } from 'drizzle-orm';
 import { ShareImpactActions } from './ShareImpactActions';
 import { headers } from 'next/headers';
 
-function getRequestOrigin() {
-  const h = headers();
+async function getRequestOrigin() {
+  const h = await headers();
   const host = h.get('x-forwarded-host') ?? h.get('host');
   const forwardedProto = h.get('x-forwarded-proto');
   const proto =
@@ -64,7 +64,7 @@ export default async function ShareImpactPage({ params, searchParams }: { params
   const resolvedSearchParams: any = await (searchParams as any);
   const isPrint = String(resolvedSearchParams?.print || '') === '1';
 
-  const origin = getRequestOrigin();
+  const origin = await getRequestOrigin();
   const shareUrl = origin ? `${origin}/share/impact/${token}` : `/share/impact/${token}`;
 
   const summaryLines = [
