@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useLeverage, LeverageOffer } from '@/components/providers/LeverageContext';
 import { Button } from '@/components/ui/Button';
 import { X, Calendar, ChevronRight, CheckCircle2, Check } from 'lucide-react';
@@ -43,6 +43,7 @@ export function LeverageDrawer() {
 function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void, opportunity: any, onCreate: (o: LeverageOffer) => void }) {
     const [anchor, setAnchor] = useState<number>(100000);
     const [matchMode, setMatchMode] = useState<'match' | 'remainder'>('match');
+    const deadlineRef = useRef<HTMLInputElement | null>(null);
     const [deadline, setDeadline] = useState<string>(() => {
         const d = new Date();
         d.setDate(d.getDate() + 60);
@@ -213,12 +214,51 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     {/* B4: Deadline */}
                     <div>
                         <label className="block text-sm font-medium mb-2">Challenge Deadline</label>
-                        <input
-                            type="date"
-                            value={deadline}
-                            onChange={(e) => setDeadline(e.target.value)}
-                            className="w-full p-2 border border-[rgba(255,255,255,0.12)] rounded-lg bg-[rgba(255,255,255,0.03)] text-[var(--text-primary)] focus:ring-[var(--color-gold)]"
-                        />
+                        <div className="relative">
+                            <input
+                                ref={deadlineRef}
+                                type="date"
+                                value={deadline}
+                                onChange={(e) => setDeadline(e.target.value)}
+                                className="input-field pr-12"
+                            />
+                            <button
+                                type="button"
+                                className={[
+                                    'absolute right-2 top-1/2 -translate-y-1/2',
+                                    'h-9 w-9 rounded-lg border border-[rgba(var(--silver-rgb),0.18)]',
+                                    'bg-[linear-gradient(180deg,rgba(26,26,26,0.72),rgba(10,10,10,0.78))]',
+                                    'text-[rgba(var(--accent-rgb),0.95)]',
+                                    'shadow-[0_18px_60px_-50px_rgba(var(--accent-rgb),0.55)]',
+                                    'hover:bg-[linear-gradient(180deg,rgba(42,42,42,0.68),rgba(10,10,10,0.82))]',
+                                    'transition-colors',
+                                ].join(' ')}
+                                aria-label="Pick deadline date"
+                                title="Pick a date"
+                                onClick={() => {
+                                    const el = deadlineRef.current;
+                                    if (!el) return;
+                                    // Chromium supports showPicker(); Safari/Firefox fall back to focus/click.
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    const anyEl: any = el as any;
+                                    try {
+                                        if (typeof anyEl.showPicker === 'function') {
+                                            anyEl.showPicker();
+                                            return;
+                                        }
+                                    } catch {
+                                        // ignore
+                                    }
+                                    el.focus();
+                                    el.click();
+                                }}
+                            >
+                                <Calendar size={16} className="mx-auto" />
+                            </button>
+                        </div>
+                        <div className="mt-2 text-xs text-[var(--text-tertiary)]">
+                            Default is 60 days out. Click the calendar to pick a date.
+                        </div>
                     </div>
 
                     {/* Terms */}
