@@ -108,8 +108,8 @@ async function main() {
   await bestEffort(() => exec(`UPDATE org_kyc SET verified_by=NULL WHERE verified_by=?`, [userId]));
   await bestEffort(() => exec(`UPDATE submission_entries SET requestor_user_id=NULL WHERE requestor_user_id=?`, [userId]));
 
-  // Delete “owned” rows
-  await bestEffort(() => exec(`DELETE FROM campaigns WHERE created_by=?`, [userId]));
+  // Campaigns: keep, but detach ownership
+  await bestEffort(() => exec(`UPDATE campaigns SET created_by=NULL WHERE created_by=?`, [userId]));
   await bestEffort(() => exec(`DELETE FROM password_resets WHERE user_id=?`, [userId]));
   await bestEffort(() => exec(`DELETE FROM invite_codes WHERE created_by=? OR used_by=?`, [userId, userId]));
 
