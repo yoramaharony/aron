@@ -5,8 +5,19 @@ export async function shareLink(opts: { title?: string; text?: string; url: stri
 
   // Prefer native share sheet on mobile.
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-    await navigator.share({ title, text, url });
-    return { method: 'native' as const };
+    try {
+      await navigator.share({ title, text, url });
+      return { method: 'native' as const, canceled: false as const };
+    } catch (e: any) {
+      const name = String(e?.name ?? '');
+      const msg = String(e?.message ?? '');
+      // User cancelled the share sheet — treat as a normal flow.
+      if (name === 'AbortError' || msg.toLowerCase().includes('share canceled')) {
+        return { method: 'native' as const, canceled: true as const };
+      }
+      // If native share fails (desktop quirks), fall back to WhatsApp.
+      // (We avoid throwing, because it can show a scary red runtime error UI.)
+    }
   }
 
   // WhatsApp fallback
