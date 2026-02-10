@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users } from '@/db/schema';
+import {
+  campaigns,
+  conciergeMessages,
+  donorOpportunityEvents,
+  donorOpportunityState,
+  donorProfiles,
+  inviteCodes,
+  leverageOffers,
+  orgKyc,
+  passwordResets,
+  requests,
+  submissionEntries,
+  submissionLinks,
+  users,
+} from '@/db/schema';
 import { getSession, hashPassword } from '@/lib/auth';
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 import crypto from 'crypto';
 import { renderEmailFromTemplate } from '@/lib/email-templates';
 import { sendMailgunEmail } from '@/lib/mailgun';
@@ -156,7 +170,43 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     return NextResponse.json({ error: 'Cannot delete current admin' }, { status: 400 });
   }
 
-  await db.delete(users).where(eq(users.id, id));
-  return NextResponse.json({ success: true });
+  // MVP "hard delete" with manual cascade cleanup.
+  // Many tables reference users.id. SQLite will reject deleting users if dependents remain.
+  try {
+    // 1) Null out optional references (preserve global rows)
+    await db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id));
+    await db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id));
+    await db.update(requests).set({ createdBy: null }).where(eq(requests.createdBy, id));
+    await db.update(campaigns).set({ createdBy: null }).where(eq(campaigns.createdBy, id));
+
+    // 2) Delete donor-scoped rows
+    await db.delete(passwordResets).where(eq(passwordResets.userId, id));
+    await db.delete(inviteCodes).where(or(eq(inviteCodes.createdBy, id), eq(inviteCodes.usedBy, id)));
+
+    await db.delete(leverageOffers).where(eq(leverageOffers.donorId, id));
+    await db.delete(donorOpportunityEvents).where(eq(donorOpportunityEvents.donorId, id));
+    await db.delete(donorOpportunityState).where(eq(donorOpportunityState.donorId, id));
+    await db.delete(conciergeMessages).where(eq(conciergeMessages.donorId, id));
+    await db.delete(donorProfiles).where(eq(donorProfiles.donorId, id));
+
+    // 3) Submissions & links (order matters: entries -> links)
+    await db.delete(submissionEntries).where(eq(submissionEntries.donorId, id));
+    await db.delete(submissionLinks).where(eq(submissionLinks.donorId, id));
+    await db.delete(submissionLinks).where(eq(submissionLinks.createdBy, id));
+
+    // 4) Finally delete the user
+    await db.delete(users).where(eq(users.id, id));
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    const msg = String(e?.message ?? 'Failed to delete user');
+    // Provide a clear hint when this is a FK constraint.
+    if (msg.toLowerCase().includes('foreign key')) {
+      return NextResponse.json(
+        { error: `Cannot delete user due to related records (foreign key constraint). Try disabling instead, or contact support.` },
+        { status: 409 }
+      );
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 }
 
