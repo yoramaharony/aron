@@ -20,6 +20,7 @@ export default function AdminDonorsPage() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [query, setQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'disabled' | 'deleted'>('all');
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', email: '', password: '' });
@@ -36,7 +37,18 @@ export default function AdminDonorsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const filtered = useMemo(() => rows, [rows]);
+  const filtered = useMemo(() => {
+    const isDeleted = (u: AdminUser) => {
+      const email = String(u.email || '').toLowerCase();
+      const name = String(u.name || '').toLowerCase();
+      return email.startsWith('deleted+') || name === 'deleted user';
+    };
+
+    if (statusFilter === 'all') return rows;
+    if (statusFilter === 'deleted') return rows.filter((u) => isDeleted(u));
+    if (statusFilter === 'disabled') return rows.filter((u) => !isDeleted(u) && Boolean(u.disabledAt));
+    return rows.filter((u) => !isDeleted(u) && !u.disabledAt);
+  }, [rows, statusFilter]);
 
   const toggleDisable = async (u: AdminUser) => {
     setLoading(true);
@@ -180,7 +192,20 @@ export default function AdminDonorsPage() {
               }}
             />
           </div>
-          <div className="pt-6">
+          <div className="pt-6 flex items-center gap-3">
+            <div className="min-w-[180px]">
+              <label className="label">Status</label>
+              <select
+                className="input-field"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value as any)}
+              >
+                <option value="all">All</option>
+                <option value="active">Active</option>
+                <option value="disabled">Disabled</option>
+                <option value="deleted">Deleted</option>
+              </select>
+            </div>
             <Button variant="outline" onClick={() => refresh().catch(() => {})}>
               Search
             </Button>
