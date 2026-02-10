@@ -21,7 +21,7 @@ export function LeverageDrawer() {
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         onClick={closeLeverageDrawer}
-                        className="fixed inset-0 bg-black/65 z-[100] backdrop-blur-[2px]"
+                        className="fixed inset-0 bg-black/85 z-[100] backdrop-blur-[6px]"
                     />
 
                     {/* Drawer */}
@@ -30,7 +30,7 @@ export function LeverageDrawer() {
                         animate={{ x: 0 }}
                         exit={{ x: '100%' }}
                         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border-l border-[rgba(255,255,255,0.10)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb), 0.14),transparent_55%),linear-gradient(180deg,rgba(12,12,20,0.92),rgba(10,10,16,0.86))]"
+                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border-l border-[rgba(255,255,255,0.12)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb), 0.10),transparent_55%),linear-gradient(180deg,rgba(8,8,14,0.98),rgba(6,6,10,0.96))]"
                     >
                         <LeverageForm onClose={closeLeverageDrawer} opportunity={activeOpportunity} onCreate={createOffer} />
                     </motion.div>
@@ -54,6 +54,8 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     const [proofRequired, setProofRequired] = useState(true);
     const [milestones, setMilestones] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitErr, setSubmitErr] = useState<string | null>(null);
 
     // Derived Logic
     const challengeGoal = matchMode === 'match'
@@ -75,7 +77,9 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
         }
     })();
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
+        setSubmitting(true);
+        setSubmitErr(null);
         const offer: LeverageOffer = {
             id: `offer_${Date.now()}`,
             opportunityId: opportunity.id,
@@ -98,23 +102,31 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
-        // Persist via API (best effort). Keep local ripple for now.
-        fetch('/api/leverage-offers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                opportunityKey: opportunity.id,
-                anchorAmount: offer.anchorAmount,
-                matchMode,
-                challengeGoal: offer.challengeGoal,
-                topUpCap: offer.topUpCap,
-                deadline: offer.deadline,
-                terms: offer.terms,
-            }),
-        }).catch(() => {});
+        // Persist via API (await) so the parent page refresh sees the History event immediately.
+        try {
+            const res = await fetch('/api/leverage-offers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    opportunityKey: opportunity.id,
+                    anchorAmount: offer.anchorAmount,
+                    matchMode,
+                    challengeGoal: offer.challengeGoal,
+                    topUpCap: offer.topUpCap,
+                    deadline: offer.deadline,
+                    terms: offer.terms,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Failed to create leverage offer');
 
-        onCreate(offer);
-        onClose();
+            onCreate(offer);
+            onClose();
+        } catch (e: any) {
+            setSubmitErr(String(e?.message || 'Failed to create leverage offer'));
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     if (showConfirm) {
@@ -163,9 +175,14 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         </div>
                     </div>
 
-                    <Button variant="gold" size="lg" className="w-full" onClick={handleCreate}>
+                    <Button variant="gold" size="lg" className="w-full" onClick={handleCreate} isLoading={submitting} disabled={submitting}>
                         Create Offer
                     </Button>
+                    {submitErr ? (
+                        <div className="-mt-2 text-xs text-red-300 text-center">
+                            {submitErr}
+                        </div>
+                    ) : null}
                     <p className="text-xs text-[var(--text-tertiary)]">Funds are held in escrow until verification.</p>
                 </div>
             </div>

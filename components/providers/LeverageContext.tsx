@@ -64,6 +64,7 @@ interface LeverageContextType {
     passed: Set<string>; // IDs
     inbox: InboxMessage[];
     vaultDocs: VaultDoc[];
+    lastOpportunityUpdate: { key: string; at: number } | null;
 
     createOffer: (offer: LeverageOffer) => void;
     saveOpportunity: (id: string) => void;
@@ -84,6 +85,7 @@ export function LeverageProvider({ children }: { children: ReactNode }) {
     const [passed, setPassed] = useState<Set<string>>(new Set());
     const [inbox, setInbox] = useState<InboxMessage[]>([]);
     const [vaultDocs, setVaultDocs] = useState<VaultDoc[]>([]);
+    const [lastOpportunityUpdate, setLastOpportunityUpdate] = useState<{ key: string; at: number } | null>(null);
 
     // Drawer State
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -101,6 +103,7 @@ export function LeverageProvider({ children }: { children: ReactNode }) {
 
     const createOffer = (offer: LeverageOffer) => {
         setOffers(prev => [offer, ...prev]);
+        setLastOpportunityUpdate({ key: offer.opportunityId, at: Date.now() });
 
         // Ripple Effect 1: Inbox Message
         const newMessage: InboxMessage = {
@@ -150,6 +153,7 @@ export function LeverageProvider({ children }: { children: ReactNode }) {
             passed,
             inbox,
             vaultDocs,
+            lastOpportunityUpdate,
             createOffer,
             saveOpportunity,
             passOpportunity,

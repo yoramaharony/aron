@@ -37,7 +37,7 @@ export default function DonorFeed() {
     const [moreInfoErr, setMoreInfoErr] = useState<string | null>(null);
     const [moreInfoCopied, setMoreInfoCopied] = useState(false);
 
-    const { openLeverageDrawer } = useLeverage();
+    const { openLeverageDrawer, lastOpportunityUpdate } = useLeverage();
 
     const stateToTab = (s: string) => {
         if (s === 'passed') return 'passed';
@@ -116,6 +116,16 @@ export default function DonorFeed() {
             setDetailLoading(false);
         }
     };
+
+    // When leverage is created via the drawer (separate endpoint), refresh the selected opportunity detail
+    // so History updates immediately without requiring a manual Refresh click.
+    useEffect(() => {
+        if (!lastOpportunityUpdate?.key) return;
+        if (!selectedKey) return;
+        if (String(lastOpportunityUpdate.key) !== String(selectedKey)) return;
+        loadDetail(selectedKey).catch(() => {});
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [lastOpportunityUpdate?.at]);
 
     const act = async (key: string, action: string, meta?: any) => {
         try {
