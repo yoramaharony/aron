@@ -211,11 +211,16 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     await bestEffort(() => db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id)));
     await bestEffort(() => db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id)));
 
-    // Some DBs have NOT NULL on created_by. Re-assign to current admin instead of null.
+    // Requests: preserve by re-assigning created_by (or nulling out if schema allows).
     if (reassignToUserId) {
       await bestEffort(() => db.update(requests).set({ createdBy: reassignToUserId }).where(eq(requests.createdBy, id)));
-      await bestEffort(() => db.update(campaigns).set({ createdBy: reassignToUserId }).where(eq(campaigns.createdBy, id)));
+    } else {
+      await bestEffort(() => db.update(requests).set({ createdBy: null }).where(eq(requests.createdBy, id)));
     }
+
+    // Campaigns: your DB rejects reassignment here (NOT NULL + FK mismatch in older schema).
+    // Safest for MVP: delete campaigns rows owned by the deleted user.
+    await bestEffort(() => db.delete(campaigns).where(eq(campaigns.createdBy, id)));
 
     // 2) Delete donor-scoped rows
     await bestEffort(() => db.delete(passwordResets).where(eq(passwordResets.userId, id)));
