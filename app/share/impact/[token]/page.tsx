@@ -4,6 +4,26 @@ import { donorProfiles } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 import { ShareImpactActions } from './ShareImpactActions';
+import { headers } from 'next/headers';
+
+function getRequestOrigin() {
+  const h = headers();
+  const host = h.get('x-forwarded-host') ?? h.get('host');
+  const forwardedProto = h.get('x-forwarded-proto');
+  const proto =
+    forwardedProto ??
+    (host && (host.includes('localhost') || host.includes('127.0.0.1')) ? 'http' : 'https');
+
+  if (host) return `${proto}://${host}`;
+
+  const envUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (envUrl) return envUrl.replace(/\/$/, '');
+
+  const vercelUrl = process.env.VERCEL_URL?.trim();
+  if (vercelUrl) return `https://${vercelUrl.replace(/\/$/, '')}`;
+
+  return '';
+}
 
 function fmtDate(v: any) {
   try {
@@ -40,7 +60,12 @@ export default async function ShareImpactPage({ params, searchParams }: { params
 
   const board = profile.boardJson ? JSON.parse(profile.boardJson) : null;
   const vision = profile.visionJson ? JSON.parse(profile.visionJson) : null;
-  const isPrint = searchParams?.print === '1';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const resolvedSearchParams: any = await (searchParams as any);
+  const isPrint = String(resolvedSearchParams?.print || '') === '1';
+
+  const origin = getRequestOrigin();
+  const shareUrl = origin ? `${origin}/share/impact/${token}` : `/share/impact/${token}`;
 
   const summaryLines = [
     `Impact Vision`,
@@ -107,7 +132,7 @@ export default async function ShareImpactPage({ params, searchParams }: { params
             {!isPrint ? (
               <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(10,10,14,0.70)] backdrop-blur p-6 no-print">
                 <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">Share link</div>
-                <div className="mt-2 text-sm text-[var(--text-secondary)] font-mono break-all">{`/share/impact/${token}`}</div>
+                <div className="mt-2 text-sm text-[var(--text-secondary)] font-mono break-all">{shareUrl}</div>
               </div>
             ) : null}
           </div>
