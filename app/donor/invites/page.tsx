@@ -407,9 +407,6 @@ export default function DonorInvitesPage() {
       <Card className="p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="text-sm font-medium text-[var(--text-primary)]">Recent Invites (last 25)</div>
-          <Button variant="outline" onClick={() => refresh().catch(() => {})}>
-            Refresh
-          </Button>
         </div>
 
         <div className="space-y-2">
