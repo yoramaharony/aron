@@ -63,6 +63,18 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     const topUpAmount = matchMode === 'match' ? anchor : challengeGoal; // Simplified 1:1 logic
     const totalDeployed = anchor + topUpAmount;
 
+    const matchModeLabel = matchMode === 'match' ? 'Match Me (1:1)' : 'Cover Remainder';
+    const deadlineLabel = (() => {
+        try {
+            if (!deadline) return '—';
+            const d = new Date(`${deadline}T00:00:00`);
+            if (Number.isNaN(d.getTime())) return deadline;
+            return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+        } catch {
+            return deadline;
+        }
+    })();
+
     const handleCreate = () => {
         const offer: LeverageOffer = {
             id: `offer_${Date.now()}`,
@@ -116,13 +128,34 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     <h2 className="text-2xl font-serif">Confirm Conditional Offer?</h2>
 
                     <div className="bg-[rgba(255,255,255,0.03)] p-6 rounded-lg w-full text-left space-y-3 border border-[rgba(255,255,255,0.10)]">
+                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">
+                            {opportunity.title}
+                        </div>
+                        <div className="text-xs text-[var(--text-tertiary)] -mt-1">
+                            {opportunity.orgName} • {opportunity.location}
+                        </div>
+                        <div className="border-t border-[rgba(255,255,255,0.10)] pt-3 mt-3" />
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Anchor (Pay Now)</span>
                             <span className="font-bold">${anchor.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Challenge type</span>
+                            <span className="font-bold">{matchModeLabel}</span>
+                        </div>
+                        <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Condition</span>
                             <span className="font-bold">Raises ${challengeGoal.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Deadline</span>
+                            <span className="font-bold">{deadlineLabel}</span>
+                        </div>
+                        <div className="flex justify-between">
+                            <span className="text-[var(--text-secondary)]">Terms</span>
+                            <span className="font-bold text-right">
+                                {proofRequired ? 'Verification required' : 'No verification'}{milestones ? ' • Milestones 50/50' : ''}
+                            </span>
                         </div>
                         <div className="border-t pt-2 mt-2 flex justify-between text-lg">
                             <span className="font-bold">Total Max</span>
