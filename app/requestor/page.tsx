@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Check, ChevronRight, Upload, FileText, Globe, DollarSign } from 'lucide-react';
+import { JEWISH_DEMO_CATEGORIES } from '@/lib/categories';
 
 export default function RequestWizard() {
     const router = useRouter();
@@ -12,9 +13,10 @@ export default function RequestWizard() {
     const [loading, setLoading] = useState(false);
     const [submittedId, setSubmittedId] = useState<string | null>(null);
 
+    const defaultCategory = JEWISH_DEMO_CATEGORIES[0] ?? 'Chesed / Community support';
     const [formData, setFormData] = useState({
         title: '',
-        category: 'Education',
+        category: defaultCategory,
         location: '',
         target: 500000,
         summary: '',
@@ -124,9 +126,11 @@ export default function RequestWizard() {
                                                 value={formData.category}
                                                 onChange={e => setFormData({ ...formData, category: e.target.value })}
                                             >
-                                                <option>Education</option>
-                                                <option>Healthcare</option>
-                                                <option>Environment</option>
+                                                {JEWISH_DEMO_CATEGORIES.map((c) => (
+                                                    <option key={c} value={c}>
+                                                        {c}
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
                                         <div>
