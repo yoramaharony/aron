@@ -16,7 +16,7 @@ import {
   users,
 } from '@/db/schema';
 import { getSession, hashPassword } from '@/lib/auth';
-import { eq, or } from 'drizzle-orm';
+import { eq, ne, or } from 'drizzle-orm';
 import crypto from 'crypto';
 import { renderEmailFromTemplate } from '@/lib/email-templates';
 import { sendMailgunEmail } from '@/lib/mailgun';
@@ -184,13 +184,38 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       }
     };
 
+    // Re-assign "ownership" rows to a known-existing user to satisfy FK + NOT NULL constraints.
+    // Session cookies can be stale after DB resets, so don't assume session.userId exists in DB.
+    let reassignToUserId: string | null = null;
+    const sessionUserExists = await db.select({ id: users.id }).from(users).where(eq(users.id, session.userId)).get();
+    if (sessionUserExists?.id) {
+      reassignToUserId = sessionUserExists.id;
+    } else {
+      const anyAdmin = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.role, 'admin'))
+        .get();
+      if (anyAdmin?.id) reassignToUserId = anyAdmin.id;
+    }
+    if (!reassignToUserId) {
+      const anyOtherUser = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(ne(users.id, id))
+        .get();
+      if (anyOtherUser?.id) reassignToUserId = anyOtherUser.id;
+    }
+
     // 1) Null out optional references (preserve global rows)
     await bestEffort(() => db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id)));
     await bestEffort(() => db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id)));
 
     // Some DBs have NOT NULL on created_by. Re-assign to current admin instead of null.
-    await bestEffort(() => db.update(requests).set({ createdBy: session.userId }).where(eq(requests.createdBy, id)));
-    await bestEffort(() => db.update(campaigns).set({ createdBy: session.userId }).where(eq(campaigns.createdBy, id)));
+    if (reassignToUserId) {
+      await bestEffort(() => db.update(requests).set({ createdBy: reassignToUserId }).where(eq(requests.createdBy, id)));
+      await bestEffort(() => db.update(campaigns).set({ createdBy: reassignToUserId }).where(eq(campaigns.createdBy, id)));
+    }
 
     // 2) Delete donor-scoped rows
     await bestEffort(() => db.delete(passwordResets).where(eq(passwordResets.userId, id)));
