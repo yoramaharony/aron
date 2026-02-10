@@ -173,26 +173,39 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
   // MVP "hard delete" with manual cascade cleanup.
   // Many tables reference users.id. SQLite will reject deleting users if dependents remain.
   try {
+    const bestEffort = async (fn: () => Promise<unknown>) => {
+      try {
+        await fn();
+      } catch (e: any) {
+        const msg = String(e?.message ?? '').toLowerCase();
+        // Some DBs may not have every table/column (older schema). Ignore those.
+        if (msg.includes('no such table') || msg.includes('no such column')) return;
+        throw e;
+      }
+    };
+
     // 1) Null out optional references (preserve global rows)
-    await db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id));
-    await db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id));
-    await db.update(requests).set({ createdBy: null }).where(eq(requests.createdBy, id));
-    await db.update(campaigns).set({ createdBy: null }).where(eq(campaigns.createdBy, id));
+    await bestEffort(() => db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id)));
+    await bestEffort(() => db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id)));
+
+    // Some DBs have NOT NULL on created_by. Re-assign to current admin instead of null.
+    await bestEffort(() => db.update(requests).set({ createdBy: session.userId }).where(eq(requests.createdBy, id)));
+    await bestEffort(() => db.update(campaigns).set({ createdBy: session.userId }).where(eq(campaigns.createdBy, id)));
 
     // 2) Delete donor-scoped rows
-    await db.delete(passwordResets).where(eq(passwordResets.userId, id));
-    await db.delete(inviteCodes).where(or(eq(inviteCodes.createdBy, id), eq(inviteCodes.usedBy, id)));
+    await bestEffort(() => db.delete(passwordResets).where(eq(passwordResets.userId, id)));
+    await bestEffort(() => db.delete(inviteCodes).where(or(eq(inviteCodes.createdBy, id), eq(inviteCodes.usedBy, id))));
 
-    await db.delete(leverageOffers).where(eq(leverageOffers.donorId, id));
-    await db.delete(donorOpportunityEvents).where(eq(donorOpportunityEvents.donorId, id));
-    await db.delete(donorOpportunityState).where(eq(donorOpportunityState.donorId, id));
-    await db.delete(conciergeMessages).where(eq(conciergeMessages.donorId, id));
-    await db.delete(donorProfiles).where(eq(donorProfiles.donorId, id));
+    await bestEffort(() => db.delete(leverageOffers).where(eq(leverageOffers.donorId, id)));
+    await bestEffort(() => db.delete(donorOpportunityEvents).where(eq(donorOpportunityEvents.donorId, id)));
+    await bestEffort(() => db.delete(donorOpportunityState).where(eq(donorOpportunityState.donorId, id)));
+    await bestEffort(() => db.delete(conciergeMessages).where(eq(conciergeMessages.donorId, id)));
+    await bestEffort(() => db.delete(donorProfiles).where(eq(donorProfiles.donorId, id)));
 
     // 3) Submissions & links (order matters: entries -> links)
-    await db.delete(submissionEntries).where(eq(submissionEntries.donorId, id));
-    await db.delete(submissionLinks).where(eq(submissionLinks.donorId, id));
-    await db.delete(submissionLinks).where(eq(submissionLinks.createdBy, id));
+    await bestEffort(() => db.delete(submissionEntries).where(eq(submissionEntries.donorId, id)));
+    await bestEffort(() => db.delete(submissionLinks).where(eq(submissionLinks.donorId, id)));
+    await bestEffort(() => db.delete(submissionLinks).where(eq(submissionLinks.createdBy, id)));
 
     // 4) Finally delete the user
     await db.delete(users).where(eq(users.id, id));
