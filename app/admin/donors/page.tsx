@@ -101,6 +101,25 @@ export default function AdminDonorsPage() {
     }
   };
 
+  const deleteUser = async (u: AdminUser) => {
+    const ok = window.confirm(`Delete user?\n\n${u.name} <${u.email}>\n\nThis is permanent. Are you sure?`);
+    if (!ok) return;
+    setLoading(true);
+    setError('');
+    setNotice('');
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(u.id)}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed to delete user');
+      setRows((prev) => prev.filter((r) => r.id !== u.id));
+      setNotice(`Deleted ${u.email}.`);
+    } catch (e: any) {
+      setError(String(e?.message || 'Failed'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const createDonor = async () => {
     setLoading(true);
     setError('');
@@ -255,6 +274,15 @@ export default function AdminDonorsPage() {
                         <Button variant="outline" size="sm" onClick={() => toggleDisable(u)} disabled={loading}>
                           {u.disabledAt ? 'Enable' : 'Disable'}
                         </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteUser(u)}
+                          disabled={loading}
+                          className="border-[rgba(248,113,113,0.35)] text-red-200 hover:text-red-100 hover:border-[rgba(248,113,113,0.55)] hover:bg-[rgba(248,113,113,0.12)]"
+                        >
+                          <span className="line-through">Delete user</span>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -310,6 +338,17 @@ export default function AdminDonorsPage() {
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => toggleDisable(u)} disabled={loading} className="flex-1">
                     {u.disabledAt ? 'Enable' : 'Disable'}
+                  </Button>
+                </div>
+                <div className="flex">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => deleteUser(u)}
+                    disabled={loading}
+                    className="w-full border-[rgba(248,113,113,0.35)] text-red-200 hover:text-red-100 hover:border-[rgba(248,113,113,0.55)] hover:bg-[rgba(248,113,113,0.12)]"
+                  >
+                    <span className="line-through">Delete user</span>
                   </Button>
                 </div>
               </div>
