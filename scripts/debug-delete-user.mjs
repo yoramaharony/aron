@@ -108,8 +108,28 @@ async function main() {
   await bestEffort(() => exec(`UPDATE org_kyc SET verified_by=NULL WHERE verified_by=?`, [userId]));
   await bestEffort(() => exec(`UPDATE submission_entries SET requestor_user_id=NULL WHERE requestor_user_id=?`, [userId]));
 
-  // Campaigns: keep, but detach ownership
-  await bestEffort(() => exec(`UPDATE campaigns SET created_by=NULL WHERE created_by=?`, [userId]));
+  // Campaigns: detach if allowed; otherwise fall back to reassigning to an existing admin; otherwise delete.
+  await bestEffort(async () => {
+    try {
+      await exec(`UPDATE campaigns SET created_by=NULL WHERE created_by=?`, [userId]);
+    } catch (e) {
+      const msg = String(e?.message ?? '').toLowerCase();
+      const looksConstraint =
+        msg.includes('not null') || msg.includes('foreign key') || msg.includes('constraint') || msg.includes('failed query');
+      if (!looksConstraint) throw e;
+
+      const adminId = await scalar(`SELECT id FROM users WHERE role='admin' LIMIT 1`);
+      if (adminId) {
+        try {
+          await exec(`UPDATE campaigns SET created_by=? WHERE created_by=?`, [adminId, userId]);
+          return;
+        } catch {
+          // fall through to delete
+        }
+      }
+      await exec(`DELETE FROM campaigns WHERE created_by=?`, [userId]);
+    }
+  });
   await bestEffort(() => exec(`DELETE FROM password_resets WHERE user_id=?`, [userId]));
   await bestEffort(() => exec(`DELETE FROM invite_codes WHERE created_by=? OR used_by=?`, [userId, userId]));
 

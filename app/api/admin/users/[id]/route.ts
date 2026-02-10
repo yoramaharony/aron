@@ -220,7 +220,30 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
     // Campaigns: DB schema allows created_by to be NULL (and it FK's to users).
     // Null it out so the user can be deleted even if the campaign record should remain.
-    await bestEffort(() => db.update(campaigns).set({ createdBy: null }).where(eq(campaigns.createdBy, id)));
+    try {
+      await db.update(campaigns).set({ createdBy: null }).where(eq(campaigns.createdBy, id));
+    } catch (e: any) {
+      // Some DBs have created_by NOT NULL or other stricter constraints. Fall back to re-assigning
+      // to an existing admin/user; and only if that fails, try deleting those campaign rows.
+      const msg = String(e?.message ?? '').toLowerCase();
+      const isConstraint =
+        msg.includes('not null') ||
+        msg.includes('foreign key') ||
+        msg.includes('constraint') ||
+        msg.includes('failed query');
+
+      if (!isConstraint) throw e;
+
+      if (reassignToUserId) {
+        try {
+          await db.update(campaigns).set({ createdBy: reassignToUserId }).where(eq(campaigns.createdBy, id));
+        } catch {
+          await bestEffort(() => db.delete(campaigns).where(eq(campaigns.createdBy, id)));
+        }
+      } else {
+        await bestEffort(() => db.delete(campaigns).where(eq(campaigns.createdBy, id)));
+      }
+    }
 
     // 2) Delete donor-scoped rows
     await bestEffort(() => db.delete(passwordResets).where(eq(passwordResets.userId, id)));
