@@ -146,13 +146,13 @@ export default function RequestWizard() {
                 }),
             });
 
-            if (!res.ok) throw new Error('Failed to create request');
+            const data = await res.json().catch(() => ({} as any));
+            if (!res.ok) throw new Error(data?.error || 'Failed to create request');
 
-            const data = await res.json();
             setSubmittedId(data.id);
             setStep(5); // Success state
         } catch (e) {
-            alert('Error submitting request. Please try again.');
+            alert(String((e as any)?.message || 'Error submitting request. Please try again.'));
         } finally {
             setLoading(false);
         }
@@ -441,7 +441,7 @@ export default function RequestWizard() {
                                     ref={budgetInputRef}
                                     type="file"
                                     accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                    className="hidden"
+                                    className="sr-only"
                                     onChange={async (e) => {
                                         const files = e.target.files;
                                         e.target.value = '';
@@ -460,7 +460,7 @@ export default function RequestWizard() {
                                     type="file"
                                     multiple
                                     accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                                    className="hidden"
+                                    className="sr-only"
                                     onChange={async (e) => {
                                         const files = e.target.files;
                                         e.target.value = '';

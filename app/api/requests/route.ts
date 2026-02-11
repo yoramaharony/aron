@@ -46,6 +46,19 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, id: newId });
     } catch (error) {
         console.error(error);
+        const msg = String((error as any)?.message || '');
+        if (
+            msg.toLowerCase().includes('no column') &&
+            msg.toLowerCase().includes('cover_url')
+        ) {
+            return NextResponse.json(
+                {
+                    error:
+                        'DB schema is out of date (missing requests.cover_url). Run: npm run db:ensure',
+                },
+                { status: 500 }
+            );
+        }
         return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
     }
 }

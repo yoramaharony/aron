@@ -1,6 +1,10 @@
 import { createClient } from '@libsql/client';
+import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
+
+// Ensure scripts can use .env when run via `node ...` (npm scripts).
+dotenv.config({ path: '.env' });
 
 function getDbUrl() {
   const explicit = process.env.TURSO_DATABASE_URL?.trim();
