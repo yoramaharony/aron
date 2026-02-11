@@ -1,7 +1,7 @@
 'use client';
 
-import { useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Check, ChevronRight, Upload, FileText, Globe, DollarSign } from 'lucide-react';
@@ -9,9 +9,13 @@ import { JEWISH_DEMO_CATEGORIES, type JewishDemoCategory } from '@/lib/categorie
 
 export default function RequestWizard() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const editId = searchParams?.get('edit') || '';
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [submittedId, setSubmittedId] = useState<string | null>(null);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editLoadErr, setEditLoadErr] = useState<string>('');
 
     const defaultCategory = JEWISH_DEMO_CATEGORIES[0] ?? 'Chesed / Community support';
     const [formData, setFormData] = useState<{
@@ -141,8 +145,10 @@ export default function RequestWizard() {
                 setLoading(false);
                 return;
             }
-            const res = await fetch('/api/requests', {
-                method: 'POST',
+            const url = editId ? `/api/requests/${encodeURIComponent(editId)}` : '/api/requests';
+            const method = editId ? 'PATCH' : 'POST';
+            const res = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     title: formData.title,
@@ -159,9 +165,9 @@ export default function RequestWizard() {
             });
 
             const data = await res.json().catch(() => ({} as any));
-            if (!res.ok) throw new Error(data?.error || 'Failed to create request');
+            if (!res.ok) throw new Error(data?.error || 'Failed to save request');
 
-            setSubmittedId(data.id);
+            setSubmittedId(editId ? editId : data.id);
             setStep(5); // Success state
         } catch (e) {
             alert(String((e as any)?.message || 'Error submitting request. Please try again.'));
@@ -169,6 +175,61 @@ export default function RequestWizard() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        let cancelled = false;
+        async function load() {
+            if (!editId) {
+                setIsEditing(false);
+                setEditLoadErr('');
+                return;
+            }
+            setIsEditing(true);
+            setEditLoadErr('');
+            try {
+                const res = await fetch(`/api/requests/${encodeURIComponent(editId)}`);
+                const data = await res.json().catch(() => ({} as any));
+                if (!res.ok) throw new Error(data?.error || 'Failed to load request');
+                const r = data?.request;
+                if (!r) throw new Error('Request not found');
+
+                if (cancelled) return;
+
+                setFormData({
+                    title: String(r.title || ''),
+                    category: String(r.category || defaultCategory),
+                    location: String(r.location || ''),
+                    target: Number(r.targetAmount || 0) || 0,
+                    summary: String(r.summary || ''),
+                });
+                setCoverUrl(String(r.coverUrl || '/assets/default-request-cover.svg'));
+                setCoverLocalPreview(null);
+
+                // Evidence prefill (so Step 3 validation passes and links show).
+                try {
+                    const parsed = r.evidenceJson ? JSON.parse(String(r.evidenceJson)) : null;
+                    const budget = parsed?.budget ?? null;
+                    const files = Array.isArray(parsed?.files) ? parsed.files : [];
+                    setBudgetFile(budget && budget.url ? budget : null);
+                    setAdditionalFiles(files);
+                } catch {
+                    setBudgetFile(null);
+                    setAdditionalFiles([]);
+                }
+
+                setSubmittedId(null);
+                setStep(1);
+            } catch (e: any) {
+                if (cancelled) return;
+                setEditLoadErr(String(e?.message || 'Failed to load request'));
+            }
+        }
+        load();
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editId]);
 
     const validateStep = (s: number) => {
         const nextErr: typeof fieldErr = {};
@@ -199,8 +260,12 @@ export default function RequestWizard() {
         <div>
             <div className="flex justify-between items-center mb-8">
                 <div>
-                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">New Funding Request</h1>
-                    <p className="text-secondary">Draft your opportunity for the Aron Private Network.</p>
+                    <h1 className="text-3xl font-semibold text-[var(--text-primary)]">
+                        {isEditing ? 'Edit Request' : 'New Funding Request'}
+                    </h1>
+                    <p className="text-secondary">
+                        {isEditing ? 'Update your request details and documents.' : 'Draft your opportunity for the Aron Private Network.'}
+                    </p>
                 </div>
                 <div className="text-sm font-mono text-tertiary">Step {step} of 4</div>
             </div>
@@ -209,6 +274,26 @@ export default function RequestWizard() {
                 {/* Left: Wizard Form */}
                 <div>
                     <Card className="p-8">
+                        {editLoadErr ? (
+                            <div className="mb-4 text-sm text-red-300">
+                                Failed to load request: {editLoadErr}
+                            </div>
+                        ) : null}
+                        {isEditing ? (
+                            <div className="mb-4 flex items-center justify-between gap-3">
+                                <div className="text-xs text-[var(--text-tertiary)]">
+                                    Editing ID: <span className="text-[var(--text-primary)] font-mono">{editId}</span>
+                                </div>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => router.push('/requestor/requests')}
+                                >
+                                    Back to My Requests
+                                </Button>
+                            </div>
+                        ) : null}
 
                         {step === 1 && (
                             <div className="fade-in">
@@ -523,7 +608,7 @@ export default function RequestWizard() {
                                     className="w-full"
                                     isLoading={loading}
                                 >
-                                    Submit Request
+                                    {isEditing ? 'Save Changes' : 'Submit Request'}
                                 </Button>
                             </div>
                         )}
@@ -533,7 +618,7 @@ export default function RequestWizard() {
                                 <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ background: 'rgba(5, 150, 105, 0.1)', border: '1px solid var(--color-success)' }}>
                                     <Check size={32} style={{ color: 'var(--color-success)' }} />
                                 </div>
-                                <h2 className="text-2xl mb-2">Request Submitted</h2>
+                                <h2 className="text-2xl mb-2">{isEditing ? 'Changes Saved' : 'Request Submitted'}</h2>
                                 <p className="text-secondary mb-6">Reference ID: {submittedId || 'PENDING'}</p>
                                 <div className="mb-6 text-sm text-[var(--text-tertiary)]">
                                     <div>

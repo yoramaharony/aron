@@ -97,7 +97,11 @@ export default function MyRequestsPage() {
                                 ) : null}
                             </div>
                             <div>
-                                <Button variant="outline" size="sm">Manage</Button>
+                                <Button asChild variant="outline" size="sm">
+                                    <Link href={`/requestor?edit=${encodeURIComponent(req.id)}`}>
+                                        Manage
+                                    </Link>
+                                </Button>
                             </div>
                         </Card>
                     ))}
