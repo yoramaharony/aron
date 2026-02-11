@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Check, ChevronRight, Upload, FileText, Globe, DollarSign } from 'lucide-react';
-import { JEWISH_DEMO_CATEGORIES } from '@/lib/categories';
+import { JEWISH_DEMO_CATEGORIES, type JewishDemoCategory } from '@/lib/categories';
 
 export default function RequestWizard() {
     const router = useRouter();
@@ -14,7 +14,13 @@ export default function RequestWizard() {
     const [submittedId, setSubmittedId] = useState<string | null>(null);
 
     const defaultCategory = JEWISH_DEMO_CATEGORIES[0] ?? 'Chesed / Community support';
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        title: string;
+        category: JewishDemoCategory | string;
+        location: string;
+        target: number;
+        summary: string;
+    }>({
         title: '',
         category: defaultCategory,
         location: '',
@@ -146,7 +152,13 @@ export default function RequestWizard() {
                                             <select
                                                 className="input-field"
                                                 value={formData.category}
-                                                onChange={e => setFormData({ ...formData, category: e.target.value })}
+                                                onChange={(e) => {
+                                                    const v = String(e.target.value || '');
+                                                    const next = (JEWISH_DEMO_CATEGORIES as readonly string[]).includes(v)
+                                                        ? (v as JewishDemoCategory)
+                                                        : defaultCategory;
+                                                    setFormData({ ...formData, category: next });
+                                                }}
                                             >
                                                 {JEWISH_DEMO_CATEGORIES.map((c) => (
                                                     <option key={c} value={c}>
