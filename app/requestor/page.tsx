@@ -89,6 +89,13 @@ export default function RequestWizard() {
         }
     };
 
+    const uploadFilesToServer = async (files: File[]) => {
+        // Normalize so we never depend on a live FileList reference (Safari can clear it when input.value is reset)
+        const list = new DataTransfer();
+        for (const f of files) list.items.add(f);
+        return uploadToServer(list.files);
+    };
+
     const uploadCover = async (file: File) => {
         setUploadError('');
         setCoverErr('');
@@ -456,12 +463,16 @@ export default function RequestWizard() {
                                     accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                                     className="sr-only"
                                     onChange={async (e) => {
-                                        const files = e.target.files;
-                                        e.target.value = '';
-                                        if (!files || files.length === 0) return;
+                                        const picked = Array.from(e.currentTarget.files ?? []);
+                                        // Clear AFTER copying out the files (important for Safari).
+                                        e.currentTarget.value = '';
+                                        if (picked.length === 0) {
+                                            setUploadStatus('No file selected.');
+                                            return;
+                                        }
                                         try {
-                                            setUploadStatus(`Picked: ${files[0]?.name || 'file'} (${Math.round((files[0]?.size || 0) / 1024)} KB)`);
-                                            const uploaded = await uploadToServer(files);
+                                            setUploadStatus(`Picked: ${picked[0]?.name || 'file'} (${Math.round((picked[0]?.size || 0) / 1024)} KB)`);
+                                            const uploaded = await uploadFilesToServer(picked);
                                             if (uploaded[0]) setBudgetFile(uploaded[0]);
                                         } catch (err: any) {
                                             setUploadError(err?.message || 'Upload failed');
@@ -476,12 +487,16 @@ export default function RequestWizard() {
                                     accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                                     className="sr-only"
                                     onChange={async (e) => {
-                                        const files = e.target.files;
-                                        e.target.value = '';
-                                        if (!files || files.length === 0) return;
+                                        const picked = Array.from(e.currentTarget.files ?? []);
+                                        // Clear AFTER copying out the files (important for Safari).
+                                        e.currentTarget.value = '';
+                                        if (picked.length === 0) {
+                                            setUploadStatus('No files selected.');
+                                            return;
+                                        }
                                         try {
-                                            setUploadStatus(`Picked: ${files[0]?.name || 'file'} (${files.length} file(s))`);
-                                            const uploaded = await uploadToServer(files);
+                                            setUploadStatus(`Picked: ${picked[0]?.name || 'file'} (${picked.length} file(s))`);
+                                            const uploaded = await uploadFilesToServer(picked);
                                             setAdditionalFiles((prev) => [...uploaded, ...prev]);
                                         } catch (err: any) {
                                             setUploadError(err?.message || 'Upload failed');
