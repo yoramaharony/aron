@@ -85,11 +85,12 @@ export default function RequestWizard() {
             if (!res.ok) throw new Error(data?.error || 'Cover upload failed');
             const f = data?.file ?? (data?.files?.[0] ?? null);
             if (!f?.url) throw new Error('Cover upload returned no URL');
+            const storage = data?.storage ? String(data.storage) : '';
             // Cache-bust so the preview updates immediately even if the URL is reused by the browser cache.
             const u = String(f.url);
             const withBust = u.includes('?') ? `${u}&v=${Date.now()}` : `${u}?v=${Date.now()}`;
             setCoverUrl(withBust);
-            setCoverOk('Cover uploaded.');
+            setCoverOk(`Cover uploaded${storage ? ` (${storage})` : ''}.`);
             window.setTimeout(() => setCoverOk(''), 1400);
             return u;
         } catch (e: any) {

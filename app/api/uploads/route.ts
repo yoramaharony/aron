@@ -35,8 +35,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No files provided' }, { status: 400 });
     }
 
-    const useBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+    // Vercel Blob env var is typically BLOB_READ_WRITE_TOKEN (optionally prefixed).
+    const blobToken =
+      process.env.BLOB_READ_WRITE_TOKEN?.trim() ||
+      process.env.BLOB_READ_WRITE_TOKEN?.trim() ||
+      '';
+    const useBlob = Boolean(blobToken);
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'tmp');
+    // On Vercel, local disk is ephemeral; fail loudly if Blob isn't configured.
+    const isVercel = Boolean(process.env.VERCEL);
+    if (isVercel && !useBlob) {
+      return NextResponse.json(
+        { error: 'Uploads are not configured. Set BLOB_READ_WRITE_TOKEN (Vercel Blob) in env.' },
+        { status: 500 }
+      );
+    }
     if (!useBlob) {
       await mkdir(uploadsDir, { recursive: true });
     }
@@ -76,6 +89,7 @@ export async function POST(request: Request) {
         const blob = await put(blobPath, bytes, {
           access: 'public',
           contentType: contentType || undefined,
+          token: blobToken,
         });
         url = blob.url;
       } else {
@@ -95,9 +109,9 @@ export async function POST(request: Request) {
 
     // For cover uploads, enforce exactly one file.
     if (isCover) {
-      return NextResponse.json({ file: stored[0] ?? null, files: stored });
+      return NextResponse.json({ storage: useBlob ? 'blob' : 'local', file: stored[0] ?? null, files: stored });
     }
-    return NextResponse.json({ files: stored });
+    return NextResponse.json({ storage: useBlob ? 'blob' : 'local', files: stored });
   } catch (e) {
     console.error(e);
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
