@@ -754,9 +754,9 @@ export default function RequestWizard() {
                                 setCoverStatus('No cover selected.');
                                 return;
                             }
+                            const prevCoverUrl = coverUrl;
                             try {
                                 const file = picked[0];
-                                const prev = coverUrl;
                                 const local = URL.createObjectURL(file);
                                 setCoverLocalPreview(local);
                                 setCoverStatus(`Picked cover: ${file.name}`);
@@ -771,7 +771,7 @@ export default function RequestWizard() {
                             } catch (err: any) {
                                 // Roll back preview if upload failed.
                                 setCoverLocalPreview(null);
-                                setCoverUrl((v) => v || prev);
+                                setCoverUrl((v) => v || prevCoverUrl);
                                 setCoverErr(err?.message || 'Cover upload failed');
                             }
                         }}
