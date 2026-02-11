@@ -43,6 +43,7 @@ export default function RequestWizard() {
     const [coverUrl, setCoverUrl] = useState<string>('/assets/default-request-cover.svg');
     const [coverErr, setCoverErr] = useState<string>('');
     const [coverOk, setCoverOk] = useState<string>('');
+    const [coverStatus, setCoverStatus] = useState<string>('');
     const [coverLocalPreview, setCoverLocalPreview] = useState<string | null>(null);
 
     type UploadedFile = { name: string; url: string; size: number; type: string };
@@ -100,6 +101,7 @@ export default function RequestWizard() {
         setUploadError('');
         setCoverErr('');
         setCoverOk('');
+        setCoverStatus(`Uploading cover… (${file.name})`);
         setCoverUploading(true);
         try {
             const fd = new FormData();
@@ -116,14 +118,17 @@ export default function RequestWizard() {
             const withBust = u.includes('?') ? `${u}&v=${Date.now()}` : `${u}?v=${Date.now()}`;
             setCoverUrl(withBust);
             setCoverOk(`Cover uploaded${storage ? ` (${storage})` : ''}.`);
+            setCoverStatus(`Cover uploaded${storage ? ` (${storage})` : ''}.`);
             window.setTimeout(() => setCoverOk(''), 1400);
             return u;
         } catch (e: any) {
             const msg = String(e?.message || 'Cover upload failed');
             setCoverErr(msg);
+            setCoverStatus(`Cover upload failed: ${msg}`);
             throw e;
         } finally {
             setCoverUploading(false);
+            window.setTimeout(() => setCoverStatus(''), 1600);
         }
     };
 
@@ -583,10 +588,18 @@ export default function RequestWizard() {
                             <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.62)', padding: '4px 8px', borderRadius: '6px', fontSize: '10px', color: 'white', border: '1px solid rgba(255,255,255,0.10)' }}>
                                 {formData.category || 'Category'}
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => coverInputRef.current?.click()}
-                                disabled={coverUploading}
+                            <label
+                                htmlFor="cover-file-input"
+                                role="button"
+                                aria-disabled={coverUploading}
+                                onClick={(e) => {
+                                    if (coverUploading) {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        return;
+                                    }
+                                    setCoverStatus('Opening cover picker…');
+                                }}
                                 style={{
                                     position: 'absolute',
                                     right: 12,
@@ -599,12 +612,13 @@ export default function RequestWizard() {
                                     fontSize: 10,
                                     letterSpacing: '0.14em',
                                     textTransform: 'uppercase',
-                                    cursor: 'pointer',
+                                    cursor: coverUploading ? 'not-allowed' : 'pointer',
+                                    opacity: coverUploading ? 0.65 : 1,
                                 }}
                                 title="Upload cover"
                             >
                                 {coverUploading ? 'Uploading…' : 'Edit cover'}
-                            </button>
+                            </label>
                             {coverUploading ? (
                                 <div
                                     style={{
@@ -643,18 +657,24 @@ export default function RequestWizard() {
                     </Card>
                     <input
                         ref={coverInputRef}
+                        id="cover-file-input"
                         type="file"
                         accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
-                        className="hidden"
+                        className="sr-only"
                         onChange={async (e) => {
-                            const files = e.target.files;
-                            e.target.value = '';
-                            if (!files || files.length === 0) return;
+                            const picked = Array.from(e.currentTarget.files ?? []);
+                            // Clear AFTER copying out the files (important for Safari).
+                            e.currentTarget.value = '';
+                            if (picked.length === 0) {
+                                setCoverStatus('No cover selected.');
+                                return;
+                            }
                             try {
-                                const file = files[0];
+                                const file = picked[0];
                                 const prev = coverUrl;
                                 const local = URL.createObjectURL(file);
                                 setCoverLocalPreview(local);
+                                setCoverStatus(`Picked cover: ${file.name}`);
                                 await uploadCover(file);
                                 // Once uploaded, switch from local blob preview to the persisted URL.
                                 try {
@@ -674,6 +694,9 @@ export default function RequestWizard() {
                     <div className="mt-3 text-xs text-[var(--text-tertiary)]">
                         Tip: add a cover image to make your request stand out. (If you don’t, Aron uses a default cover.)
                     </div>
+                    {coverStatus ? (
+                        <div className="mt-2 text-xs text-[var(--text-tertiary)]">{coverStatus}</div>
+                    ) : null}
                     {coverErr ? (
                         <div className="mt-2 text-xs text-red-300">
                             Cover upload failed: {coverErr}
