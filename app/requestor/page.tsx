@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Check, ChevronRight, Upload, FileText, Globe, DollarSign } from 'lucide-react';
 import { JEWISH_DEMO_CATEGORIES, type JewishDemoCategory } from '@/lib/categories';
 
-export default function RequestWizard() {
+function RequestWizardInner() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const editId = searchParams?.get('edit') || '';
@@ -795,5 +795,20 @@ export default function RequestWizard() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function RequestWizardPage() {
+    // Next.js 16 requires `useSearchParams()` to live under a Suspense boundary.
+    return (
+        <Suspense
+            fallback={
+                <div className="py-20 text-center text-[var(--text-secondary)]">
+                    Loading…
+                </div>
+            }
+        >
+            <RequestWizardInner />
+        </Suspense>
     );
 }
