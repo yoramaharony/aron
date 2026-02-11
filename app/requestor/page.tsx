@@ -27,6 +27,14 @@ export default function RequestWizard() {
         target: 500000,
         summary: '',
     });
+    const [fieldErr, setFieldErr] = useState<{
+        title?: string;
+        location?: string;
+        summary?: string;
+        target?: string;
+        budget?: string;
+    }>({});
+    const [stepErr, setStepErr] = useState<string>('');
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState<string>('');
@@ -115,6 +123,12 @@ export default function RequestWizard() {
     const handleSubmit = async () => {
         setLoading(true);
         try {
+            // Final validation guard
+            const ok = validateStep(4);
+            if (!ok) {
+                setLoading(false);
+                return;
+            }
             const res = await fetch('/api/requests', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -144,6 +158,31 @@ export default function RequestWizard() {
         }
     };
 
+    const validateStep = (s: number) => {
+        const nextErr: typeof fieldErr = {};
+        const title = String(formData.title || '').trim();
+        const location = String(formData.location || '').trim();
+        const summary = String(formData.summary || '').trim();
+        const target = Number(formData.target);
+
+        if (s === 1) {
+            if (!title) nextErr.title = 'Project title is required.';
+            if (!location) nextErr.location = 'Location is required.';
+            if (!summary) nextErr.summary = 'Summary is required.';
+        }
+        if (s === 2) {
+            if (!Number.isFinite(target) || target <= 0) nextErr.target = 'Funding target must be greater than 0.';
+        }
+        if (s === 3 || s === 4) {
+            if (!budgetFile) nextErr.budget = 'Project budget file is required.';
+        }
+
+        setFieldErr(nextErr);
+        const hasAny = Object.keys(nextErr).length > 0;
+        setStepErr(hasAny ? 'Please fill out the required fields before continuing.' : '');
+        return !hasAny;
+    };
+
     return (
         <div>
             <div className="flex justify-between items-center mb-8">
@@ -164,13 +203,14 @@ export default function RequestWizard() {
                                 <h2 className="text-xl flex items-center mb-6"><Globe size={20} className="text-gold" style={{ marginRight: 8 }} /> Basics</h2>
                                 <div className="flex flex-col gap-6">
                                     <div>
-                                        <label className="label">Project Title</label>
+                                        <label className="label">Project Title <span className="text-red-300">*</span></label>
                                         <input
-                                            className="input-field"
+                                            className={`input-field ${fieldErr.title ? 'border-red-500' : ''}`}
                                             placeholder="e.g. Community Center Expansion"
                                             value={formData.title}
                                             onChange={e => setFormData({ ...formData, title: e.target.value })}
                                         />
+                                        {fieldErr.title ? <div className="mt-1 text-xs text-red-300">{fieldErr.title}</div> : null}
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
@@ -194,24 +234,26 @@ export default function RequestWizard() {
                                             </select>
                                         </div>
                                         <div>
-                                            <label className="label">Location</label>
+                                            <label className="label">Location <span className="text-red-300">*</span></label>
                                             <input
-                                                className="input-field"
+                                                className={`input-field ${fieldErr.location ? 'border-red-500' : ''}`}
                                                 placeholder="City, Country"
                                                 value={formData.location}
                                                 onChange={e => setFormData({ ...formData, location: e.target.value })}
                                             />
+                                            {fieldErr.location ? <div className="mt-1 text-xs text-red-300">{fieldErr.location}</div> : null}
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="label">Short Summary (The "Why")</label>
+                                        <label className="label">Short Summary (The "Why") <span className="text-red-300">*</span></label>
                                         <textarea
-                                            className="input-field"
+                                            className={`input-field ${fieldErr.summary ? 'border-red-500' : ''}`}
                                             style={{ height: '100px', resize: 'none' }}
                                             placeholder="Describe the impact in 2-3 sentences..."
                                             value={formData.summary}
                                             onChange={e => setFormData({ ...formData, summary: e.target.value })}
                                         />
+                                        {fieldErr.summary ? <div className="mt-1 text-xs text-red-300">{fieldErr.summary}</div> : null}
                                     </div>
                                 </div>
                             </div>
@@ -222,17 +264,18 @@ export default function RequestWizard() {
                                 <h2 className="text-xl flex items-center mb-6"><DollarSign size={20} className="text-gold" style={{ marginRight: 8 }} /> Financials</h2>
                                 <div className="flex flex-col gap-6">
                                     <div>
-                                        <label className="label">Funding Target</label>
+                                        <label className="label">Funding Target <span className="text-red-300">*</span></label>
                                         <div style={{ position: 'relative' }}>
                                             <span style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-secondary)' }}>$</span>
                                             <input
                                                 type="number"
-                                                className="input-field"
+                                                className={`input-field ${fieldErr.target ? 'border-red-500' : ''}`}
                                                 style={{ paddingLeft: '32px', fontSize: '1.25rem' }}
                                                 value={formData.target}
                                                 onChange={e => setFormData({ ...formData, target: Number(e.target.value) })}
                                             />
                                         </div>
+                                        {fieldErr.target ? <div className="mt-1 text-xs text-red-300">{fieldErr.target}</div> : null}
                                     </div>
                                     <div className="p-4 rounded bg-[var(--bg-surface)] text-sm text-secondary">
                                         <p><strong>Note:</strong> Aron verifies all budgets. Please ensure your attached budget file matches this figure.</p>
@@ -344,6 +387,9 @@ export default function RequestWizard() {
                                     <div className="mb-4 text-xs text-[var(--text-tertiary)] whitespace-pre-wrap">
                                         {uploadStatus}
                                     </div>
+                                ) : null}
+                                {fieldErr.budget && !budgetFile ? (
+                                    <div className="mb-4 text-xs text-red-300">{fieldErr.budget}</div>
                                 ) : null}
                                 <div>
                                     <label className="label">Additional Files</label>
@@ -460,9 +506,20 @@ export default function RequestWizard() {
                         )}
 
                         {/* Navigation */}
+                        {stepErr ? (
+                            <div className="mt-4 text-sm text-red-300">
+                                {stepErr}
+                            </div>
+                        ) : null}
                         {step < 4 && (
                             <div className="flex justify-end pt-6 mt-6 border-t border-[var(--border-subtle)]">
-                                <Button onClick={() => setStep(step + 1)} rightIcon={<ChevronRight size={16} />}>
+                                <Button
+                                    onClick={() => {
+                                        if (!validateStep(step)) return;
+                                        setStep(step + 1);
+                                    }}
+                                    rightIcon={<ChevronRight size={16} />}
+                                >
                                     Next Step
                                 </Button>
                             </div>
