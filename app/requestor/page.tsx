@@ -31,6 +31,9 @@ export default function RequestWizard() {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [coverUploading, setCoverUploading] = useState(false);
     const [coverUrl, setCoverUrl] = useState<string>('/assets/default-request-cover.svg');
+    const [coverErr, setCoverErr] = useState<string>('');
+    const [coverOk, setCoverOk] = useState<string>('');
+    const [coverLocalPreview, setCoverLocalPreview] = useState<string | null>(null);
 
     type UploadedFile = { name: string; url: string; size: number; type: string };
     const [budgetFile, setBudgetFile] = useState<UploadedFile | null>(null);
@@ -70,6 +73,8 @@ export default function RequestWizard() {
 
     const uploadCover = async (file: File) => {
         setUploadError('');
+        setCoverErr('');
+        setCoverOk('');
         setCoverUploading(true);
         try {
             const fd = new FormData();
@@ -80,7 +85,17 @@ export default function RequestWizard() {
             if (!res.ok) throw new Error(data?.error || 'Cover upload failed');
             const f = data?.file ?? (data?.files?.[0] ?? null);
             if (!f?.url) throw new Error('Cover upload returned no URL');
-            setCoverUrl(String(f.url));
+            // Cache-bust so the preview updates immediately even if the URL is reused by the browser cache.
+            const u = String(f.url);
+            const withBust = u.includes('?') ? `${u}&v=${Date.now()}` : `${u}?v=${Date.now()}`;
+            setCoverUrl(withBust);
+            setCoverOk('Cover uploaded.');
+            window.setTimeout(() => setCoverOk(''), 1400);
+            return u;
+        } catch (e: any) {
+            const msg = String(e?.message || 'Cover upload failed');
+            setCoverErr(msg);
+            throw e;
         } finally {
             setCoverUploading(false);
         }
@@ -398,7 +413,7 @@ export default function RequestWizard() {
                     <Card noPadding className="opacity-90">
                         <div style={{ height: '160px', background: 'var(--bg-surface)', position: 'relative', overflow: 'hidden' }}>
                             <img
-                                src={coverUrl || '/assets/default-request-cover.svg'}
+                                src={coverLocalPreview || coverUrl || '/assets/default-request-cover.svg'}
                                 alt="Request cover"
                                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                             />
@@ -428,6 +443,27 @@ export default function RequestWizard() {
                             >
                                 {coverUploading ? 'Uploading…' : 'Edit cover'}
                             </button>
+                            {coverUploading ? (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        left: 0,
+                                        right: 0,
+                                        bottom: 0,
+                                        height: 4,
+                                        background: 'rgba(255,255,255,0.08)',
+                                    }}
+                                >
+                                    <div
+                                        style={{
+                                            height: '100%',
+                                            width: '45%',
+                                            background: 'rgba(212,175,55,0.85)',
+                                            boxShadow: '0 0 20px rgba(212,175,55,0.55)',
+                                        }}
+                                    />
+                                </div>
+                            ) : null}
                         </div>
                         <div className="p-4">
                             <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2" style={{ lineHeight: 1.2 }}>
@@ -453,15 +489,39 @@ export default function RequestWizard() {
                             e.target.value = '';
                             if (!files || files.length === 0) return;
                             try {
-                                await uploadCover(files[0]);
+                                const file = files[0];
+                                const prev = coverUrl;
+                                const local = URL.createObjectURL(file);
+                                setCoverLocalPreview(local);
+                                await uploadCover(file);
+                                // Once uploaded, switch from local blob preview to the persisted URL.
+                                try {
+                                    URL.revokeObjectURL(local);
+                                } catch {
+                                    // ignore
+                                }
+                                setCoverLocalPreview(null);
                             } catch (err: any) {
-                                setUploadError(err?.message || 'Cover upload failed');
+                                // Roll back preview if upload failed.
+                                setCoverLocalPreview(null);
+                                setCoverUrl((v) => v || prev);
+                                setCoverErr(err?.message || 'Cover upload failed');
                             }
                         }}
                     />
                     <div className="mt-3 text-xs text-[var(--text-tertiary)]">
                         Tip: add a cover image to make your request stand out. (If you don’t, Aron uses a default cover.)
                     </div>
+                    {coverErr ? (
+                        <div className="mt-2 text-xs text-red-300">
+                            Cover upload failed: {coverErr}
+                        </div>
+                    ) : null}
+                    {coverOk ? (
+                        <div className="mt-2 text-xs text-green-200">
+                            {coverOk}
+                        </div>
+                    ) : null}
                 </div>
             </div>
         </div>
