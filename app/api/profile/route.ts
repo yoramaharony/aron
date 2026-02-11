@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { inviteCodes, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, ne } from 'drizzle-orm';
 
 export async function GET() {
   const session = await getSession();
@@ -42,18 +42,40 @@ export async function PATCH(request: NextRequest) {
 
   const body = await request.json().catch(() => ({}));
   const name = typeof body?.name === 'string' ? body.name.trim() : '';
-  const email = typeof body?.email === 'string' ? body.email.trim() : '';
+  const rawEmail = typeof body?.email === 'string' ? body.email.trim() : '';
+  const email = rawEmail.toLowerCase();
 
   if (!name || !email) {
     return NextResponse.json({ error: 'Name and email are required.' }, { status: 400 });
   }
 
+  // Basic sanity check. (We keep this permissive; just catch obvious bad input.)
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return NextResponse.json({ error: 'Please enter a valid email address.' }, { status: 400 });
+  }
+
   try {
-    await db.update(users).set({ name, email }).where(eq(users.id, session.userId));
+    // Pre-check: return a clean error if someone else already owns this email.
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.email, email), ne(users.id, session.userId)))
+      .get();
+    if (existing?.id) {
+      return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
+    }
+
+    await db.update(users).set({ name, email }).where(eq(users.id, session.userId)).run();
   } catch (e: any) {
     const msg = String(e?.message ?? '').toLowerCase();
     if (msg.includes('unique')) return NextResponse.json({ error: 'Email already exists' }, { status: 409 });
-    return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Internal Error',
+        ...(process.env.NODE_ENV !== 'production' ? { detail: String(e?.message ?? e) } : {}),
+      },
+      { status: 500 }
+    );
   }
 
   const u = await db.select().from(users).where(eq(users.id, session.userId)).get();
