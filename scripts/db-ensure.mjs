@@ -68,6 +68,7 @@ async function main() {
       status TEXT DEFAULT 'draft',
       created_by TEXT REFERENCES users(id),
       cover_url TEXT,
+      evidence_json TEXT,
       created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
     );
     `,
@@ -279,6 +280,7 @@ async function main() {
     `ALTER TABLE submission_entries ADD COLUMN more_info_submitted_at INTEGER;`,
     `ALTER TABLE submission_entries ADD COLUMN details_json TEXT;`,
     `ALTER TABLE requests ADD COLUMN cover_url TEXT;`,
+    `ALTER TABLE requests ADD COLUMN evidence_json TEXT;`,
 
     // Seed default email templates (B"H prefix is customary in Hasidic community).
     `

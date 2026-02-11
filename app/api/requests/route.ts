@@ -28,7 +28,15 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { title, category, location, summary, targetAmount, coverUrl } = body;
+        const { title, category, location, summary, targetAmount, coverUrl, evidence } = body;
+
+        const evidenceJson =
+            evidence && typeof evidence === 'object'
+                ? JSON.stringify({
+                    budget: evidence?.budget ?? null,
+                    files: Array.isArray(evidence?.files) ? evidence.files : [],
+                })
+                : null;
 
         const newId = uuidv4();
         await db.insert(requests).values({
@@ -40,6 +48,7 @@ export async function POST(request: Request) {
             targetAmount,
             createdBy: session.userId,
             coverUrl: typeof coverUrl === 'string' && coverUrl.trim() ? coverUrl.trim() : null,
+            evidenceJson,
             status: 'pending' // Default to pending
         });
 
@@ -47,6 +56,18 @@ export async function POST(request: Request) {
     } catch (error) {
         console.error(error);
         const msg = String((error as any)?.message || '');
+        if (
+            msg.toLowerCase().includes('no column') &&
+            msg.toLowerCase().includes('evidence_json')
+        ) {
+            return NextResponse.json(
+                {
+                    error:
+                        'DB schema is out of date (missing requests.evidence_json). Run: npm run db:ensure',
+                },
+                { status: 500 }
+            );
+        }
         if (
             msg.toLowerCase().includes('no column') &&
             msg.toLowerCase().includes('cover_url')

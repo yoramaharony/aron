@@ -24,6 +24,7 @@ export const requests = sqliteTable('requests', {
     status: text('status').default('draft'), // draft, pending, active
     createdBy: text('created_by').references(() => users.id),
     coverUrl: text('cover_url'),
+    evidenceJson: text('evidence_json'), // JSON: { budget?: UploadedFile, files?: UploadedFile[] }
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 

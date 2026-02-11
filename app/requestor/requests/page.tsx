@@ -12,6 +12,7 @@ interface Request {
     targetAmount: number;
     status: string;
     category: string;
+    evidenceJson?: string | null;
 }
 
 export default function MyRequestsPage() {
@@ -67,7 +68,33 @@ export default function MyRequestsPage() {
                                         {req.status}
                                     </span>
                                 </div>
-                                <div className="text-sm text-secondary">{req.category} • Target: ${req.targetAmount.toLocaleString()}</div>
+                                <div className="text-sm text-secondary">
+                                    {req.category} • Target: ${req.targetAmount.toLocaleString()}
+                                </div>
+                                {req.evidenceJson ? (
+                                    <div className="mt-1 text-xs text-[var(--text-tertiary)]">
+                                        {(() => {
+                                            try {
+                                                const parsed = JSON.parse(req.evidenceJson || '{}');
+                                                const budgetUrl = parsed?.budget?.url as string | undefined;
+                                                return budgetUrl ? (
+                                                    <a
+                                                        className="text-[var(--color-gold)] hover:underline"
+                                                        href={budgetUrl}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        Open budget file
+                                                    </a>
+                                                ) : (
+                                                    <span>Budget file: —</span>
+                                                );
+                                            } catch {
+                                                return <span>Budget file: —</span>;
+                                            }
+                                        })()}
+                                    </div>
+                                ) : null}
                             </div>
                             <div>
                                 <Button variant="outline" size="sm">Manage</Button>

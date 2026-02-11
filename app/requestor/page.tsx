@@ -366,19 +366,24 @@ export default function RequestWizard() {
                                                 <div className="font-medium">Upload Project Budget</div>
                                                 <div className="text-xs text-secondary mt-1">PDF or Excel (Max 10MB)</div>
                                             </div>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
+                                            <label
+                                                htmlFor="budget-file-input"
+                                                className={[
+                                                    'btn btn-outline btn-sm',
+                                                    uploading ? 'btn-disabled' : '',
+                                                ].join(' ')}
                                                 onClick={(e) => {
+                                                    // Keep the dropzone click handler from double-firing.
                                                     e.stopPropagation();
+                                                    if (uploading) {
+                                                        e.preventDefault();
+                                                        return;
+                                                    }
                                                     setUploadStatus('Opening file picker…');
-                                                    budgetInputRef.current?.click();
                                                 }}
-                                                disabled={uploading}
                                             >
                                                 Choose file
-                                            </Button>
+                                            </label>
                                         </>
                                     )}
                                 </div>
@@ -416,15 +421,22 @@ export default function RequestWizard() {
                                         ))}
 
                                         <div className="flex items-center justify-between gap-3 pt-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => additionalInputRef.current?.click()}
-                                                disabled={uploading}
+                                            <label
+                                                htmlFor="additional-files-input"
+                                                className={[
+                                                    'btn btn-outline btn-sm',
+                                                    uploading ? 'btn-disabled' : '',
+                                                ].join(' ')}
+                                                onClick={(e) => {
+                                                    if (uploading) {
+                                                        e.preventDefault();
+                                                        return;
+                                                    }
+                                                    setUploadStatus('Opening file picker…');
+                                                }}
                                             >
                                                 Add files
-                                            </Button>
+                                            </label>
                                             <div className="text-[10px] text-[var(--text-tertiary)]">
                                                 PDF / Excel • max 10MB each
                                             </div>
@@ -439,6 +451,7 @@ export default function RequestWizard() {
                                 {/* Hidden file inputs */}
                                 <input
                                     ref={budgetInputRef}
+                                    id="budget-file-input"
                                     type="file"
                                     accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                                     className="sr-only"
@@ -457,6 +470,7 @@ export default function RequestWizard() {
                                 />
                                 <input
                                     ref={additionalInputRef}
+                                    id="additional-files-input"
                                     type="file"
                                     multiple
                                     accept=".pdf,.xls,.xlsx,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -501,6 +515,19 @@ export default function RequestWizard() {
                                 </div>
                                 <h2 className="text-2xl mb-2">Request Submitted</h2>
                                 <p className="text-secondary mb-6">Reference ID: {submittedId || 'PENDING'}</p>
+                                <div className="mb-6 text-sm text-[var(--text-tertiary)]">
+                                    <div>
+                                        Budget:{' '}
+                                        {budgetFile?.url ? (
+                                            <a className="text-[var(--color-gold)] hover:underline" href={budgetFile.url} target="_blank" rel="noreferrer">
+                                                Open
+                                            </a>
+                                        ) : (
+                                            '—'
+                                        )}
+                                    </div>
+                                    <div>Additional docs: {additionalFiles.length}</div>
+                                </div>
                                 <Button variant="outline" onClick={() => router.push('/requestor/requests')}>View My Requests</Button>
                             </div>
                         )}
