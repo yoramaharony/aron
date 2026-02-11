@@ -13,7 +13,10 @@ export default async function UploadTestPage() {
       <div className="mb-6">
         <h1 className="text-2xl font-semibold text-[var(--text-primary)]">Dev / Upload Test</h1>
         <p className="text-sm text-secondary">
-          Logged in as <span className="text-[var(--text-primary)]">{session.email}</span>
+          Logged in as{' '}
+          <span className="text-[var(--text-primary)]">
+            {session.role} / {session.userId}
+          </span>
         </p>
       </div>
       <UploadTestClient />
