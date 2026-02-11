@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { users } from '@/db/schema';
+import { inviteCodes, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
-import { eq } from 'drizzle-orm';
+import { desc, eq } from 'drizzle-orm';
 
 export async function GET() {
   const session = await getSession();
@@ -11,11 +11,28 @@ export async function GET() {
   const u = await db.select().from(users).where(eq(users.id, session.userId)).get();
   if (!u) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
+  // If the user signed up via an invite, surface who invited them (read-only).
+  // We pick the most recent invite that was used by this user.
+  const invite = await db
+    .select()
+    .from(inviteCodes)
+    .where(eq(inviteCodes.usedBy, session.userId))
+    .orderBy(desc(inviteCodes.usedAt))
+    .limit(1);
+
+  const inviterId = invite?.[0]?.createdBy ? String(invite[0].createdBy) : null;
+  const inviter = inviterId
+    ? await db.select().from(users).where(eq(users.id, inviterId)).get()
+    : null;
+
   return NextResponse.json({
     id: u.id,
     name: u.name,
     email: u.email,
     role: u.role,
+    invitedBy: inviter
+      ? { id: inviter.id, name: inviter.name, email: inviter.email, role: inviter.role }
+      : null,
   });
 }
 

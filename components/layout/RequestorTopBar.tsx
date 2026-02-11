@@ -10,7 +10,7 @@ export function RequestorTopBar() {
   const { sidebarCollapsed, toggleSidebar } = useRequestorUi();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
-  const [me, setMe] = useState<{ name: string; email: string } | null>(null);
+  const [me, setMe] = useState<{ name: string; email: string; invitedBy?: { name?: string; email?: string } | null } | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -27,7 +27,13 @@ export function RequestorTopBar() {
     fetch('/api/profile')
       .then((r) => r.json())
       .then((d) => {
-        if (d?.name && d?.email) setMe({ name: String(d.name), email: String(d.email) });
+        if (d?.name && d?.email) {
+          setMe({
+            name: String(d.name),
+            email: String(d.email),
+            invitedBy: d?.invitedBy ? { name: String(d.invitedBy?.name || ''), email: String(d.invitedBy?.email || '') } : null,
+          });
+        }
       })
       .catch(() => {});
   }, []);
@@ -110,6 +116,14 @@ export function RequestorTopBar() {
                 <div className="text-base font-semibold text-[var(--text-primary)] mt-2">{me?.name || 'Organization'}</div>
                 {me?.email ? (
                   <div className="text-xs text-[var(--text-tertiary)] mt-1 font-mono truncate">{me.email}</div>
+                ) : null}
+                {me?.invitedBy?.name || me?.invitedBy?.email ? (
+                  <div className="mt-3 text-xs text-[var(--text-tertiary)]">
+                    <span className="uppercase tracking-[0.18em] text-[10px]">Invited by:</span>{' '}
+                    <span className="text-[var(--text-secondary)]">
+                      {me.invitedBy?.name || me.invitedBy?.email}
+                    </span>
+                  </div>
                 ) : null}
               </div>
               <button
