@@ -587,7 +587,7 @@ export default function RequestWizard() {
                                         try {
                                             setUploadStatus(`Picked: ${picked[0]?.name || 'file'} (${picked.length} file(s))`);
                                             const uploaded = await uploadFilesToServer(picked);
-                                            setAdditionalFiles((prev) => [...uploaded, ...prev]);
+                                            setAdditionalFiles((prior) => [...uploaded, ...prior]);
                                         } catch (err: any) {
                                             setUploadError(err?.message || 'Upload failed');
                                         }
