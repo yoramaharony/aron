@@ -29,6 +29,7 @@ export default function RequestWizard() {
     });
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [uploadStatus, setUploadStatus] = useState<string>('');
     const [coverUploading, setCoverUploading] = useState(false);
     const [coverUrl, setCoverUrl] = useState<string>('/assets/default-request-cover.svg');
     const [coverErr, setCoverErr] = useState<string>('');
@@ -45,6 +46,7 @@ export default function RequestWizard() {
 
     const uploadToServer = async (files: FileList) => {
         setUploadError('');
+        setUploadStatus('');
         setUploading(true);
         setUploadProgress(10);
 
@@ -54,14 +56,21 @@ export default function RequestWizard() {
 
         try {
             const fd = new FormData();
+            fd.append('folder', 'evidence');
             Array.from(files).forEach((f) => fd.append('files', f));
             const res = await fetch('/api/uploads', { method: 'POST', body: fd });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data?.error || 'Upload failed');
             setUploadProgress(100);
+            const storage = data?.storage ? String(data.storage) : '';
+            if (storage) setUploadStatus(`Uploaded (${storage}).`);
             const out = (data?.files ?? []) as UploadedFile[];
             if (!out.length) throw new Error('Upload returned no files');
             return out;
+        } catch (e: any) {
+            const msg = String(e?.message || 'Upload failed');
+            setUploadStatus(`Upload failed: ${msg}`);
+            throw e;
         } finally {
             window.clearInterval(interval);
             window.setTimeout(() => {
@@ -329,6 +338,11 @@ export default function RequestWizard() {
                                 {uploadError ? (
                                     <div className="mt-4 text-sm text-red-400">{uploadError}</div>
                                 ) : null}
+                                {uploadStatus ? (
+                                    <div className="mt-2 text-xs text-[var(--text-tertiary)] whitespace-pre-wrap">
+                                        {uploadStatus}
+                                    </div>
+                                ) : null}
 
                                 {/* Hidden file inputs */}
                                 <input
@@ -341,6 +355,7 @@ export default function RequestWizard() {
                                         e.target.value = '';
                                         if (!files || files.length === 0) return;
                                         try {
+                                            setUploadStatus(`Picked: ${files[0]?.name || 'file'} (${Math.round((files[0]?.size || 0) / 1024)} KB)`);
                                             const uploaded = await uploadToServer(files);
                                             if (uploaded[0]) setBudgetFile(uploaded[0]);
                                         } catch (err: any) {
@@ -359,6 +374,7 @@ export default function RequestWizard() {
                                         e.target.value = '';
                                         if (!files || files.length === 0) return;
                                         try {
+                                            setUploadStatus(`Picked: ${files[0]?.name || 'file'} (${files.length} file(s))`);
                                             const uploaded = await uploadToServer(files);
                                             setAdditionalFiles((prev) => [...uploaded, ...prev]);
                                         } catch (err: any) {
