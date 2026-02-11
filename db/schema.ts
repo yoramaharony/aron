@@ -23,6 +23,7 @@ export const requests = sqliteTable('requests', {
     currentAmount: integer('current_amount').default(0),
     status: text('status').default('draft'), // draft, pending, active
     createdBy: text('created_by').references(() => users.id),
+    coverUrl: text('cover_url'),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 

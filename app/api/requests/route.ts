@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { title, category, location, summary, targetAmount } = body;
+        const { title, category, location, summary, targetAmount, coverUrl } = body;
 
         const newId = uuidv4();
         await db.insert(requests).values({
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
             summary,
             targetAmount,
             createdBy: session.userId,
+            coverUrl: typeof coverUrl === 'string' && coverUrl.trim() ? coverUrl.trim() : null,
             status: 'pending' // Default to pending
         });
 

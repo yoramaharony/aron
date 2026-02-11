@@ -23,6 +23,8 @@ export default function RequestWizard() {
     });
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [coverUploading, setCoverUploading] = useState(false);
+    const [coverUrl, setCoverUrl] = useState<string>('/assets/default-request-cover.svg');
 
     type UploadedFile = { name: string; url: string; size: number; type: string };
     const [budgetFile, setBudgetFile] = useState<UploadedFile | null>(null);
@@ -30,6 +32,7 @@ export default function RequestWizard() {
     const [uploadError, setUploadError] = useState('');
     const budgetInputRef = useRef<HTMLInputElement | null>(null);
     const additionalInputRef = useRef<HTMLInputElement | null>(null);
+    const coverInputRef = useRef<HTMLInputElement | null>(null);
 
     const uploadToServer = async (files: FileList) => {
         setUploadError('');
@@ -59,6 +62,24 @@ export default function RequestWizard() {
         }
     };
 
+    const uploadCover = async (file: File) => {
+        setUploadError('');
+        setCoverUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append('folder', 'covers');
+            fd.append('files', file);
+            const res = await fetch('/api/uploads', { method: 'POST', body: fd });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Cover upload failed');
+            const f = data?.file ?? (data?.files?.[0] ?? null);
+            if (!f?.url) throw new Error('Cover upload returned no URL');
+            setCoverUrl(String(f.url));
+        } finally {
+            setCoverUploading(false);
+        }
+    };
+
     const handleSubmit = async () => {
         setLoading(true);
         try {
@@ -71,6 +92,7 @@ export default function RequestWizard() {
                     location: formData.location || 'Remote',
                     summary: formData.summary,
                     targetAmount: Number(formData.target),
+                    coverUrl,
                     evidence: {
                         budget: budgetFile,
                         files: additionalFiles,
@@ -362,13 +384,38 @@ export default function RequestWizard() {
                 <div className="hidden-mobile">
                     <div className="text-xs uppercase tracking-widest text-secondary mb-4 font-bold">Donor Card Preview</div>
                     <Card noPadding className="opacity-90">
-                        <div style={{ height: '160px', background: 'var(--bg-surface)', position: 'relative' }}>
-                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>
-                                cover-image.jpg
-                            </div>
-                            <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.6)', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', color: 'white' }}>
+                        <div style={{ height: '160px', background: 'var(--bg-surface)', position: 'relative', overflow: 'hidden' }}>
+                            <img
+                                src={coverUrl || '/assets/default-request-cover.svg'}
+                                alt="Request cover"
+                                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.55))' }} />
+                            <div style={{ position: 'absolute', top: 12, left: 12, background: 'rgba(0,0,0,0.62)', padding: '4px 8px', borderRadius: '6px', fontSize: '10px', color: 'white', border: '1px solid rgba(255,255,255,0.10)' }}>
                                 {formData.category || 'Category'}
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => coverInputRef.current?.click()}
+                                disabled={coverUploading}
+                                style={{
+                                    position: 'absolute',
+                                    right: 12,
+                                    top: 12,
+                                    background: 'rgba(0,0,0,0.62)',
+                                    border: '1px solid rgba(255,255,255,0.10)',
+                                    color: 'rgba(255,255,255,0.92)',
+                                    borderRadius: 10,
+                                    padding: '6px 10px',
+                                    fontSize: 10,
+                                    letterSpacing: '0.14em',
+                                    textTransform: 'uppercase',
+                                    cursor: 'pointer',
+                                }}
+                                title="Upload cover"
+                            >
+                                {coverUploading ? 'Uploading…' : 'Edit cover'}
+                            </button>
                         </div>
                         <div className="p-4">
                             <h3 className="text-lg font-semibold text-[var(--text-primary)] mb-2" style={{ lineHeight: 1.2 }}>
@@ -384,6 +431,25 @@ export default function RequestWizard() {
                             </div>
                         </div>
                     </Card>
+                    <input
+                        ref={coverInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,.png,.jpg,.jpeg,.webp"
+                        className="hidden"
+                        onChange={async (e) => {
+                            const files = e.target.files;
+                            e.target.value = '';
+                            if (!files || files.length === 0) return;
+                            try {
+                                await uploadCover(files[0]);
+                            } catch (err: any) {
+                                setUploadError(err?.message || 'Cover upload failed');
+                            }
+                        }}
+                    />
+                    <div className="mt-3 text-xs text-[var(--text-tertiary)]">
+                        Tip: add a cover image to make your request stand out. (If you don’t, Aron uses a default cover.)
+                    </div>
                 </div>
             </div>
         </div>
