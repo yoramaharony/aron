@@ -30,6 +30,7 @@ export default function RequestWizard() {
     const [uploading, setUploading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [uploadStatus, setUploadStatus] = useState<string>('');
+    const [dragOver, setDragOver] = useState(false);
     const [coverUploading, setCoverUploading] = useState(false);
     const [coverUrl, setCoverUrl] = useState<string>('/assets/default-request-cover.svg');
     const [coverErr, setCoverErr] = useState<string>('');
@@ -245,10 +246,42 @@ export default function RequestWizard() {
                                 <h2 className="text-xl flex items-center mb-6"><FileText size={20} className="text-gold" style={{ marginRight: 8 }} /> Evidence & Documents</h2>
 
                                 <div
-                                    className="p-8 border-dashed rounded-lg flex flex-col items-center justify-center gap-4 mb-6 transition-all hover:bg-[var(--bg-surface)]"
+                                    className={[
+                                        'p-8 border-dashed rounded-lg flex flex-col items-center justify-center gap-4 mb-3 transition-all',
+                                        dragOver ? 'bg-[rgba(var(--accent-rgb),0.10)]' : 'hover:bg-[var(--bg-surface)]',
+                                    ].join(' ')}
                                     style={{ border: '2px dashed var(--border-subtle)', cursor: 'pointer' }}
+                                    role="button"
+                                    tabIndex={0}
+                                    aria-label="Upload Project Budget"
                                     onClick={() => {
+                                        setUploadStatus('Opening file picker…');
                                         budgetInputRef.current?.click();
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault();
+                                            setUploadStatus('Opening file picker…');
+                                            budgetInputRef.current?.click();
+                                        }
+                                    }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        setDragOver(true);
+                                    }}
+                                    onDragLeave={() => setDragOver(false)}
+                                    onDrop={async (e) => {
+                                        e.preventDefault();
+                                        setDragOver(false);
+                                        const files = e.dataTransfer?.files;
+                                        if (!files || files.length === 0) return;
+                                        try {
+                                            setUploadStatus(`Dropped: ${files[0]?.name || 'file'} (${Math.round((files[0]?.size || 0) / 1024)} KB)`);
+                                            const uploaded = await uploadToServer(files);
+                                            if (uploaded[0]) setBudgetFile(uploaded[0]);
+                                        } catch (err: any) {
+                                            setUploadError(err?.message || 'Upload failed');
+                                        }
                                     }}
                                 >
                                     {uploading ? (
@@ -290,10 +323,28 @@ export default function RequestWizard() {
                                                 <div className="font-medium">Upload Project Budget</div>
                                                 <div className="text-xs text-secondary mt-1">PDF or Excel (Max 10MB)</div>
                                             </div>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setUploadStatus('Opening file picker…');
+                                                    budgetInputRef.current?.click();
+                                                }}
+                                                disabled={uploading}
+                                            >
+                                                Choose file
+                                            </Button>
                                         </>
                                     )}
                                 </div>
 
+                                {uploadStatus ? (
+                                    <div className="mb-4 text-xs text-[var(--text-tertiary)] whitespace-pre-wrap">
+                                        {uploadStatus}
+                                    </div>
+                                ) : null}
                                 <div>
                                     <label className="label">Additional Files</label>
                                     <div className="space-y-2">
@@ -337,11 +388,6 @@ export default function RequestWizard() {
 
                                 {uploadError ? (
                                     <div className="mt-4 text-sm text-red-400">{uploadError}</div>
-                                ) : null}
-                                {uploadStatus ? (
-                                    <div className="mt-2 text-xs text-[var(--text-tertiary)] whitespace-pre-wrap">
-                                        {uploadStatus}
-                                    </div>
                                 ) : null}
 
                                 {/* Hidden file inputs */}
