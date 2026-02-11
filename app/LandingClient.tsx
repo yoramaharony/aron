@@ -10,6 +10,9 @@ import { IntelligentSpine } from '@/components/landing/IntelligentSpine';
 import { RotatingVideoBackground } from '@/components/landing/RotatingVideoBackground';
 import { AronLogo } from '@/components/layout/AronLogo';
 
+// Keep the video code ready for later, but default to the static luxury background image.
+const USE_HERO_VIDEO_BG = false;
+
 // Animation variants
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -107,12 +110,24 @@ export default function LandingClient() {
       <main className="flex-1">
         {/* 1) HERO SECTION */}
         <section className="relative overflow-hidden min-h-screen flex items-center">
-          {mounted ? (
+          {USE_HERO_VIDEO_BG && mounted ? (
             <RotatingVideoBackground className="pointer-events-none" />
           ) : (
             <div className="absolute inset-0 pointer-events-none">
+              {/* Static background image (replaces hero video). */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundImage: "url('/assets/golden-background.jpg')",
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  filter: 'saturate(1.05) contrast(1.05) brightness(0.78)',
+                  transform: 'scale(1.03)', // hide edge artifacts
+                }}
+              />
+              {/* Luxury overlays (keeps text readable; matches video overlay treatment). */}
               <div className="absolute inset-0 bg-black/32" />
-              <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(var(--accent-rgb), 0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(var(--accent-rgb), 0.10),transparent_55%)] opacity-70 mix-blend-screen" />
+              <div className="absolute inset-0 bg-[radial-gradient(900px_600px_at_20%_0%,rgba(var(--accent-rgb),_0.18),transparent_60%),radial-gradient(900px_600px_at_80%_30%,rgba(var(--accent-rgb),_0.10),transparent_55%)] opacity-70 mix-blend-screen" />
               <div className="absolute inset-0 bg-[radial-gradient(1200px_700px_at_50%_10%,rgba(0,0,0,0.22),rgba(0,0,0,0.62))]" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/22 via-black/42 to-[var(--bg-app)]" />
               <div className="absolute bottom-0 left-0 right-0 h-[120px] bg-gradient-to-b from-transparent to-[var(--bg-app)]" />
