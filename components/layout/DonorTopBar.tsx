@@ -47,7 +47,8 @@ export function DonorTopBar() {
   };
 
   const title = (() => {
-    if (pathname === '/donor') return "Today's Opportunities";
+    if (pathname === '/donor') return 'Impact Vision';
+    if (pathname === '/donor/opportunities') return "Today's Opportunities";
     if (pathname === '/donor/pledges') return 'My Pledges';
     if (pathname === '/donor/impact') return 'Impact';
     if (pathname === '/donor/vault') return 'Vault';

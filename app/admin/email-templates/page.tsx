@@ -76,9 +76,6 @@ export default function AdminEmailTemplatesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => refresh().catch(() => {})}>
-            Refresh
-          </Button>
           <Button variant="gold" onClick={save} isLoading={loading} disabled={!draft.key}>
             Save
           </Button>

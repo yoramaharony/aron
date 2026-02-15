@@ -1,0 +1,10 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "git fetch": true,
+        "git add": true,
+        "/^git commit -m \"refactor: redirect donor page to legacy and update navigation\n\n- Change main donor page to redirect to /donor/legacy\n- Update navigation links to point to new /donor/opportunities route\n- Update top bar and mobile nav accordingly\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

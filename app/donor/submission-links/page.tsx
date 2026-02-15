@@ -169,9 +169,6 @@ export default function DonorSubmissionLinksPage() {
               Tracking includes opens (visits) and submissions.
             </div>
           </div>
-          <Button variant="outline" onClick={() => refresh().catch(() => {})}>
-            Refresh
-          </Button>
         </div>
 
         <div className="space-y-2">

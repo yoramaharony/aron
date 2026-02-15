@@ -28,7 +28,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
     shortlist: 'shortlisted',
     pass: 'passed',
     reset: 'new',
-    request_info: 'requested_info',
+    // Requesting info also implies donor intent, so keep it in shortlist.
+    request_info: 'shortlisted',
     scheduled: 'scheduled',
     funded: 'funded',
   };

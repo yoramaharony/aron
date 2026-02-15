@@ -765,3 +765,13 @@ body {
 .delay-300 {
   animation-delay: 300ms;
 }
+
+/* Schedule modal date/time controls: keep icon contrast and native picker dark. */
+.schedule-picker-dark {
+  color-scheme: dark;
+}
+
+.schedule-picker-dark::-webkit-calendar-picker-indicator {
+  filter: invert(79%) sepia(10%) saturate(313%) hue-rotate(175deg) brightness(103%) contrast(91%);
+  opacity: 0.95;
+}

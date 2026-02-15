@@ -186,15 +186,6 @@ export default function AdminOrganizationsPage() {
           >
             Soft Orgs
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (tab === 'accounts') refreshAccounts().catch(() => {});
-              else refreshSoft().catch(() => {});
-            }}
-          >
-            Refresh
-          </Button>
         </div>
       </div>
 

@@ -12,7 +12,8 @@ export default function MobileNav({ role }: MobileNavProps) {
     const pathname = usePathname();
 
     const donorLinks = [
-        { name: 'Feed', href: '/donor', icon: Home },
+        { name: 'Vision', href: '/donor/legacy', icon: Home },
+        { name: 'Opps', href: '/donor/opportunities', icon: LayoutGrid },
         { name: 'Impact', href: '/donor/impact', icon: Radio },
         { name: 'Vault', href: '/donor/vault', icon: Briefcase },
         { name: 'Inbox', href: '/donor/inbox', icon: Inbox },

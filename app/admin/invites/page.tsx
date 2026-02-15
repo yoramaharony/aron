@@ -389,9 +389,6 @@ export default function AdminInvitesPage() {
               Shows all invites created in this environment (admin view).
             </div>
           </div>
-          <Button variant="outline" onClick={() => refresh().catch(() => {})}>
-            Refresh
-          </Button>
         </div>
 
         <div className="space-y-2">

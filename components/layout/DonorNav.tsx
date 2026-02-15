@@ -9,7 +9,7 @@ import { useDonorUi } from '@/components/providers/DonorUiContext';
 
 const NAV_ITEMS = [
     { label: 'Impact Vision', icon: Compass, href: '/donor/legacy' },
-    { label: 'Opportunities', icon: Heart, href: '/donor' },
+    { label: 'Opportunities', icon: Heart, href: '/donor/opportunities' },
     { label: 'Pledges', icon: CreditCard, href: '/donor/pledges' },
     { label: 'Impact', icon: PieChart, href: '/donor/impact' },
     { label: 'Vault', icon: Lock, href: '/donor/vault' },

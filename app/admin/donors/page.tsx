@@ -169,9 +169,6 @@ export default function AdminDonorsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => refresh().catch(() => {})}>
-            Refresh
-          </Button>
           <Button variant="gold" onClick={() => setCreateOpen(true)}>
             Create Donor
           </Button>
