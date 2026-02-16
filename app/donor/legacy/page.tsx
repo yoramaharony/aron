@@ -528,7 +528,7 @@ function LegacyCanvas({ refreshKey }: { refreshKey: number }) {
                     Your vision is now saved. Next, shortlist or pass opportunities, and create leverage offers when you’re ready.
                 </p>
                 <a
-                    href="/donor"
+                    href="/donor/opportunities"
                     className="w-full px-6 py-4 rounded-lg flex items-center justify-between transition-all relative overflow-hidden hover:scale-[1.02]"
                     style={{
                         background: 'linear-gradient(135deg, #D4AF37 0%, #E5C158 100%)',

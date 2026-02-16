@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Calendar, ChevronRight, Download, ExternalLink, Zap, X, Heart } from 'lucide-react';
+import { Calendar, ChevronRight, Download, ExternalLink, Zap, X, Heart, Check, DollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
@@ -41,25 +41,123 @@ type Pledge = {
 const PAST_FULFILLMENT = [
     {
         title: 'Hachnasas Kallah Essentials Fund 5784',
+        orgName: 'Keren Hachnasas Kallah of Greater New York',
         fulfilledDate: 'Fulfilled Kislev 15, 5784 (Nov 28, 2023)',
         amount: 180000,
+        grantId: 'GR-5784-HK01',
     },
     {
         title: 'Chesed Shel Emes Emergency Appeal',
+        orgName: 'Chesed Shel Emes Burial Society',
         fulfilledDate: 'Fulfilled Tishrei 3, 5784 (Sep 18, 2023)',
         amount: 50000,
+        grantId: 'GR-5784-CS02',
     },
     {
         title: 'Beit Midrash Renovation \u2014 Yeshivat Ohr Somayach',
+        orgName: 'Yeshivat Ohr Somayach \u2014 Jerusalem Campus',
         fulfilledDate: 'Fulfilled Adar II 20, 5784 (Mar 30, 2024)',
         amount: 360000,
+        grantId: 'GR-5784-OS03',
     },
 ];
+
+// ---- Payments Modal ----
+
+function PaymentsModal({ pledge, onClose }: { pledge: Pledge; onClose: () => void }) {
+    const quarterly = pledge.totalPledge > 0 ? Math.round(pledge.totalPledge / 4) : 0;
+    const commitYear = pledge.commitmentDate
+        ? new Date(pledge.commitmentDate).getFullYear()
+        : new Date().getFullYear();
+
+    const [paidQuarters, setPaidQuarters] = useState<Set<number>>(new Set());
+
+    const quarters = [
+        { label: `Q1 ${commitYear}`, due: `Mar 31, ${commitYear}` },
+        { label: `Q2 ${commitYear}`, due: `Jun 30, ${commitYear}` },
+        { label: `Q3 ${commitYear}`, due: `Sep 30, ${commitYear}` },
+        { label: `Q4 ${commitYear}`, due: `Dec 31, ${commitYear}` },
+    ];
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+            <div className="fixed inset-0 bg-black/60" onClick={onClose} />
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="relative bg-[var(--bg-paper)] rounded-lg shadow-2xl border border-[var(--border-subtle)] w-full max-w-md mx-4 overflow-hidden"
+            >
+                {/* Header */}
+                <div className="p-6 border-b border-[var(--border-subtle)]">
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <h3 className="text-lg font-semibold text-[var(--text-primary)]">Payment Schedule</h3>
+                            <div className="text-sm text-secondary mt-1">{pledge.title}</div>
+                            <div className="text-xs text-[var(--text-tertiary)] font-mono mt-0.5">{pledge.grantId}</div>
+                        </div>
+                        <button onClick={onClose} className="p-2 hover:bg-[var(--bg-surface)] rounded-full transition-colors">
+                            <X size={18} />
+                        </button>
+                    </div>
+                </div>
+
+                {/* Schedule */}
+                <div className="p-6 space-y-3">
+                    {quarters.map((q, i) => {
+                        const isPaid = paidQuarters.has(i);
+                        return (
+                            <div key={i} className={`flex items-center justify-between p-4 rounded border transition-colors ${isPaid ? 'bg-[rgba(34,197,94,0.08)] border-green-500/30' : 'bg-[var(--bg-surface)] border-[var(--border-subtle)]'}`}>
+                                <div className="flex-1">
+                                    <div className="font-medium text-sm text-[var(--text-primary)]">{q.label}</div>
+                                    <div className="text-xs text-[var(--text-tertiary)]">Due {q.due}</div>
+                                </div>
+                                <div className="text-right mr-4">
+                                    <div className="font-medium text-sm">${quarterly.toLocaleString()}</div>
+                                </div>
+                                {isPaid ? (
+                                    <span className="flex items-center gap-1 text-xs font-medium text-green-500 bg-green-500/10 px-3 py-1.5 rounded">
+                                        <Check size={12} /> Paid
+                                    </span>
+                                ) : (
+                                    <button
+                                        onClick={() => setPaidQuarters((prev) => new Set([...prev, i]))}
+                                        className="flex items-center gap-1 text-xs font-medium text-[var(--color-gold)] border border-[var(--color-gold)]/40 px-3 py-1.5 rounded hover:bg-[rgba(212,175,55,0.08)] transition-colors"
+                                    >
+                                        <DollarSign size={12} /> Record
+                                    </button>
+                                )}
+                            </div>
+                        );
+                    })}
+
+                    {/* Total */}
+                    <div className="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)]">
+                        <span className="text-sm font-semibold text-[var(--text-primary)]">Total Pledge</span>
+                        <span className="text-lg font-semibold text-[var(--text-primary)]">
+                            {pledge.totalPledge > 0 ? `$${pledge.totalPledge.toLocaleString()}` : 'TBD'}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 pb-6">
+                    <div className="p-3 bg-[rgba(212,175,55,0.08)] border border-[rgba(212,175,55,0.15)] rounded text-xs text-[var(--text-secondary)] leading-relaxed">
+                        Payment methods and schedule adjustments are managed through your dedicated concierge.
+                    </div>
+                </div>
+            </motion.div>
+        </div>
+    );
+}
+
+// ---- Main Page ----
 
 export default function DonorPledges() {
     const [pledges, setPledges] = useState<Pledge[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedPledge, setSelectedPledge] = useState<Pledge | null>(null);
+    const [paymentsModalPledge, setPaymentsModalPledge] = useState<Pledge | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -92,6 +190,48 @@ export default function DonorPledges() {
     const progressPct = (p: Pledge) =>
         p.totalPledge > 0 ? Math.round((p.paidToDate / p.totalPledge) * 100) : 0;
 
+    // ---- Export Report (CSV) ----
+    const handleExportReport = useCallback(() => {
+        const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+        const headers = ['Grant ID', 'Title', 'Organization', 'Amount', 'Paid', 'Status', 'Commitment Date'];
+        const rows: string[][] = [];
+
+        for (const p of pledges) {
+            rows.push([
+                p.grantId,
+                p.title,
+                p.orgName,
+                p.totalPledge.toString(),
+                p.paidToDate.toString(),
+                p.status,
+                p.commitmentDate ? new Date(p.commitmentDate).toLocaleDateString() : '',
+            ]);
+        }
+
+        for (const pf of PAST_FULFILLMENT) {
+            rows.push([
+                pf.grantId,
+                pf.title,
+                pf.orgName,
+                pf.amount.toString(),
+                pf.amount.toString(),
+                'Fulfilled',
+                '',
+            ]);
+        }
+
+        const csv = [headers.join(','), ...rows.map((r) => r.map(escape).join(','))].join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'aron-pledges-report.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, [pledges]);
+
     return (
         <div className="relative">
             {/* HEADER */}
@@ -100,7 +240,7 @@ export default function DonorPledges() {
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">My Pledges</h1>
                     <p className="text-secondary">Track your commitments and payment schedules</p>
                 </div>
-                <Button variant="outline" size="sm" leftIcon={<Download size={16} />}>
+                <Button variant="outline" size="sm" leftIcon={<Download size={16} />} onClick={handleExportReport}>
                     Export Report
                 </Button>
             </div>
@@ -220,7 +360,14 @@ export default function DonorPledges() {
                             </div>
                             <div className="flex items-center gap-6">
                                 <span className="font-semibold text-[var(--text-primary)]">${item.amount.toLocaleString()}</span>
-                                <Button variant="ghost" size="sm" rightIcon={<Download size={14} />}>Receipt</Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    rightIcon={<Download size={14} />}
+                                    onClick={() => window.open(`/api/receipts/demo?index=${i}`, '_blank')}
+                                >
+                                    Receipt
+                                </Button>
                             </div>
                         </Card>
                     ))}
@@ -330,11 +477,17 @@ export default function DonorPledges() {
                                 {/* Actions */}
                                 <div className="space-y-3">
                                     <h3 className="font-semibold text-lg text-[var(--text-primary)]">Actions</h3>
-                                    <button className="w-full flex items-center justify-between p-4 bg-[rgba(255,255,255,0.02)] border border-[var(--border-subtle)] rounded hover:border-[var(--color-gold)] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-left group">
+                                    <button
+                                        onClick={() => alert('Grant agreement document will be generated by your concierge team.')}
+                                        className="w-full flex items-center justify-between p-4 bg-[rgba(255,255,255,0.02)] border border-[var(--border-subtle)] rounded hover:border-[var(--color-gold)] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-left group"
+                                    >
                                         <span className="font-medium text-[var(--text-primary)]">View Grant Agreement</span>
                                         <ExternalLink size={16} className="text-[var(--text-tertiary)] group-hover:text-[var(--color-gold)]" />
                                     </button>
-                                    <button className="w-full flex items-center justify-between p-4 bg-[rgba(255,255,255,0.02)] border border-[var(--border-subtle)] rounded hover:border-[var(--color-gold)] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-left group">
+                                    <button
+                                        onClick={() => alert('Tax receipt will be available after your first payment is processed.')}
+                                        className="w-full flex items-center justify-between p-4 bg-[rgba(255,255,255,0.02)] border border-[var(--border-subtle)] rounded hover:border-[var(--color-gold)] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-left group"
+                                    >
                                         <span className="font-medium text-[var(--text-primary)]">Download Tax Receipt</span>
                                         <Download size={16} className="text-[var(--text-tertiary)] group-hover:text-[var(--color-gold)]" />
                                     </button>
@@ -348,12 +501,22 @@ export default function DonorPledges() {
                             </div>
 
                             <div className="p-6 border-t border-[var(--border-subtle)] bg-[var(--bg-surface)]">
-                                <Button className="w-full">
+                                <Button className="w-full" onClick={() => setPaymentsModalPledge(selectedPledge)}>
                                     Manage Payments
                                 </Button>
                             </div>
                         </motion.div>
                     </>
+                )}
+            </AnimatePresence>
+
+            {/* PAYMENTS MODAL */}
+            <AnimatePresence>
+                {paymentsModalPledge && (
+                    <PaymentsModal
+                        pledge={paymentsModalPledge}
+                        onClose={() => setPaymentsModalPledge(null)}
+                    />
                 )}
             </AnimatePresence>
         </div>
