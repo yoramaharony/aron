@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { AlertCircle, Building2, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Clock3, DollarSign, Eye, FileCheck2, FileText, Heart, History, MapPin, MessageSquare, Paperclip, StickyNote, X as XIcon, Zap } from 'lucide-react';
+import { AlertCircle, Building2, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Clock3, DollarSign, FileCheck2, FileText, Heart, History, MapPin, MessageSquare, Paperclip, StickyNote, X as XIcon, Zap } from 'lucide-react';
 import { useLeverage } from '@/components/providers/LeverageContext';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -189,6 +189,7 @@ export default function DonorFeed() {
     const [notesEditing, setNotesEditing] = useState(false);
     const [notesSaving, setNotesSaving] = useState(false);
     const notesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const detailTopRef = useRef<HTMLDivElement>(null);
     const [postMeetingOpen, setPostMeetingOpen] = useState(false);
     const postMeetingFilesRef = useRef<File[]>([]);
     const [postMeetingDraft, setPostMeetingDraft] = useState({
@@ -284,9 +285,8 @@ export default function DonorFeed() {
             const flow = deriveWorkflow(data);
             const isProgressed = flow.isPassed || flow.isCommitted || flow.stage !== 'discover';
             setViewMode(isProgressed ? 'decision' : 'overview');
-            // At due diligence, auto-expand the full details panel so the donor can review everything.
-            const shouldExpand = !isProgressed || flow.stage === 'due_diligence';
-            setDetailsExpanded(shouldExpand);
+            // Always expand full details for progressed opportunities (user can manually collapse).
+            setDetailsExpanded(true);
 
             // Restore checklist state from persisted meeting_completed event
             const events = Array.isArray(data?.events) ? data.events : [];
@@ -765,7 +765,7 @@ export default function DonorFeed() {
                                 transition={{ duration: 0.22, ease: [0.2, 0.9, 0.2, 1] }}
                                 className="space-y-5"
                             >
-                            <div className="space-y-5">
+                            <div ref={detailTopRef} className="space-y-5">
                                 <div className="min-w-0">
                                     <h2 className="text-4xl leading-tight font-light text-[var(--text-primary)]">
                                         {detail.opportunity.title}
@@ -789,34 +789,7 @@ export default function DonorFeed() {
                                         )}
                                     </button>
 
-                                    <div className="mt-3 flex flex-wrap items-center gap-3">
-                                        <span
-                                            className={[
-                                                'inline-flex items-center rounded-full px-4 py-1.5 text-[13px] border',
-                                                viewMode === 'decision'
-                                                    ? 'border-[rgba(var(--accent-rgb),0.45)] bg-[rgba(var(--accent-rgb),0.10)] text-[var(--color-gold)]'
-                                                    : 'border-[var(--border-subtle)] bg-[rgba(255,255,255,0.03)] text-[var(--text-tertiary)]',
-                                            ].join(' ')}
-                                        >
-                                            {viewMode === 'overview' ? 'Overview Mode' : 'Review Mode'}
-                                        </span>
-
-                                        {viewMode === 'decision' ? (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setViewMode('overview');
-                                                    setDetailsExpanded(true);
-                                                }}
-                                                className="inline-flex items-center gap-2 rounded-xl px-8 py-3 text-[16px] border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] text-[var(--text-secondary)] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[rgba(var(--accent-rgb),0.42)] hover:text-[var(--text-primary)] hover:bg-[rgba(255,255,255,0.06)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.35),0_0_14px_rgba(212,175,55,0.18)]"
-                                            >
-                                                <Eye size={16} />
-                                                Review Details
-                                            </button>
-                                        ) : null}
-                                    </div>
-
-                                    <p className="text-sm text-[var(--text-secondary)] mt-4">{detail.opportunity.summary}</p>
+                                    <p className="text-sm text-[var(--text-secondary)] mt-3">{detail.opportunity.summary}</p>
                                 </div>
 
                                 {viewMode === 'overview' ? (
@@ -946,7 +919,7 @@ export default function DonorFeed() {
                                                 type="button"
                                                 onClick={() => {
                                                     setViewMode('decision');
-                                                    setDetailsExpanded(false);
+                                                    setDetailsExpanded(true);
                                                 }}
                                                 className="inline-flex h-12 min-w-[190px] items-center justify-center gap-1.5 rounded-[10px] border border-[rgba(var(--accent-rgb),0.65)] bg-[var(--color-gold)] px-6 text-[15px] font-normal text-[#151515] shadow-[0_8px_18px_rgba(212,175,55,0.22),0_0_20px_rgba(212,175,55,0.14)] transform-gpu transition-all duration-200 hover:scale-[1.08] hover:translate-y-[-1px] hover:shadow-[0_12px_24px_rgba(212,175,55,0.28),0_0_30px_rgba(212,175,55,0.2)] active:scale-[1.03]"
                                             >
@@ -1420,10 +1393,10 @@ export default function DonorFeed() {
                                         <div className="flex justify-center pt-2">
                                             <button
                                                 type="button"
-                                                onClick={() => setDetailsExpanded(false)}
+                                                onClick={() => detailTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                                                 className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[10px] border border-[rgba(var(--accent-rgb),0.45)] bg-[rgba(var(--accent-rgb),0.1)] px-5 text-[14px] font-normal text-[var(--color-gold)] transition-all hover:translate-y-[-1px] hover:bg-[rgba(var(--accent-rgb),0.16)] hover:shadow-[0_10px_20px_rgba(212,175,55,0.14)]"
                                             >
-                                                Back to Action Mode
+                                                Review from the Top
                                             </button>
                                         </div>
                                     </div>
