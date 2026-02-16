@@ -31,6 +31,9 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
     // Requesting info also implies donor intent, so keep it in shortlist.
     request_info: 'shortlisted',
     scheduled: 'scheduled',
+    meeting_completed: 'scheduled',
+    info_received: 'shortlisted',
+    diligence_completed: 'shortlisted',
     funded: 'funded',
   };
 
@@ -118,6 +121,23 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
 
         emailSent = { to, id: sent?.id };
       }
+    }
+  }
+
+  // When info_received comes with details, persist them on the submission record.
+  if (action === 'info_received' && safeKey.startsWith('sub_')) {
+    const meta = body?.meta && typeof body.meta === 'object' ? body.meta : null;
+    const details = (meta as any)?.details;
+    if (details && typeof details === 'object') {
+      const submissionId = safeKey.slice('sub_'.length);
+      await db
+        .update(submissionEntries)
+        .set({
+          detailsJson: JSON.stringify(details),
+          moreInfoSubmittedAt: new Date(),
+          status: 'more_info_submitted',
+        })
+        .where(eq(submissionEntries.id, submissionId));
     }
   }
 

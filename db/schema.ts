@@ -199,6 +199,7 @@ export const donorOpportunityState = sqliteTable('donor_opportunity_state', {
     donorId: text('donor_id').notNull().references(() => users.id),
     opportunityKey: text('opportunity_key').notNull(), // e.g. 'req_1' or 'sub_<uuid>'
     state: text('state').notNull().default('new'),
+    notes: text('notes'),
     updatedAt: integer('updated_at', { mode: 'timestamp' }),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });

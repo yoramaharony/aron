@@ -223,6 +223,7 @@ async function main() {
       donor_id TEXT NOT NULL REFERENCES users(id),
       opportunity_key TEXT NOT NULL,
       state TEXT NOT NULL DEFAULT 'new',
+      notes TEXT,
       updated_at INTEGER,
       created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
     );
@@ -281,6 +282,7 @@ async function main() {
     `ALTER TABLE submission_entries ADD COLUMN details_json TEXT;`,
     `ALTER TABLE requests ADD COLUMN cover_url TEXT;`,
     `ALTER TABLE requests ADD COLUMN evidence_json TEXT;`,
+    `ALTER TABLE donor_opportunity_state ADD COLUMN notes TEXT;`,
 
     // Seed default email templates (B"H prefix is customary in Hasidic community).
     `

@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { donorOpportunityEvents, donorOpportunityState, leverageOffers, requests, submissionEntries } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
+import { v4 as uuidv4 } from 'uuid';
 import { toIsoTime } from '@/lib/time';
 import { CHARIDY_CURATED } from '@/lib/charidy-curated';
 
@@ -88,7 +89,9 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ ke
     .from(donorOpportunityState)
     .where(eq(donorOpportunityState.donorId, session.userId))
     .limit(500);
-  const state = stateRow.find((s) => String(s.opportunityKey) === safeKey)?.state ?? 'new';
+  const matchedStateRow = stateRow.find((s) => String(s.opportunityKey) === safeKey);
+  const state = matchedStateRow?.state ?? 'new';
+  const notes = matchedStateRow?.notes ?? null;
 
   const events = await db
     .select()
@@ -124,6 +127,45 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ ke
       createdAt: toIsoTime(o.createdAt),
     }));
 
-  return NextResponse.json({ opportunity, state, events: eventsForKey, leverageOffers: offersForKey });
+  return NextResponse.json({ opportunity, state, notes, events: eventsForKey, leverageOffers: offersForKey });
+}
+
+export async function PATCH(request: NextRequest, context: { params: Promise<{ key: string }> }) {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (session.role !== 'donor') return forbidden();
+
+  const { key } = await context.params;
+  const safeKey = String(key || '');
+  if (!safeKey) return NextResponse.json({ error: 'Missing key' }, { status: 400 });
+
+  const body = await request.json().catch(() => ({}));
+  const notesValue = typeof body?.notes === 'string' ? body.notes : null;
+
+  const donorId = session.userId;
+  const existing = await db
+    .select()
+    .from(donorOpportunityState)
+    .where(eq(donorOpportunityState.donorId, donorId))
+    .limit(500);
+  const row = existing.find((r) => String(r.opportunityKey) === safeKey);
+
+  if (row) {
+    await db
+      .update(donorOpportunityState)
+      .set({ notes: notesValue, updatedAt: new Date() })
+      .where(eq(donorOpportunityState.id, row.id));
+  } else {
+    await db.insert(donorOpportunityState).values({
+      id: uuidv4(),
+      donorId,
+      opportunityKey: safeKey,
+      state: 'new',
+      notes: notesValue,
+      updatedAt: new Date(),
+    });
+  }
+
+  return NextResponse.json({ success: true, notes: notesValue });
 }
 

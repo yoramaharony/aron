@@ -1,0 +1,158 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/db';
+import {
+  donorOpportunityState,
+  donorOpportunityEvents,
+  leverageOffers,
+  requests,
+  submissionEntries,
+} from '@/db/schema';
+import { getSession } from '@/lib/auth';
+import { and, desc, eq } from 'drizzle-orm';
+import { toIsoTime } from '@/lib/time';
+import { CHARIDY_CURATED } from '@/lib/charidy-curated';
+
+function generateGrantId(key: string, fundedDate: Date | null): string {
+  const year = fundedDate ? fundedDate.getFullYear() : new Date().getFullYear();
+  const hash = key
+    .split('')
+    .reduce((acc, ch) => ((acc << 5) - acc + ch.charCodeAt(0)) | 0, 0);
+  const short = Math.abs(hash).toString(36).slice(0, 4).toUpperCase().padStart(4, '0');
+  return `GR-${year}-${short}`;
+}
+
+export async function GET() {
+  const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (session.role !== 'donor') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const donorId = session.userId;
+
+  // 1. All funded state rows
+  const fundedStates = await db
+    .select()
+    .from(donorOpportunityState)
+    .where(
+      and(
+        eq(donorOpportunityState.donorId, donorId),
+        eq(donorOpportunityState.state, 'funded'),
+      ),
+    );
+
+  if (fundedStates.length === 0) {
+    return NextResponse.json({ pledges: [] });
+  }
+
+  const fundedKeys = fundedStates.map((s) => String(s.opportunityKey));
+
+  // 2. Funded events (for commitment date)
+  const fundedEvents = await db
+    .select()
+    .from(donorOpportunityEvents)
+    .where(
+      and(
+        eq(donorOpportunityEvents.donorId, donorId),
+        eq(donorOpportunityEvents.type, 'funded'),
+      ),
+    )
+    .orderBy(desc(donorOpportunityEvents.createdAt));
+
+  const fundedDateByKey = new Map<string, string | null>();
+  for (const e of fundedEvents) {
+    const k = String(e.opportunityKey);
+    if (!fundedDateByKey.has(k)) {
+      fundedDateByKey.set(k, toIsoTime(e.createdAt));
+    }
+  }
+
+  // 3. Leverage offers
+  const allOffers = await db
+    .select()
+    .from(leverageOffers)
+    .where(eq(leverageOffers.donorId, donorId))
+    .orderBy(desc(leverageOffers.createdAt));
+
+  const offersByKey = new Map<string, (typeof allOffers)[number][]>();
+  for (const o of allOffers) {
+    const k = String(o.opportunityKey);
+    if (!offersByKey.has(k)) offersByKey.set(k, []);
+    offersByKey.get(k)!.push(o);
+  }
+
+  // 4. Resolve each funded opportunity
+  const pledges = [];
+  for (const key of fundedKeys) {
+    let title = 'Unknown';
+    let orgName = 'Unknown';
+    let category: string | null = null;
+    let location: string | null = null;
+    let summary = '';
+    let amount: number | null = null;
+
+    const curated = CHARIDY_CURATED.find((c) => c.key === key);
+    if (curated) {
+      title = curated.title;
+      orgName = curated.orgName;
+      category = curated.category;
+      location = curated.location;
+      summary = curated.summary;
+      amount = curated.fundingGap;
+    } else if (key.startsWith('sub_')) {
+      const id = key.slice('sub_'.length);
+      const row = await db.select().from(submissionEntries).where(eq(submissionEntries.id, id)).get();
+      if (row) {
+        title = row.title || 'Submission';
+        orgName = row.orgName || row.orgEmail || 'Unknown';
+        summary = row.summary;
+        amount = row.amountRequested ?? null;
+      }
+    } else {
+      const row = await db.select().from(requests).where(eq(requests.id, key)).get();
+      if (row) {
+        title = row.title;
+        orgName = 'Curated';
+        category = row.category;
+        location = row.location;
+        summary = row.summary;
+        amount = row.targetAmount
+          ? Number(row.targetAmount) - Number(row.currentAmount ?? 0)
+          : null;
+      }
+    }
+
+    const commitmentDateRaw = fundedDateByKey.get(key) ?? null;
+    const commitmentDate = commitmentDateRaw ? new Date(commitmentDateRaw) : null;
+
+    const keyOffers = (offersByKey.get(key) || []).map((o) => ({
+      id: o.id,
+      anchorAmount: o.anchorAmount,
+      challengeGoal: o.challengeGoal,
+      matchMode: o.matchMode,
+      topUpCap: o.topUpCap,
+      deadline: o.deadline,
+      status: o.status,
+      createdAt: toIsoTime(o.createdAt),
+    }));
+
+    pledges.push({
+      opportunityKey: key,
+      source: curated ? 'charidy' : key.startsWith('sub_') ? 'submission' : 'request',
+      title,
+      orgName,
+      category,
+      location,
+      summary,
+      totalPledge: amount ?? 0,
+      paidToDate: 0,
+      status: 'New Commitment',
+      grantId: generateGrantId(key, commitmentDate),
+      commitmentDate: commitmentDateRaw,
+      leverageOffers: keyOffers,
+    });
+  }
+
+  // Newest first
+  pledges.sort((a, b) => (b.commitmentDate || '').localeCompare(a.commitmentDate || ''));
+
+  return NextResponse.json({ pledges });
+}

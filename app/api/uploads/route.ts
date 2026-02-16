@@ -21,7 +21,7 @@ function sanitizeFilename(name: string) {
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.role !== 'requestor') {
+  if (session.role !== 'requestor' && session.role !== 'donor') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

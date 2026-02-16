@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { AlertCircle, Building2, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Clock3, DollarSign, Eye, FileCheck2, FileText, Heart, History, MapPin, MessageSquare, Paperclip, StickyNote, X as XIcon, Zap } from 'lucide-react';
@@ -32,6 +33,7 @@ const WORKFLOW_STAGES: WorkflowStage[] = ['discover', 'info_requested', 'meeting
 function deriveWorkflow(detail: any): WorkflowView {
     const state = String(detail?.state || '').toLowerCase();
     const events = Array.isArray(detail?.events) ? detail.events : [];
+    const hasDiligenceCompleted = events.some((e: any) => String(e?.type || '') === 'diligence_completed');
     const hasDiligenceSignal = events.some((e: any) => String(e?.type || '') === 'leverage_created');
     const hasMeetingCompleted = events.some((e: any) => String(e?.type || '') === 'meeting_completed');
     const hasMeetingScheduled = events.some((e: any) => String(e?.type || '') === 'scheduled');
@@ -39,6 +41,7 @@ function deriveWorkflow(detail: any): WorkflowView {
 
     if (state === 'passed') return { stage: 'decision', isPassed: true, isCommitted: false };
     if (state === 'funded') return { stage: 'decision', isPassed: false, isCommitted: true };
+    if (hasDiligenceCompleted) return { stage: 'decision', isPassed: false, isCommitted: false };
     if (hasMeetingCompleted) return { stage: 'due_diligence', isPassed: false, isCommitted: false };
     if (hasDiligenceSignal) return { stage: 'due_diligence', isPassed: false, isCommitted: false };
     if (hasMeetingScheduled) return { stage: 'meeting', isPassed: false, isCommitted: false };
@@ -69,6 +72,7 @@ function humanizeEventType(type: string) {
         leverage_created: 'Drafted leverage offer',
         scheduled: 'Scheduled meeting',
         meeting_completed: 'Meeting completed',
+        diligence_completed: 'Due diligence completed',
         funded: 'Committed',
         reset: 'Reset',
     };
@@ -110,6 +114,7 @@ function timelineIcon(type: string) {
     if (t === 'info_received') return <CheckCircle2 size={15} />;
     if (t === 'scheduled') return <Clock3 size={15} />;
     if (t === 'meeting_completed') return <CheckCircle2 size={15} />;
+    if (t === 'diligence_completed') return <FileCheck2 size={15} />;
     if (t === 'leverage_created') return <FileCheck2 size={15} />;
     if (t === 'funded') return <CheckCircle2 size={15} />;
     if (t === 'pass') return <XIcon size={15} />;
@@ -169,10 +174,7 @@ export default function DonorFeed() {
     const [viewMode, setViewMode] = useState<'overview' | 'decision'>('overview');
     const [detailsExpanded, setDetailsExpanded] = useState(true);
     const [meetingCompleteByKey, setMeetingCompleteByKey] = useState<Record<string, boolean>>({});
-    const [checklistOpen, setChecklistOpen] = useState(false);
     const [checklistByKey, setChecklistByKey] = useState<Record<string, Record<string, boolean>>>({});
-    const [reviewBegunByKey, setReviewBegunByKey] = useState<Record<string, boolean>>({});
-    const [decisionReadyByKey, setDecisionReadyByKey] = useState<Record<string, boolean>>({});
     const [forcedStageByKey, setForcedStageByKey] = useState<Record<string, WorkflowStage>>({});
     const [scheduleMeetingOpen, setScheduleMeetingOpen] = useState(false);
     const [scheduleMeetingDraft, setScheduleMeetingDraft] = useState({
@@ -182,7 +184,13 @@ export default function DonorFeed() {
         notes: '',
         isReschedule: false,
     });
+    const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [notesText, setNotesText] = useState('');
+    const [notesEditing, setNotesEditing] = useState(false);
+    const [notesSaving, setNotesSaving] = useState(false);
+    const notesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [postMeetingOpen, setPostMeetingOpen] = useState(false);
+    const postMeetingFilesRef = useRef<File[]>([]);
     const [postMeetingDraft, setPostMeetingDraft] = useState({
         summary: '',
         tone: '',
@@ -199,11 +207,12 @@ export default function DonorFeed() {
         },
     });
 
-    const { lastOpportunityUpdate } = useLeverage();
+    const router = useRouter();
+    const { lastOpportunityUpdate, openLeverageDrawer } = useLeverage();
 
     const stateToTab = (s: string) => {
         if (s === 'passed') return 'passed';
-        if (s === 'shortlisted') return 'shortlist';
+        if (s === 'shortlisted' || s === 'scheduled' || s === 'funded') return 'shortlist';
         return 'discover';
     };
 
@@ -275,12 +284,49 @@ export default function DonorFeed() {
             const flow = deriveWorkflow(data);
             const isProgressed = flow.isPassed || flow.isCommitted || flow.stage !== 'discover';
             setViewMode(isProgressed ? 'decision' : 'overview');
-            setDetailsExpanded(!isProgressed);
+            // At due diligence, auto-expand the full details panel so the donor can review everything.
+            const shouldExpand = !isProgressed || flow.stage === 'due_diligence';
+            setDetailsExpanded(shouldExpand);
+
+            // Restore checklist state from persisted meeting_completed event
+            const events = Array.isArray(data?.events) ? data.events : [];
+            const meetingEvt = events.find((e: any) => String(e?.type || '') === 'meeting_completed');
+            if (meetingEvt?.meta?.followUps) {
+                const fu = meetingEvt.meta.followUps;
+                const checklist = buildBaseChecklist();
+                checklist.siteVisit = Boolean(fu.siteVisit);
+                checklist.references = Boolean(fu.referenceCalls);
+                checklist.financialAudit = Boolean(fu.financialAudit);
+                checklist.rabbinicEndorsement = Boolean(fu.rabbinicEndorsement);
+                checklist.legalStructureVerification = Boolean(fu.legalStructureVerification);
+                setChecklistByKey((prev) => ({ ...prev, [key]: prev[key] || checklist }));
+                setMeetingCompleteByKey((prev) => ({ ...prev, [key]: true }));
+            }
+
+            // Seed notes from persisted data
+            setNotesText(data?.notes || '');
+            setNotesEditing(false);
         } catch {
             setDetail(null);
         } finally {
             setDetailLoading(false);
         }
+    };
+
+    const saveNotes = (text: string) => {
+        if (!currentKey) return;
+        if (notesSaveTimer.current) clearTimeout(notesSaveTimer.current);
+        setNotesSaving(true);
+        notesSaveTimer.current = setTimeout(async () => {
+            try {
+                await fetch(`/api/opportunities/${encodeURIComponent(currentKey)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes: text }),
+                });
+            } catch { /* silent */ }
+            setNotesSaving(false);
+        }, 600);
     };
 
     // When leverage is created via the drawer (separate endpoint), refresh the selected opportunity detail
@@ -307,8 +353,9 @@ export default function DonorFeed() {
             if (!res.ok) throw new Error(data?.error || 'Failed');
             const updated = (await refresh()) ?? rows;
 
-            if (selectedKey === key && action === 'request_info') {
-                // Request info moves item to shortlist; keep donor on this opportunity and refresh detail in place.
+            const stayActions = ['request_info', 'scheduled', 'meeting_completed', 'info_received', 'diligence_completed', 'funded'];
+            if (selectedKey === key && stayActions.includes(action)) {
+                // Progression actions keep the donor on this opportunity in the shortlist tab.
                 setActiveTab('shortlist');
                 await loadDetail(key);
                 return data;
@@ -365,11 +412,19 @@ export default function DonorFeed() {
         return [...deduped].reverse();
     }, [detail?.events]);
     const proofLinks = useMemo(() => parseProofLinks(detail?.opportunity?.details?.proofLinks), [detail?.opportunity?.details?.proofLinks]);
+    const meetingDocs = useMemo(() => {
+        const meetingEvt = timelineEvents.find((e: any) => String(e?.type || '') === 'meeting_completed');
+        if (!meetingEvt?.meta) return [] as Array<{ name: string; url: string }>;
+        const m = meetingEvt.meta;
+        if (Array.isArray(m.documents)) return m.documents.filter((d: any) => d?.name) as Array<{ name: string; url: string }>;
+        if (Array.isArray(m.documentNames)) return m.documentNames.filter(Boolean).map((n: string) => ({ name: n, url: '' }));
+        return [] as Array<{ name: string; url: string }>;
+    }, [timelineEvents]);
     const currentKey = String(detail?.opportunity?.key || '');
     const orgResponded = Boolean(detail?.opportunity?.details || detail?.opportunity?.moreInfoSubmittedAt);
     const meetingComplete = Boolean(currentKey && meetingCompleteByKey[currentKey]);
     const checklistItems = checklistByKey[currentKey] || buildBaseChecklist();
-    const checklistComplete = Object.values(checklistItems).every(Boolean);
+
     const latestScheduledAt = useMemo(() => {
         const events = Array.isArray(detail?.events) ? detail.events : [];
         const scheduled = events.filter((e: any) => String(e?.type || '') === 'scheduled');
@@ -387,8 +442,6 @@ export default function DonorFeed() {
             ? workflow.stage
             : forcedStageByKey[currentKey]
                 ? forcedStageByKey[currentKey]
-                : decisionReadyByKey[currentKey]
-                ? 'decision'
                 : workflow.stage;
     const displayWorkflow: WorkflowView = { ...workflow, stage: effectiveStage };
     const statusMessage = useMemo(() => deriveStatusMessage(displayWorkflow), [displayWorkflow]);
@@ -409,52 +462,32 @@ export default function DonorFeed() {
     };
 
     // Demo-only helper for fast stepper/progression tuning.
-    const runDemoInfoResponse = () => {
-        setDetail((prev: any) => {
-            if (!prev?.opportunity) return prev;
-            const nowIso = new Date().toISOString();
-            const existingDetails = prev.opportunity.details || {};
-            const syntheticDetails = {
-                mission:
-                    existingDetails.mission ||
-                    `${prev.opportunity.orgName} provides verified delivery outcomes with measurable beneficiary impact.`,
-                program:
-                    existingDetails.program ||
-                    `Program execution covering ${prev.opportunity.location || 'priority communities'} with monthly reporting.`,
-                budget:
-                    existingDetails.budget ||
-                    (summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '$250,000'),
-                amountRequested:
-                    existingDetails.amountRequested ||
-                    (summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '$250,000'),
-                timeline: existingDetails.timeline || 'Execution window: 6-9 months',
-                governance: existingDetails.governance || 'Board oversight with quarterly review',
-                leadership: existingDetails.leadership || `${prev.opportunity.orgName} leadership team`,
-                proofLinks:
-                    existingDetails.proofLinks ||
-                    'https://example.org/impact-report.pdf; https://example.org/audit.pdf',
-            };
+    const runDemoInfoResponse = async () => {
+        if (!currentKey || !detail?.opportunity) return;
+        const opp = detail.opportunity;
+        const existingDetails = opp.details || {};
+        const syntheticDetails = {
+            mission:
+                existingDetails.mission ||
+                `${opp.orgName} provides verified delivery outcomes with measurable beneficiary impact.`,
+            program:
+                existingDetails.program ||
+                `Program execution covering ${opp.location || 'priority communities'} with monthly reporting.`,
+            budget:
+                existingDetails.budget ||
+                (summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '$250,000'),
+            amountRequested:
+                existingDetails.amountRequested ||
+                (summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '$250,000'),
+            timeline: existingDetails.timeline || 'Execution window: 6-9 months',
+            governance: existingDetails.governance || 'Board oversight with quarterly review',
+            leadership: existingDetails.leadership || `${opp.orgName} leadership team`,
+            proofLinks:
+                existingDetails.proofLinks ||
+                'https://example.org/impact-report.pdf; https://example.org/audit.pdf',
+        };
 
-            const existingEvents = Array.isArray(prev.events) ? prev.events : [];
-            const hasRequestInfo = existingEvents.some((e: any) => String(e?.type) === 'request_info');
-            const hasInfoReceived = existingEvents.some((e: any) => String(e?.type) === 'info_received');
-            const injectedEvents = [
-                ...(hasInfoReceived ? [] : [{ id: `demo_info_received_${Date.now()}`, type: 'info_received', meta: { source: 'demo_stepper_click' }, createdAt: nowIso }]),
-                ...(hasRequestInfo ? [] : [{ id: `demo_request_info_${Date.now() + 1}`, type: 'request_info', meta: { source: 'demo_stepper_click' }, createdAt: nowIso }]),
-            ];
-
-            return {
-                ...prev,
-                state: prev.state,
-                opportunity: {
-                    ...prev.opportunity,
-                    details: syntheticDetails,
-                    moreInfoSubmittedAt: nowIso,
-                },
-                events: injectedEvents.length ? [...injectedEvents, ...existingEvents] : existingEvents,
-            };
-        });
-
+        await act(currentKey, 'info_received', { details: syntheticDetails });
         setViewMode('decision');
         setDetailsExpanded(false);
     };
@@ -471,21 +504,20 @@ export default function DonorFeed() {
         });
     };
 
-    const submitScheduleMeeting = () => {
+    const submitScheduleMeeting = async () => {
+        if (!currentKey) return;
         const scheduledFor =
             scheduleMeetingDraft.date && scheduleMeetingDraft.time
                 ? `${scheduleMeetingDraft.date}T${scheduleMeetingDraft.time}:00`
                 : null;
 
-        appendDemoEvent('scheduled', {
+        await act(currentKey, 'scheduled', {
             scheduledFor,
             meetingType: scheduleMeetingDraft.meetingType,
             notes: scheduleMeetingDraft.notes || undefined,
             rescheduled: scheduleMeetingDraft.isReschedule || undefined,
         });
-        if (currentKey) {
-            setMeetingCompleteByKey((prev) => ({ ...prev, [currentKey]: false }));
-        }
+        setMeetingCompleteByKey((prev) => ({ ...prev, [currentKey]: false }));
         setScheduleMeetingOpen(false);
         setScheduleMeetingDraft({
             date: '',
@@ -496,7 +528,7 @@ export default function DonorFeed() {
         });
     };
 
-    const submitPostMeetingSummary = () => {
+    const submitPostMeetingSummary = async () => {
         if (!currentKey) return;
         const checklistSeed = buildBaseChecklist();
         const followUp = postMeetingDraft.followUps;
@@ -506,30 +538,32 @@ export default function DonorFeed() {
         checklistSeed.rabbinicEndorsement = Boolean(followUp.rabbinicEndorsement);
         checklistSeed.legalStructureVerification = Boolean(followUp.legalStructureVerification);
 
+        // Upload files via /api/uploads and collect URLs
+        let uploadedDocs: Array<{ name: string; url: string }> = [];
+        const files = postMeetingFilesRef.current;
+        if (files.length > 0) {
+            try {
+                const form = new FormData();
+                files.forEach((f) => form.append('files', f));
+                form.append('folder', 'evidence');
+                const res = await fetch('/api/uploads', { method: 'POST', body: form });
+                if (res.ok) {
+                    const data = await res.json();
+                    uploadedDocs = (data.files || []).map((f: any) => ({ name: f.name, url: f.url }));
+                }
+            } catch {
+                // Fallback: store names without URLs
+            }
+        }
+        // If upload didn't return results, fall back to name-only entries
+        if (uploadedDocs.length === 0 && postMeetingDraft.documentNames.length > 0) {
+            uploadedDocs = postMeetingDraft.documentNames.map((name) => ({ name, url: '' }));
+        }
+
         setChecklistByKey((prev) => ({ ...prev, [currentKey]: checklistSeed }));
-        setReviewBegunByKey((prev) => ({ ...prev, [currentKey]: false }));
         setMeetingCompleteByKey((prev) => ({ ...prev, [currentKey]: true }));
-        setForcedStageByKey((prev) => ({ ...prev, [currentKey]: 'due_diligence' }));
-        setChecklistOpen(false);
 
-        setDetail((prev: any) => {
-            if (!prev?.opportunity) return prev;
-            const docs = Array.isArray(prev?.opportunity?.documents) ? prev.opportunity.documents : [];
-            const uploadedAt = new Date().toISOString();
-            const appendedDocs = [
-                ...docs,
-                ...postMeetingDraft.documentNames.map((name) => ({ id: `demo_doc_${Date.now()}_${name}`, name, uploadedAt })),
-            ];
-            return {
-                ...prev,
-                opportunity: {
-                    ...prev.opportunity,
-                    documents: appendedDocs,
-                },
-            };
-        });
-
-        appendDemoEvent('meeting_completed', {
+        await act(currentKey, 'meeting_completed', {
             summary: postMeetingDraft.summary,
             tone: postMeetingDraft.tone,
             funding: {
@@ -537,10 +571,11 @@ export default function DonorFeed() {
                 amountNegotiable: postMeetingDraft.amountNegotiable,
                 expectedTimeline: postMeetingDraft.expectedTimeline,
             },
-            documentNames: postMeetingDraft.documentNames,
+            documents: uploadedDocs,
             followUps: postMeetingDraft.followUps,
         });
 
+        postMeetingFilesRef.current = [];
         setPostMeetingOpen(false);
         setPostMeetingDraft({
             summary: '',
@@ -614,6 +649,7 @@ export default function DonorFeed() {
                 values={postMeetingDraft}
                 setValues={setPostMeetingDraft}
                 onSubmit={submitPostMeetingSummary}
+                onFilesChange={(files) => { postMeetingFilesRef.current = [...postMeetingFilesRef.current, ...files]; }}
             />
             <header className="flex justify-between items-end gap-6">
                 <div>
@@ -735,6 +771,23 @@ export default function DonorFeed() {
                                         {detail.opportunity.title}
                                     </h2>
                                     <div className="text-2xl font-light text-[var(--color-gold)] mt-1">{detail.opportunity.orgName}</div>
+                                    <button
+                                        type="button"
+                                        className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] tracking-wide text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors group"
+                                        title="Copy opportunity ID"
+                                        onClick={() => {
+                                            navigator.clipboard.writeText(detail.opportunity.key).catch(() => {});
+                                            setCopiedId(detail.opportunity.key);
+                                            setTimeout(() => setCopiedId(null), 2000);
+                                        }}
+                                    >
+                                        <span className="font-mono opacity-70 group-hover:opacity-100">{detail.opportunity.key}</span>
+                                        {copiedId === detail.opportunity.key ? (
+                                            <Check size={11} className="text-emerald-400" />
+                                        ) : (
+                                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:opacity-100"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                        )}
+                                    </button>
 
                                     <div className="mt-3 flex flex-wrap items-center gap-3">
                                         <span
@@ -811,54 +864,81 @@ export default function DonorFeed() {
                                             </div>
                                         </div>
 
-                                        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6">
-                                            <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2 mb-3"><Paperclip size={18} className="text-[var(--color-gold)]" />Materials</div>
-                                            <div className="space-y-2 text-sm text-[var(--text-secondary)]">
-                                                <div className="flex items-start justify-between gap-6">
-                                                    <span>Proof links</span>
-                                                    <span className="text-right">
-                                                        {proofLinks.length ? (
-                                                            <span className="space-y-1 inline-flex flex-col items-end">
-                                                                {proofLinks.slice(0, 3).map((link, idx) => (
-                                                                    <a
-                                                                        key={`${link}-${idx}`}
-                                                                        href={ensureHref(link)}
-                                                                        target="_blank"
-                                                                        rel="noreferrer"
-                                                                        className="text-[var(--text-primary)] hover:text-[var(--color-gold)] hover:underline"
-                                                                    >
-                                                                        {`Document ${idx + 1}`}
-                                                                    </a>
-                                                                ))}
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-[var(--text-primary)]">Available on request</span>
-                                                        )}
-                                                    </span>
-                                                </div>
-                                                <div className="flex items-start justify-between gap-6">
-                                                    <span>Video</span>
-                                                    <span>
-                                                        {detail.opportunity.videoUrl ? (
-                                                            <a
-                                                                href={detail.opportunity.videoUrl}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="text-[var(--color-gold)] hover:underline"
-                                                            >
-                                                                Available
-                                                            </a>
-                                                        ) : (
-                                                            <span className="text-[var(--text-primary)]">Not attached</span>
-                                                        )}
-                                                    </span>
+                                        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6 space-y-4">
+                                            <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2"><Paperclip size={18} className="text-[var(--color-gold)]" />Materials</div>
+                                            <div>
+                                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Organization Documents</div>
+                                                <div className="space-y-1">
+                                                    {proofLinks.length ? (
+                                                        proofLinks.slice(0, 5).map((link, idx) => (
+                                                            <div key={`overview-org-${idx}`} className="flex items-center gap-2 text-sm">
+                                                                <Paperclip size={13} className="text-[var(--color-gold)] shrink-0" />
+                                                                <a href={ensureHref(link)} target="_blank" rel="noreferrer" className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors">{`Document ${idx + 1}`}</a>
+                                                            </div>
+                                                        ))
+                                                    ) : (
+                                                        <div className="text-sm text-[var(--text-tertiary)] italic">None submitted</div>
+                                                    )}
                                                 </div>
                                             </div>
+                                            <div>
+                                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Video</div>
+                                                <div className="space-y-1">
+                                                    {detail.opportunity.videoUrl ? (
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <Paperclip size={13} className="text-[var(--color-gold)] shrink-0" />
+                                                            <a href={detail.opportunity.videoUrl} target="_blank" rel="noreferrer" className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors">Watch video</a>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="text-sm text-[var(--text-tertiary)] italic">Not attached</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {meetingDocs.length > 0 ? (
+                                                <div>
+                                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Meeting Documents</div>
+                                                    <div className="space-y-1">
+                                                        {meetingDocs.map((doc: { name: string; url: string }, i: number) => (
+                                                            <div key={`overview-mdoc-${i}`} className="flex items-center gap-2 text-sm">
+                                                                <Paperclip size={13} className="text-[var(--color-gold)] shrink-0" />
+                                                                {doc.url ? (
+                                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors">{doc.name}</a>
+                                                                ) : (
+                                                                    <span className="text-[var(--text-secondary)]">{doc.name}</span>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ) : null}
                                         </div>
 
                                         <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6">
-                                            <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2 mb-3"><StickyNote size={18} className="text-[var(--color-gold)]" />Notes</div>
-                                            <p className="text-sm text-[var(--text-secondary)]">{detail.opportunity.whyNow || 'No notes yet.'}</p>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2"><StickyNote size={18} className="text-[var(--color-gold)]" />Notes</div>
+                                                <div className="flex items-center gap-2">
+                                                    {notesSaving ? <span className="text-[10px] text-[var(--text-tertiary)]">Saving...</span> : notesEditing ? <span className="text-[10px] text-emerald-400">Auto-saved</span> : null}
+                                                    {!notesEditing ? (
+                                                        <button type="button" onClick={() => setNotesEditing(true)} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors">Edit</button>
+                                                    ) : (
+                                                        <button type="button" onClick={() => setNotesEditing(false)} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors">Done</button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {notesEditing ? (
+                                                <textarea
+                                                    rows={4}
+                                                    value={notesText}
+                                                    onChange={(e) => { setNotesText(e.target.value); saveNotes(e.target.value); }}
+                                                    placeholder="Add your personal notes about this opportunity..."
+                                                    className="w-full rounded-lg px-4 py-3 bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:border-[rgba(var(--accent-rgb),0.35)] resize-y"
+                                                    autoFocus
+                                                />
+                                            ) : (
+                                                <p className="text-sm text-[var(--text-secondary)] whitespace-pre-line cursor-pointer" onClick={() => setNotesEditing(true)}>
+                                                    {notesText || detail.opportunity.whyNow || <span className="text-[var(--text-tertiary)] italic">Click to add notes...</span>}
+                                                </p>
+                                            )}
                                         </div>
 
                                         <div className="flex justify-center pt-2">
@@ -991,32 +1071,43 @@ export default function DonorFeed() {
                                                 )
                                             ) : null}
                                             {displayWorkflow.stage === 'due_diligence' ? (
-                                                checklistComplete ? (
-                                                    <Button
-                                                        variant="gold"
-                                                        onClick={() => {
-                                                            setDecisionReadyByKey((prev) => ({ ...prev, [currentKey]: true }));
-                                                            setChecklistOpen(false);
-                                                        }}
-                                                    >
-                                                        Finalize Decision
-                                                    </Button>
-                                                ) : (
-                                                    <Button
-                                                        variant="gold"
-                                                        onClick={() => {
-                                                            setChecklistOpen(true);
-                                                            setReviewBegunByKey((prev) => ({ ...prev, [currentKey]: true }));
-                                                        }}
-                                                    >
-                                                        {reviewBegunByKey[currentKey] ? 'Continue Review' : 'Begin Review'}
-                                                    </Button>
-                                                )
+                                                <Button
+                                                    variant="gold"
+                                                    onClick={async () => {
+                                                        await act(detail.opportunity.key, 'diligence_completed');
+                                                    }}
+                                                >
+                                                    Complete Due Diligence
+                                                </Button>
                                             ) : null}
                                             {displayWorkflow.stage === 'decision' && !displayWorkflow.isCommitted && !displayWorkflow.isPassed ? (
-                                                <Button variant="gold" onClick={() => act(detail.opportunity.key, 'funded')}>
-                                                    Commit Donation
-                                                </Button>
+                                                <>
+                                                    <Button
+                                                        variant="gold"
+                                                        onClick={async () => {
+                                                            await act(detail.opportunity.key, 'funded');
+                                                            router.push('/donor/pledges');
+                                                        }}
+                                                    >
+                                                        Approve &amp; Pledge
+                                                    </Button>
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => {
+                                                            openLeverageDrawer({
+                                                                id: detail.opportunity.key,
+                                                                title: detail.opportunity.title,
+                                                                orgName: detail.opportunity.orgName,
+                                                                category: detail.opportunity.category || summary.cause || '',
+                                                                location: detail.opportunity.location || summary.geo || '',
+                                                                fundingGap: Number(detail.opportunity.amountRequested || detail.opportunity.targetAmount || summary.amount) || 0,
+                                                                summary: detail.opportunity.summary || '',
+                                                            } as any);
+                                                        }}
+                                                    >
+                                                        Structure Leverage
+                                                    </Button>
+                                                </>
                                             ) : null}
                                             {!displayWorkflow.isCommitted && !displayWorkflow.isPassed ? (
                                                 <Button variant="outline" onClick={() => act(detail.opportunity.key, 'pass')}>
@@ -1029,35 +1120,7 @@ export default function DonorFeed() {
                                             ) : null}
                                         </div>
 
-                                        {displayWorkflow.stage === 'due_diligence' && checklistOpen ? (
-                                            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-5 space-y-3">
-                                                <div className="text-sm font-medium text-[var(--text-primary)]">Diligence Checklist</div>
-                                                {Object.entries(checklistItems).map(([key, checked]) => (
-                                                    <label key={key} className="flex items-center justify-between gap-3 text-sm text-[var(--text-secondary)]">
-                                                        <span>{key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())}</span>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={Boolean(checked)}
-                                                            onChange={(e) => {
-                                                                const next = {
-                                                                    ...checklistItems,
-                                                                    [key]: e.target.checked,
-                                                                };
-                                                                setChecklistByKey((prev) => ({ ...prev, [currentKey]: next }));
-                                                            }}
-                                                        />
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        ) : null}
-
-                                        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div><div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Cause</div><div className="text-[var(--text-primary)] inline-flex items-center gap-2"><Heart size={14} className="text-[var(--color-gold)]" />{summary.cause}</div></div>
-                                            <div><div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Amount</div><div className="text-[var(--color-gold)] inline-flex items-center gap-2"><DollarSign size={14} />{summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '—'}</div></div>
-                                            <div><div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Geography</div><div className="text-[var(--text-primary)] inline-flex items-center gap-2"><MapPin size={14} className="text-[var(--color-gold)]" />{summary.geo}</div></div>
-                                            <div><div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Urgency</div><div className="text-[var(--text-primary)] inline-flex items-center gap-2"><Clock3 size={14} className="text-[var(--color-gold)]" />{summary.urgency}</div></div>
-                                        </div>
-
+                                        {/* Engagement Timeline — right after action buttons */}
                                         <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6">
                                             <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2 mb-4"><Clock3 size={18} className="text-[var(--color-gold)]" />Engagement Timeline</div>
                                             {timelineEvents.length === 0 ? (
@@ -1084,6 +1147,134 @@ export default function DonorFeed() {
                                                 </div>
                                             )}
                                         </div>
+
+                                        {displayWorkflow.stage === 'due_diligence' ? (
+                                            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-5 space-y-3">
+                                                <div className="text-sm font-medium text-[var(--text-primary)]">Diligence Checklist</div>
+                                                {Object.entries(checklistItems).map(([key, checked]) => (
+                                                    <label key={key} className="flex items-center justify-between gap-3 text-sm text-[var(--text-secondary)]">
+                                                        <span>{key.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())}</span>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={Boolean(checked)}
+                                                            onChange={(e) => {
+                                                                const next = {
+                                                                    ...checklistItems,
+                                                                    [key]: e.target.checked,
+                                                                };
+                                                                setChecklistByKey((prev) => ({ ...prev, [currentKey]: next }));
+                                                            }}
+                                                        />
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        ) : null}
+
+                                        {/* Meeting Outcomes — extracted from the meeting_completed event */}
+                                        {(() => {
+                                            const meetingEvt = timelineEvents.find((e: any) => String(e?.type || '') === 'meeting_completed');
+                                            if (!meetingEvt?.meta) return null;
+                                            const m = meetingEvt.meta;
+                                            const toneMap: Record<string, { label: string; color: string }> = {
+                                                very_positive: { label: 'Very Positive', color: 'text-emerald-400' },
+                                                promising: { label: 'Promising', color: 'text-sky-400' },
+                                                neutral: { label: 'Neutral', color: 'text-[var(--text-secondary)]' },
+                                                concerning: { label: 'Concerning', color: 'text-amber-400' },
+                                            };
+                                            const tone = toneMap[m.tone] || { label: m.tone, color: 'text-[var(--text-secondary)]' };
+                                            const confirmMap: Record<string, string> = { yes: 'Yes', no: 'No', partially: 'Partially' };
+                                            const negotiableMap: Record<string, string> = { yes: 'Yes', no: 'No', unknown: 'Unknown' };
+                                            const docs: Array<{ name: string; url: string }> = Array.isArray(m.documents)
+                                                ? m.documents.filter((d: any) => d?.name)
+                                                : Array.isArray(m.documentNames)
+                                                    ? m.documentNames.filter(Boolean).map((n: string) => ({ name: n, url: '' }))
+                                                    : [];
+                                            const followUps = m.followUps || {};
+                                            const activeFollowUps = Object.entries(followUps)
+                                                .filter(([, v]) => Boolean(v))
+                                                .map(([k]) => k.replace(/([A-Z])/g, ' $1').replace(/^./, (c: string) => c.toUpperCase()));
+                                            return (
+                                                <div className="rounded-2xl border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(255,255,255,0.02)] p-6 space-y-5">
+                                                    <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2">
+                                                        <StickyNote size={18} className="text-[var(--color-gold)]" />Meeting Outcomes
+                                                    </div>
+
+                                                    {m.summary ? (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Summary</div>
+                                                            <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-line">{m.summary}</p>
+                                                        </div>
+                                                    ) : null}
+
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Tone</div>
+                                                            <div className={`text-sm font-medium ${tone.color}`}>{tone.label}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Amount Confirmed</div>
+                                                            <div className="text-sm text-[var(--text-primary)]">{confirmMap[m.funding?.confirmRequestedAmount] || m.funding?.confirmRequestedAmount || '—'}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Negotiable</div>
+                                                            <div className="text-sm text-[var(--text-primary)]">{negotiableMap[m.funding?.amountNegotiable] || m.funding?.amountNegotiable || '—'}</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Expected Timeline</div>
+                                                            <div className="text-sm text-[var(--text-primary)]">{m.funding?.expectedTimeline || '—'}</div>
+                                                        </div>
+                                                    </div>
+
+                                                    {docs.length > 0 ? (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Documents Received</div>
+                                                            <div className="space-y-1">
+                                                                {docs.map((doc, i) => (
+                                                                    <div key={i} className="flex items-center gap-2 text-sm">
+                                                                        <Paperclip size={13} className="text-[var(--color-gold)] shrink-0" />
+                                                                        {doc.url ? (
+                                                                            <a
+                                                                                href={doc.url}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors"
+                                                                            >
+                                                                                {doc.name}
+                                                                            </a>
+                                                                        ) : (
+                                                                            <span className="text-[var(--text-secondary)]">{doc.name}</span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ) : null}
+
+                                                    {activeFollowUps.length > 0 ? (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Follow-ups Identified</div>
+                                                            <div className="flex flex-wrap gap-2">
+                                                                {activeFollowUps.map((label) => (
+                                                                    <span key={label} className="inline-flex items-center gap-1 rounded-full border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.04)] px-3 py-1 text-xs text-[var(--text-secondary)]">
+                                                                        <AlertCircle size={11} className="text-[var(--color-gold)]" />{label}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            );
+                                        })()}
+
+                                        {/* Summary card — visible above Full Details, hidden when details expanded */}
+                                        {!detailsExpanded ? (
+                                            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div><div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Cause</div><div className="text-[var(--text-primary)] inline-flex items-center gap-2"><Heart size={14} className="text-[var(--color-gold)]" />{summary.cause}</div></div>
+                                                <div><div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Amount</div><div className="text-[var(--color-gold)] inline-flex items-center gap-2"><DollarSign size={14} />{summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '—'}</div></div>
+                                                <div><div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Geography</div><div className="text-[var(--text-primary)] inline-flex items-center gap-2"><MapPin size={14} className="text-[var(--color-gold)]" />{summary.geo}</div></div>
+                                                <div><div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Urgency</div><div className="text-[var(--text-primary)] inline-flex items-center gap-2"><Clock3 size={14} className="text-[var(--color-gold)]" />{summary.urgency}</div></div>
+                                            </div>
+                                        ) : null}
 
                                         <button
                                             type="button"
@@ -1148,57 +1339,82 @@ export default function DonorFeed() {
                                                     </div>
                                                 </div>
 
-                                                <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6">
-                                                    <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2 mb-3"><Paperclip size={18} className="text-[var(--color-gold)]" />Materials</div>
-                                                    <div className="space-y-2 text-sm text-[var(--text-secondary)]">
-                                                        <div className="flex items-start justify-between gap-6">
-                                                            <span>Proof links</span>
-                                                            <span className="text-right">
-                                                                {proofLinks.length ? (
-                                                                    <span className="space-y-1 inline-flex flex-col items-end">
-                                                                        {proofLinks.slice(0, 3).map((link, idx) => (
-                                                                            <a
-                                                                                key={`decision-${link}-${idx}`}
-                                                                                href={ensureHref(link)}
-                                                                                target="_blank"
-                                                                                rel="noreferrer"
-                                                                                className="text-[var(--text-primary)] hover:text-[var(--color-gold)] hover:underline"
-                                                                            >
-                                                                                {`Document ${idx + 1}`}
-                                                                            </a>
-                                                                        ))}
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-[var(--text-primary)]">Available on request</span>
-                                                                )}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-start justify-between gap-6">
-                                                            <span>Video</span>
-                                                            <span>
-                                                                {detail.opportunity.videoUrl ? (
-                                                                    <a className="text-[var(--color-gold)] hover:underline" href={detail.opportunity.videoUrl} target="_blank" rel="noreferrer">
-                                                                        Available
-                                                                    </a>
-                                                                ) : (
-                                                                    <span className="text-[var(--text-primary)]">Not attached</span>
-                                                                )}
-                                                            </span>
+                                                <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6 space-y-4">
+                                                    <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2"><Paperclip size={18} className="text-[var(--color-gold)]" />Materials</div>
+                                                    <div>
+                                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Organization Documents</div>
+                                                        <div className="space-y-1">
+                                                            {proofLinks.length ? (
+                                                                proofLinks.slice(0, 5).map((link, idx) => (
+                                                                    <div key={`detail-org-${idx}`} className="flex items-center gap-2 text-sm">
+                                                                        <Paperclip size={13} className="text-[var(--color-gold)] shrink-0" />
+                                                                        <a href={ensureHref(link)} target="_blank" rel="noreferrer" className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors">{`Document ${idx + 1}`}</a>
+                                                                    </div>
+                                                                ))
+                                                            ) : (
+                                                                <div className="text-sm text-[var(--text-tertiary)] italic">None submitted</div>
+                                                            )}
                                                         </div>
                                                     </div>
+                                                    <div>
+                                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Video</div>
+                                                        <div className="space-y-1">
+                                                            {detail.opportunity.videoUrl ? (
+                                                                <div className="flex items-center gap-2 text-sm">
+                                                                    <Paperclip size={13} className="text-[var(--color-gold)] shrink-0" />
+                                                                    <a href={detail.opportunity.videoUrl} target="_blank" rel="noreferrer" className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors">Watch video</a>
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-sm text-[var(--text-tertiary)] italic">Not attached</div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {meetingDocs.length > 0 ? (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Meeting Documents</div>
+                                                            <div className="space-y-1">
+                                                                {meetingDocs.map((doc: { name: string; url: string }, i: number) => (
+                                                                    <div key={`detail-mdoc-${i}`} className="flex items-center gap-2 text-sm">
+                                                                        <Paperclip size={13} className="text-[var(--color-gold)] shrink-0" />
+                                                                        {doc.url ? (
+                                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors">{doc.name}</a>
+                                                                        ) : (
+                                                                            <span className="text-[var(--text-secondary)]">{doc.name}</span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    ) : null}
                                                 </div>
 
                                                 <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6">
-                                                    <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2 mb-3"><StickyNote size={18} className="text-[var(--color-gold)]" />Notes</div>
-                                                    <p className="text-sm text-[var(--text-secondary)]">{detail.opportunity.whyNow || 'No notes yet.'}</p>
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2"><StickyNote size={18} className="text-[var(--color-gold)]" />Notes</div>
+                                                        <div className="flex items-center gap-2">
+                                                            {notesSaving ? <span className="text-[10px] text-[var(--text-tertiary)]">Saving...</span> : notesEditing ? <span className="text-[10px] text-emerald-400">Auto-saved</span> : null}
+                                                            {!notesEditing ? (
+                                                                <button type="button" onClick={() => setNotesEditing(true)} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors">Edit</button>
+                                                            ) : (
+                                                                <button type="button" onClick={() => setNotesEditing(false)} className="text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors">Done</button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    {notesEditing ? (
+                                                        <textarea
+                                                            rows={4}
+                                                            value={notesText}
+                                                            onChange={(e) => { setNotesText(e.target.value); saveNotes(e.target.value); }}
+                                                            placeholder="Add your personal notes about this opportunity..."
+                                                            className="w-full rounded-lg px-4 py-3 bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:border-[rgba(var(--accent-rgb),0.35)] resize-y"
+                                                            autoFocus
+                                                        />
+                                                    ) : (
+                                                        <p className="text-sm text-[var(--text-secondary)] whitespace-pre-line cursor-pointer" onClick={() => setNotesEditing(true)}>
+                                                            {notesText || <span className="text-[var(--text-tertiary)] italic">Click to add notes...</span>}
+                                                        </p>
+                                                    )}
                                                 </div>
-                                            </div>
-                                        ) : null}
-
-                                        {detail.opportunity.moreInfoRequestedAt ? (
-                                            <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6">
-                                                <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2 mb-2"><MessageSquare size={18} className="text-[var(--color-gold)]" />More Info Requested</div>
-                                                <p className="text-sm text-[var(--text-secondary)]">Waiting for the organization to submit the detailed form.</p>
                                             </div>
                                         ) : null}
                                         <div className="flex justify-center pt-2">
@@ -1571,8 +1787,11 @@ function PostMeetingSummaryModal(props: {
         };
     }) => void;
     onSubmit: () => void;
+    onFilesChange?: (files: File[]) => void;
 }) {
-    const { open, onClose, values, setValues, onSubmit } = props;
+    const { open, onClose, values, setValues, onSubmit, onFilesChange } = props;
+    const [docDragOver, setDocDragOver] = useState(false);
+    const docInputRef = useRef<HTMLInputElement>(null);
     if (!open) return null;
 
     const canSubmit = Boolean(values.summary.trim() && values.tone && values.expectedTimeline.trim());
@@ -1667,16 +1886,66 @@ function PostMeetingSummaryModal(props: {
                         <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4 space-y-3">
                             <div className="text-sm font-medium text-[var(--text-primary)]">3) Documents Received</div>
                             <input
+                                ref={docInputRef}
                                 type="file"
                                 multiple
+                                className="hidden"
                                 onChange={(e) => {
-                                    const names = Array.from(e.target.files || []).map((f) => f.name);
-                                    setValues({ ...values, documentNames: names });
+                                    const fileList = Array.from(e.target.files || []);
+                                    if (!fileList.length) return;
+                                    const merged = [...values.documentNames, ...fileList.map((f) => f.name)];
+                                    setValues({ ...values, documentNames: merged });
+                                    onFilesChange?.(fileList);
                                 }}
-                                className="block w-full text-sm text-[var(--text-secondary)] file:mr-3 file:rounded-md file:border file:border-[var(--border-subtle)] file:bg-[rgba(255,255,255,0.04)] file:px-3 file:py-2 file:text-[var(--text-primary)]"
                             />
+                            <div
+                                className={[
+                                    'p-6 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 transition-all cursor-pointer',
+                                    docDragOver
+                                        ? 'border-[rgba(var(--accent-rgb),0.55)] bg-[rgba(var(--accent-rgb),0.10)]'
+                                        : 'border-[var(--border-subtle)] hover:bg-[rgba(255,255,255,0.03)]',
+                                ].join(' ')}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => docInputRef.current?.click()}
+                                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); docInputRef.current?.click(); } }}
+                                onDragOver={(e) => { e.preventDefault(); setDocDragOver(true); }}
+                                onDragLeave={() => setDocDragOver(false)}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    setDocDragOver(false);
+                                    const files = Array.from(e.dataTransfer?.files || []);
+                                    if (!files.length) return;
+                                    const merged = [...values.documentNames, ...files.map((f) => f.name)];
+                                    setValues({ ...values, documentNames: merged });
+                                    onFilesChange?.(files);
+                                }}
+                            >
+                                <Paperclip size={20} className="text-[var(--color-gold)]" />
+                                <span className="text-sm text-[var(--text-secondary)]">
+                                    {docDragOver ? 'Drop files here' : 'Drag & drop files or click to browse'}
+                                </span>
+                                <span className="text-xs text-[var(--text-tertiary)]">PDF, DOC, images accepted</span>
+                            </div>
                             {values.documentNames.length ? (
-                                <div className="text-xs text-[var(--text-tertiary)]">{values.documentNames.join(' • ')}</div>
+                                <div className="space-y-1">
+                                    {values.documentNames.map((name, idx) => (
+                                        <div key={`doc-${idx}`} className="flex items-center justify-between gap-2 text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
+                                            <span className="inline-flex items-center gap-2 truncate"><Paperclip size={13} className="text-[var(--color-gold)] shrink-0" />{name}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const next = values.documentNames.filter((_, i) => i !== idx);
+                                                    setValues({ ...values, documentNames: next });
+                                                }}
+                                                className="text-[var(--text-tertiary)] hover:text-red-400 transition-colors shrink-0"
+                                                aria-label="Remove file"
+                                            >
+                                                <XIcon size={14} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : null}
                         </div>
 

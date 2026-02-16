@@ -25,6 +25,9 @@ test-results/
 # production
 /build
 
+# design reference (Figma export)
+/figma-design/
+
 # misc
 .DS_Store
 *.pem
