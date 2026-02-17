@@ -416,9 +416,12 @@ function RequestWizardInner() {
                                         const files = e.dataTransfer?.files;
                                         if (!files || files.length === 0) return;
                                         try {
-                                            setUploadStatus(`Dropped: ${files[0]?.name || 'file'} (${Math.round((files[0]?.size || 0) / 1024)} KB)`);
+                                            setUploadStatus(`Dropped: ${files[0]?.name || 'file'} (${files.length} file(s))`);
                                             const uploaded = await uploadToServer(files);
                                             if (uploaded[0]) setBudgetFile(uploaded[0]);
+                                            if (uploaded.length > 1) {
+                                                setAdditionalFiles((prior) => [...uploaded.slice(1), ...prior]);
+                                            }
                                         } catch (err: any) {
                                             setUploadError(err?.message || 'Upload failed');
                                         }

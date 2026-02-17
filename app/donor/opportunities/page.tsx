@@ -7,6 +7,14 @@ import { Button } from '@/components/ui/Button';
 import { AlertCircle, Building2, Check, CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Clock3, DollarSign, FileCheck2, FileText, Heart, History, MapPin, MessageSquare, Paperclip, StickyNote, X as XIcon, Zap } from 'lucide-react';
 import { useLeverage } from '@/components/providers/LeverageContext';
 import { AnimatePresence, motion } from 'framer-motion';
+import { OpportunityStepper } from '@/components/shared/OpportunityStepper';
+import {
+    type WorkflowStage,
+    type WorkflowView,
+    WORKFLOW_STAGES,
+    deriveWorkflow,
+    humanizeEventType,
+} from '@/lib/workflow';
 
 type OpportunityRow = {
     key: string;
@@ -21,36 +29,6 @@ type OpportunityRow = {
     state: string;
 };
 
-type WorkflowStage = 'discover' | 'info_requested' | 'meeting' | 'due_diligence' | 'decision';
-type WorkflowView = {
-    stage: WorkflowStage;
-    isPassed: boolean;
-    isCommitted: boolean;
-};
-
-const WORKFLOW_STAGES: WorkflowStage[] = ['discover', 'info_requested', 'meeting', 'due_diligence', 'decision'];
-
-function deriveWorkflow(detail: any): WorkflowView {
-    const state = String(detail?.state || '').toLowerCase();
-    const events = Array.isArray(detail?.events) ? detail.events : [];
-    const hasDiligenceCompleted = events.some((e: any) => String(e?.type || '') === 'diligence_completed');
-    const hasDiligenceSignal = events.some((e: any) => String(e?.type || '') === 'leverage_created');
-    const hasMeetingCompleted = events.some((e: any) => String(e?.type || '') === 'meeting_completed');
-    const hasMeetingScheduled = events.some((e: any) => String(e?.type || '') === 'scheduled');
-    const hasInfoRequested = events.some((e: any) => String(e?.type || '') === 'request_info');
-
-    if (state === 'passed') return { stage: 'decision', isPassed: true, isCommitted: false };
-    if (state === 'funded') return { stage: 'decision', isPassed: false, isCommitted: true };
-    if (hasDiligenceCompleted) return { stage: 'decision', isPassed: false, isCommitted: false };
-    if (hasMeetingCompleted) return { stage: 'due_diligence', isPassed: false, isCommitted: false };
-    if (hasDiligenceSignal) return { stage: 'due_diligence', isPassed: false, isCommitted: false };
-    if (hasMeetingScheduled) return { stage: 'meeting', isPassed: false, isCommitted: false };
-    if (hasInfoRequested) return { stage: 'info_requested', isPassed: false, isCommitted: false };
-    if (state === 'scheduled') return { stage: 'meeting', isPassed: false, isCommitted: false };
-    if (state === 'requested_info') return { stage: 'info_requested', isPassed: false, isCommitted: false };
-    return { stage: 'discover', isPassed: false, isCommitted: false };
-}
-
 function deriveStatusMessage(flow: WorkflowView) {
     if (flow.isPassed) return 'Decision: Passed on this opportunity';
     if (flow.isCommitted) return 'Decision: Commitment confirmed';
@@ -59,25 +37,6 @@ function deriveStatusMessage(flow: WorkflowView) {
     if (flow.stage === 'meeting') return 'Next step: Continue with due diligence';
     if (flow.stage === 'due_diligence') return 'Action required: Complete diligence review and decide';
     return 'Decision point: Ready to commit or pass';
-}
-
-function humanizeEventType(type: string) {
-    const t = String(type || '');
-    const map: Record<string, string> = {
-        save: 'Shortlisted',
-        shortlist: 'Shortlisted',
-        pass: 'Passed',
-        request_info: 'Requested more info',
-        info_received: 'Organization sent requested info',
-        leverage_created: 'Drafted leverage offer',
-        scheduled: 'Scheduled meeting',
-        meeting_completed: 'Meeting completed',
-        diligence_completed: 'Due diligence completed',
-        funded: 'Committed',
-        reset: 'Reset',
-    };
-    if (map[t]) return map[t];
-    return t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function humanizeMeetingType(value: any) {
@@ -1406,85 +1365,6 @@ export default function DonorFeed() {
                         )}
                     </AnimatePresence>
                 </Card>
-            </div>
-        </div>
-    );
-}
-
-function OpportunityStepper(props: {
-    stage: WorkflowStage;
-    isPassed: boolean;
-    isCommitted: boolean;
-    compact?: boolean;
-    onStepClick?: (stage: WorkflowStage) => void;
-}) {
-    const { stage, isPassed, isCommitted, compact = false, onStepClick } = props;
-    const currentIndex = WORKFLOW_STAGES.indexOf(stage);
-    const nodeSize = compact ? 'h-6 w-6' : 'h-10 w-10';
-    const lineTop = compact ? 12 : 20;
-    const labelClass = compact
-        ? 'mt-4 text-[11px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]'
-        : 'mt-3 text-[13px] text-[var(--text-tertiary)]';
-
-    const stepCount = WORKFLOW_STAGES.length;
-    const progressRatio = Math.max(0, Math.min(1, currentIndex / (stepCount - 1)));
-    const railInsetPercent = 10; // center of first/last column in a 5-col grid
-    const railSpanPercent = 100 - railInsetPercent * 2;
-    const progressWidth = `${progressRatio * railSpanPercent}%`;
-
-    return (
-        <div className={compact ? 'py-1 px-1' : 'py-2'}>
-            <div className="relative px-3">
-                <div
-                    className="absolute h-px bg-[var(--border-subtle)]"
-                    style={{ top: lineTop, left: `${railInsetPercent}%`, right: `${railInsetPercent}%` }}
-                />
-                {!isPassed ? (
-                    <div
-                        className="absolute h-px bg-[var(--color-gold)]"
-                        style={{ top: lineTop, left: `${railInsetPercent}%`, width: progressWidth }}
-                    />
-                ) : null}
-                <div className="relative z-10 grid grid-cols-5 gap-2">
-                {WORKFLOW_STAGES.map((label, idx) => {
-                    const isCurrent = idx === currentIndex;
-                    const isDone = idx < currentIndex || (idx === WORKFLOW_STAGES.length - 1 && isCommitted);
-                    const isDecision = idx === WORKFLOW_STAGES.length - 1;
-                    const isPassedNode = isDecision && isPassed;
-                    return (
-                        <div key={label} className="text-center">
-                            <button
-                                type="button"
-                                onClick={() => onStepClick?.(label)}
-                                className="w-full"
-                                title={compact ? undefined : `Set stage: ${label.replace('_', ' ')}`}
-                            >
-                            <div
-                                className={[
-                                    `mx-auto ${nodeSize} rounded-full border flex items-center justify-center`,
-                                    'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]',
-                                    isCurrent ? 'border-[var(--color-gold)] bg-[rgba(24,24,28,1)] shadow-[0_0_18px_rgba(212,175,55,0.42)]' : '',
-                                    isDone ? 'border-[var(--color-gold)] bg-[var(--color-gold)] text-black shadow-[0_0_20px_rgba(212,175,55,0.35)]' : '',
-                                    isPassedNode ? 'border-red-400/50 bg-[rgba(127,29,29,0.22)] text-red-300' : '',
-                                    !isCurrent && !isDone && !isPassedNode ? 'border-[var(--border-subtle)] bg-[rgba(34,35,39,1)]' : '',
-                                ].join(' ')}
-                            >
-                                {isPassedNode ? (
-                                    <XIcon size={12} />
-                                ) : isDone ? (
-                                    <Check size={12} />
-                                ) : isCurrent ? (
-                                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-gold)] shadow-[0_0_10px_rgba(212,175,55,0.55)]" />
-                                ) : null}
-                            </div>
-                            <div className={labelClass}>
-                                {label.replace('_', ' ')}
-                            </div>
-                            </button>
-                        </div>
-                    );
-                })}
-                </div>
             </div>
         </div>
     );

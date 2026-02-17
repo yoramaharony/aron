@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { requests } from '@/db/schema';
 import { getSession } from '@/lib/auth';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(request: Request) {
@@ -11,11 +11,11 @@ export async function GET(request: Request) {
 
     // If Requestor, show only their requests. If Donor, show all active/pending (simplified for MVP).
     if (session.role === 'requestor') {
-        const myRequests = await db.select().from(requests).where(eq(requests.createdBy, session.userId));
+        const myRequests = await db.select().from(requests).where(eq(requests.createdBy, session.userId)).orderBy(desc(requests.createdAt));
         return NextResponse.json({ requests: myRequests });
     } else {
         // Donor sees everything for now
-        const allRequests = await db.select().from(requests);
+        const allRequests = await db.select().from(requests).orderBy(desc(requests.createdAt));
         return NextResponse.json({ requests: allRequests });
     }
 }
