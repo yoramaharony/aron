@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -20,7 +20,9 @@ import {
     ChevronDown,
     ChevronUp,
     Clock3,
+    Copy,
     DollarSign,
+    ExternalLink,
     FileCheck2,
     FileText,
     Heart,
@@ -29,8 +31,11 @@ import {
     MessageSquare,
     Paperclip,
     Shield,
+    Sparkles,
+    Upload,
     X as XIcon,
 } from 'lucide-react';
+import { getMoreInfoDemoData } from '@/lib/demo-autofill';
 import { AnimatePresence, motion } from 'framer-motion';
 
 /* ─── Types ─── */
@@ -45,6 +50,9 @@ interface RequestData {
     status: string;
     coverUrl?: string | null;
     evidence?: { budget?: { url: string; name: string }; files?: { url: string; name: string }[] } | null;
+    moreInfoToken?: string | null;
+    moreInfoSubmittedAt?: string | null;
+    details?: Record<string, string | null> | null;
     createdAt?: string | null;
 }
 
@@ -98,6 +106,231 @@ function advanceStageForWorkflow(stage: WorkflowStage): string | null {
     return map[stage] ?? null;
 }
 
+/* ─── More-info inline form ─── */
+type UploadedFile = { name: string; url: string; size: number; type: string };
+
+function MoreInfoForm({ token, existing, amount, onSubmitted }: {
+    token: string;
+    existing: Record<string, string | null> | null;
+    amount: number;
+    onSubmitted: () => void;
+}) {
+    const [form, setForm] = useState({
+        orgWebsite: existing?.orgWebsite ?? '',
+        mission: existing?.mission ?? '',
+        program: existing?.program ?? '',
+        geo: existing?.geo ?? '',
+        beneficiaries: existing?.beneficiaries ?? '',
+        budget: existing?.budget ?? '',
+        amountRequested: existing?.amountRequested ?? '',
+        timeline: existing?.timeline ?? '',
+        governance: existing?.governance ?? '',
+        leadership: existing?.leadership ?? '',
+        proofLinks: existing?.proofLinks ?? '',
+    });
+    const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
+    const [supportingDocs, setSupportingDocs] = useState<UploadedFile[]>(
+        Array.isArray((existing as any)?.supportingDocs) ? (existing as any).supportingDocs : [],
+    );
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const [dragOver, setDragOver] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    const complexity = amount <= 25000 ? 'basic' : amount <= 100000 ? 'detailed' : 'comprehensive';
+
+    const uploadFiles = async (files: FileList | File[]) => {
+        setUploading(true);
+        setUploadError('');
+        try {
+            const fd = new FormData();
+            Array.from(files).forEach((f) => fd.append('files', f));
+            const res = await fetch(`/api/more-info/${encodeURIComponent(token)}/upload`, { method: 'POST', body: fd });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Upload failed');
+            setSupportingDocs((prev) => [...prev, ...(data?.files ?? [])]);
+        } catch (e: unknown) {
+            setUploadError(e instanceof Error ? e.message : 'Upload failed');
+        } finally {
+            setUploading(false);
+        }
+    };
+
+    const removeDoc = (url: string) => {
+        setSupportingDocs((prev) => prev.filter((d) => d.url !== url));
+    };
+
+    const handleSubmit = async () => {
+        setSubmitting(true);
+        setSubmitError('');
+        try {
+            const res = await fetch(`/api/more-info/${encodeURIComponent(token)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ...form, supportingDocs }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Failed to submit');
+            onSubmitted();
+        } catch (e: unknown) {
+            setSubmitError(e instanceof Error ? e.message : 'Failed to submit');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="label">Org website</label>
+                    <input className="input-field" value={form.orgWebsite} onChange={(e) => setForm((p) => ({ ...p, orgWebsite: e.target.value }))} />
+                </div>
+                <div>
+                    <label className="label">Geo (where you operate)</label>
+                    <input className="input-field" value={form.geo} onChange={(e) => setForm((p) => ({ ...p, geo: e.target.value }))} />
+                </div>
+                <div>
+                    <label className="label">Budget (high level)</label>
+                    <input className="input-field" value={form.budget} onChange={(e) => setForm((p) => ({ ...p, budget: e.target.value }))} placeholder="e.g. $2.1M annual" />
+                </div>
+                <div>
+                    <label className="label">Amount requested</label>
+                    <input className="input-field" value={form.amountRequested} onChange={(e) => setForm((p) => ({ ...p, amountRequested: e.target.value }))} placeholder="e.g. $250k" />
+                </div>
+            </div>
+
+            <div>
+                <label className="label">Mission (2-3 sentences)</label>
+                <textarea className="input-field min-h-[90px] resize-y" value={form.mission} onChange={(e) => setForm((p) => ({ ...p, mission: e.target.value }))} />
+            </div>
+
+            <div>
+                <label className="label">Program detail (what you'll do with the funds)</label>
+                <textarea className="input-field min-h-[110px] resize-y" value={form.program} onChange={(e) => setForm((p) => ({ ...p, program: e.target.value }))} />
+            </div>
+
+            {complexity !== 'basic' && (
+                <div>
+                    <label className="label">Beneficiaries + outcomes</label>
+                    <textarea className="input-field min-h-[100px] resize-y" value={form.beneficiaries} onChange={(e) => setForm((p) => ({ ...p, beneficiaries: e.target.value }))} />
+                </div>
+            )}
+
+            {complexity !== 'basic' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="label">Timeline</label>
+                        <textarea className="input-field min-h-[90px] resize-y" value={form.timeline} onChange={(e) => setForm((p) => ({ ...p, timeline: e.target.value }))} placeholder="e.g. start in 14 days, complete in 6 months" />
+                    </div>
+                    <div>
+                        <label className="label">Governance (board / oversight)</label>
+                        <textarea className="input-field min-h-[90px] resize-y" value={form.governance} onChange={(e) => setForm((p) => ({ ...p, governance: e.target.value }))} />
+                    </div>
+                </div>
+            )}
+
+            {complexity === 'comprehensive' && (
+                <div>
+                    <label className="label">Leadership (key people)</label>
+                    <textarea className="input-field min-h-[90px] resize-y" value={form.leadership} onChange={(e) => setForm((p) => ({ ...p, leadership: e.target.value }))} />
+                </div>
+            )}
+
+            <div>
+                <label className="label">Proof links (optional)</label>
+                <textarea className="input-field min-h-[70px] resize-y" value={form.proofLinks} onChange={(e) => setForm((p) => ({ ...p, proofLinks: e.target.value }))} placeholder="Paste links to docs, audited statements, reports, references..." />
+            </div>
+
+            {/* Supporting documents upload */}
+            <div>
+                <label className="label">Supporting documents (optional)</label>
+                <div
+                    className={[
+                        'p-6 border-dashed rounded-lg flex flex-col items-center justify-center gap-3 transition-all cursor-pointer',
+                        dragOver ? 'bg-[rgba(var(--accent-rgb),0.10)]' : 'hover:bg-[var(--bg-surface)]',
+                    ].join(' ')}
+                    style={{ border: '2px dashed var(--border-subtle)' }}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click(); } }}
+                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={async (e) => {
+                        e.preventDefault();
+                        setDragOver(false);
+                        if (e.dataTransfer?.files?.length) await uploadFiles(e.dataTransfer.files);
+                    }}
+                >
+                    {uploading ? (
+                        <div className="text-sm text-[var(--text-secondary)]">Uploading…</div>
+                    ) : (
+                        <>
+                            <div className="w-10 h-10 rounded-full bg-[var(--bg-surface)] flex items-center justify-center text-[var(--text-tertiary)]">
+                                <Upload size={20} />
+                            </div>
+                            <div className="text-center">
+                                <div className="text-sm font-medium">Drop files here or click to browse</div>
+                                <div className="text-xs text-[var(--text-tertiary)] mt-1">PDF, Excel, or images — max 10MB each</div>
+                            </div>
+                        </>
+                    )}
+                </div>
+                <input
+                    ref={fileInputRef}
+                    type="file"
+                    multiple
+                    accept=".pdf,.xls,.xlsx,.png,.jpg,.jpeg,.webp"
+                    className="sr-only"
+                    onChange={async (e) => {
+                        const picked = Array.from(e.currentTarget.files ?? []);
+                        e.currentTarget.value = '';
+                        if (picked.length) await uploadFiles(picked);
+                    }}
+                />
+                {uploadError && <div className="mt-2 text-xs text-red-300">{uploadError}</div>}
+                {supportingDocs.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                        {supportingDocs.map((doc) => (
+                            <div key={doc.url} className="flex items-center justify-between p-3 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)]">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <FileText size={16} className="text-[var(--text-tertiary)] shrink-0" />
+                                    <a href={doc.url} target="_blank" rel="noreferrer" className="text-sm truncate text-[var(--text-primary)] hover:underline">{doc.name}</a>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <Check size={14} className="text-[rgba(34,197,94,0.92)]" />
+                                    <button type="button" onClick={() => removeDoc(doc.url)} className="text-[var(--text-tertiary)] hover:text-red-400 transition-colors" title="Remove">
+                                        <XIcon size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {submitError && <div className="text-sm text-red-300">{submitError}</div>}
+
+            <div className="pt-2 flex items-center justify-end gap-3">
+                <button
+                    type="button"
+                    onClick={() => setForm(getMoreInfoDemoData())}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs text-purple-400 border border-purple-400/25 bg-purple-400/8 hover:bg-purple-400/15 transition-colors"
+                    title="Auto-fill with demo data"
+                >
+                    <Sparkles size={14} />
+                    AI Fill
+                </button>
+                <Button variant="gold" onClick={handleSubmit} isLoading={submitting}>
+                    Submit Information
+                </Button>
+            </div>
+        </div>
+    );
+}
+
 /* ─── Main page ─── */
 export default function RequestDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -113,6 +346,8 @@ export default function RequestDetailPage() {
     const [timelineOpen, setTimelineOpen] = useState(true);
     const [meetingOpen, setMeetingOpen] = useState(true);
     const [diligenceOpen, setDiligenceOpen] = useState(true);
+    const [linkCopied, setLinkCopied] = useState(false);
+    const [moreInfoModalOpen, setMoreInfoModalOpen] = useState(false);
 
     const load = useCallback(async () => {
         try {
@@ -139,7 +374,6 @@ export default function RequestDetailPage() {
         const clickedIdx = stageIndex(clickedStage);
         const currentIdx = stageIndex(workflow.stage);
 
-        // Only allow advancing forward by exactly one step (or to the next logical stage)
         if (clickedIdx <= currentIdx && !(clickedStage === 'decision' && !workflow.isCommitted && !workflow.isPassed)) return;
 
         const nextAdvance = advanceStageForWorkflow(workflow.stage);
@@ -171,6 +405,19 @@ export default function RequestDetailPage() {
     const diligenceEvent = events.find(e => e.type === 'diligence_completed');
     const infoRequestEvent = events.find(e => e.type === 'request_info');
     const fundedEvent = events.find(e => e.type === 'funded');
+
+    /* More-info state */
+    const hasInfoRequest = Boolean(infoRequestEvent || request?.moreInfoToken);
+    const hasSubmittedInfo = Boolean(request?.moreInfoSubmittedAt);
+    const moreInfoLink = request?.moreInfoToken ? `${typeof window !== 'undefined' ? window.location.origin : ''}/more-info/${request.moreInfoToken}` : null;
+
+    const copyLink = () => {
+        if (moreInfoLink) {
+            navigator.clipboard.writeText(moreInfoLink);
+            setLinkCopied(true);
+            setTimeout(() => setLinkCopied(false), 2000);
+        }
+    };
 
     if (loading) {
         return (
@@ -216,46 +463,7 @@ export default function RequestDetailPage() {
                 )}
             </AnimatePresence>
 
-            {/* Header */}
-            <Card className="p-6 space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                        <h1 className="text-3xl font-light text-[var(--text-primary)]">{request.title}</h1>
-                        <p className="text-sm text-[var(--text-secondary)] mt-2">{request.summary}</p>
-                    </div>
-                    <span
-                        className={[
-                            'shrink-0 text-[10px] px-3 py-1.5 rounded-full uppercase tracking-wider font-bold border',
-                            request.status === 'active'
-                                ? 'bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border-[rgba(34,197,94,0.22)]'
-                                : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[rgba(255,255,255,0.10)]',
-                        ].join(' ')}
-                    >
-                        {request.status}
-                    </span>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Category</div>
-                        <div className="text-[var(--text-primary)] inline-flex items-center gap-1.5"><Heart size={13} className="text-[var(--color-gold)]" />{request.category}</div>
-                    </div>
-                    <div>
-                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Amount</div>
-                        <div className="text-[var(--color-gold)] inline-flex items-center gap-1.5"><DollarSign size={13} />${request.targetAmount.toLocaleString()}</div>
-                    </div>
-                    <div>
-                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Location</div>
-                        <div className="text-[var(--text-primary)] inline-flex items-center gap-1.5"><MapPin size={13} className="text-[var(--color-gold)]" />{request.location}</div>
-                    </div>
-                    <div>
-                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Submitted</div>
-                        <div className="text-[var(--text-primary)] inline-flex items-center gap-1.5"><Calendar size={13} className="text-[var(--color-gold)]" />{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}</div>
-                    </div>
-                </div>
-            </Card>
-
-            {/* Stepper with demo advance */}
+            {/* ── 1. Progress Stepper ── */}
             <Card className="p-6">
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="text-lg font-medium text-[var(--text-primary)]">Progress</h2>
@@ -277,17 +485,70 @@ export default function RequestDetailPage() {
                 )}
             </Card>
 
-            {/* Info Request section */}
-            {infoRequestEvent && (
-                <Card className="p-6 space-y-3">
-                    <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
-                        <MessageSquare size={18} className="text-[var(--color-gold)]" />
-                        Information Requested
+            {/* ── 2. Main Info Card ── */}
+            <Card className="p-6 space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                        <h1 className="text-3xl font-light text-[var(--text-primary)]">{request.title}</h1>
+                        <p className="text-sm text-[var(--text-secondary)] mt-2">{request.summary}</p>
                     </div>
-                    {Boolean(infoRequestEvent.meta?.note) && (
-                        <p className="text-sm text-[var(--text-secondary)]">{String(infoRequestEvent.meta?.note)}</p>
+                    <span
+                        className={[
+                            'shrink-0 text-[10px] px-3 py-1.5 rounded-full uppercase tracking-wider font-bold border',
+                            request.status === 'active'
+                                ? 'bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border-[rgba(34,197,94,0.22)]'
+                                : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[rgba(255,255,255,0.10)]',
+                        ].join(' ')}
+                    >
+                        {request.status}
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Category</div>
+                        <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><Heart size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.category}</div>
+                    </div>
+                    <div>
+                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Amount</div>
+                        <div className="text-[var(--color-gold)] inline-flex items-start gap-1.5"><DollarSign size={16} className="shrink-0 mt-0.5" />${request.targetAmount.toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Location</div>
+                        <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><MapPin size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.location}</div>
+                    </div>
+                    <div>
+                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Submitted</div>
+                        <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><Calendar size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}</div>
+                    </div>
+                </div>
+            </Card>
+
+            {/* ── 3. Action Card — More Info Request ── */}
+            {hasInfoRequest && !hasSubmittedInfo && (
+                <Card className="p-6 space-y-4 border-[rgba(234,179,8,0.35)]">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
+                            <MessageSquare size={18} className="text-amber-400" />
+                            Action Required — Provide Additional Information
+                        </div>
+                        <span className="text-[10px] px-2 py-1 rounded-full bg-[rgba(234,179,8,0.12)] text-amber-400 border border-[rgba(234,179,8,0.2)]">
+                            Pending
+                        </span>
+                    </div>
+                    <p className="text-sm text-[var(--text-secondary)]">
+                        A donor has requested additional details about your submission. Fill out the form to strengthen your request and move to the next stage.
+                    </p>
+
+                    {/* Concierge note if present */}
+                    {infoRequestEvent && Boolean(infoRequestEvent.meta?.note) && (
+                        <div className="text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
+                            {String(infoRequestEvent.meta?.note)}
+                        </div>
                     )}
-                    {Array.isArray(infoRequestEvent.meta?.requestedDocs) && (
+
+                    {/* Required docs list */}
+                    {infoRequestEvent && Array.isArray(infoRequestEvent.meta?.requestedDocs) && (
                         <div className="space-y-2">
                             <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">Required Documents</div>
                             <ul className="space-y-1.5">
@@ -300,15 +561,129 @@ export default function RequestDetailPage() {
                             </ul>
                         </div>
                     )}
-                    <div className="pt-2">
-                        <span className="text-[10px] px-2 py-1 rounded-full bg-[rgba(234,179,8,0.12)] text-amber-400 border border-[rgba(234,179,8,0.2)]">
-                            Pending Response
-                        </span>
+
+                    {/* CTA + share link */}
+                    <div className="flex items-center gap-3 pt-2">
+                        <Button variant="gold" onClick={() => setMoreInfoModalOpen(true)}>
+                            Fill Out Form
+                        </Button>
+                        {moreInfoLink && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={copyLink}
+                                    className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
+                                >
+                                    <Copy size={12} />
+                                    {linkCopied ? 'Copied!' : 'Copy link'}
+                                </button>
+                                <a
+                                    href={moreInfoLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
+                                >
+                                    <ExternalLink size={12} />
+                                    Open in new tab
+                                </a>
+                            </>
+                        )}
                     </div>
                 </Card>
             )}
 
-            {/* Meeting Scheduling section */}
+            {/* ── More Info Modal ── */}
+            <AnimatePresence>
+                {moreInfoModalOpen && request.moreInfoToken && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-6"
+                        onClick={(e) => { if (e.target === e.currentTarget) setMoreInfoModalOpen(false); }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+                            className="w-full max-w-3xl my-8"
+                        >
+                            <Card className="p-6 md:p-8 space-y-5">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-medium text-[var(--text-primary)]">Provide Additional Information</h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setMoreInfoModalOpen(false)}
+                                        className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                                    >
+                                        <XIcon size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Concierge note inside modal */}
+                                {infoRequestEvent && Boolean(infoRequestEvent.meta?.note) && (
+                                    <div className="text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
+                                        {String(infoRequestEvent.meta?.note)}
+                                    </div>
+                                )}
+
+                                <MoreInfoForm
+                                    token={request.moreInfoToken}
+                                    existing={request.details ?? null}
+                                    amount={request.targetAmount}
+                                    onSubmitted={() => {
+                                        setMoreInfoModalOpen(false);
+                                        load();
+                                    }}
+                                />
+                            </Card>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── 3b. Submitted info (read-only) ── */}
+            {hasInfoRequest && hasSubmittedInfo && request.details && (
+                <Card className="p-6 space-y-4 border-[rgba(34,197,94,0.25)]">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
+                            <CheckCircle2 size={18} className="text-emerald-400" />
+                            Additional Information Submitted
+                        </div>
+                        <span className="text-[10px] px-2 py-1 rounded-full bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border border-[rgba(34,197,94,0.22)]">
+                            Submitted
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                        {Object.entries(request.details).filter(([k, v]) => v && k !== 'updatedAt').map(([key, value]) => (
+                            <div key={key}>
+                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-0.5">
+                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
+                                </div>
+                                <div className="text-[var(--text-secondary)] whitespace-pre-line">{String(value)}</div>
+                            </div>
+                        ))}
+                    </div>
+                    {/* Allow re-editing */}
+                    {moreInfoLink && (
+                        <div className="pt-2 flex items-center gap-3">
+                            <a
+                                href={moreInfoLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs inline-flex items-center gap-1 text-[var(--color-gold)] hover:underline"
+                            >
+                                <ExternalLink size={11} />
+                                Edit / update information
+                            </a>
+                        </div>
+                    )}
+                </Card>
+            )}
+
+            {/* ── 4. Stage-specific detail cards ── */}
+
+            {/* Meeting Scheduling */}
             {scheduledEvent && (
                 <Card className="p-6 space-y-4">
                     <button
@@ -430,7 +805,6 @@ export default function RequestDetailPage() {
                         )}
                     </div>
 
-                    {/* Follow-ups */}
                     {(meetingEvent.meta?.followUps != null && typeof meetingEvent.meta?.followUps === 'object') && (
                         <div>
                             <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Follow-up Items</div>
@@ -498,7 +872,6 @@ export default function RequestDetailPage() {
                                 )}
                             </div>
 
-                            {/* Checklist results */}
                             {(diligenceEvent.meta?.checklistResults != null && typeof diligenceEvent.meta?.checklistResults === 'object') && (
                                 <div>
                                     <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Checklist</div>
@@ -549,14 +922,14 @@ export default function RequestDetailPage() {
                 </Card>
             )}
 
-            {/* Materials */}
-            {request.evidence && (
+            {/* ── 5. Materials ── */}
+            {(request.evidence || (Array.isArray((request.details as any)?.supportingDocs) && (request.details as any).supportingDocs.length > 0)) && (
                 <Card className="p-6 space-y-4">
                     <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
                         <Paperclip size={18} className="text-[var(--color-gold)]" />
                         Materials
                     </div>
-                    {request.evidence.budget && (
+                    {request.evidence?.budget && (
                         <div>
                             <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1.5">Budget</div>
                             <a
@@ -570,7 +943,7 @@ export default function RequestDetailPage() {
                             </a>
                         </div>
                     )}
-                    {request.evidence.files && request.evidence.files.length > 0 && (
+                    {request.evidence?.files && request.evidence.files.length > 0 && (
                         <div>
                             <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1.5">Supporting Documents</div>
                             <div className="space-y-1.5">
@@ -589,10 +962,29 @@ export default function RequestDetailPage() {
                             </div>
                         </div>
                     )}
+                    {Array.isArray((request.details as any)?.supportingDocs) && (request.details as any).supportingDocs.length > 0 && (
+                        <div>
+                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1.5">More Info Documents</div>
+                            <div className="space-y-1.5">
+                                {((request.details as any).supportingDocs as { name: string; url: string }[]).map((f, i) => (
+                                    <a
+                                        key={i}
+                                        href={f.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-center gap-2 text-sm text-[var(--color-gold)] hover:underline"
+                                    >
+                                        <Paperclip size={13} />
+                                        {f.name || `Document ${i + 1}`}
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </Card>
             )}
 
-            {/* Engagement Timeline */}
+            {/* ── 6. Engagement Timeline ── */}
             <Card className="p-6">
                 <button
                     type="button"
@@ -624,7 +1016,6 @@ export default function RequestDetailPage() {
                                             <div className="text-xs text-[var(--text-tertiary)] mt-1">
                                                 {eventTimestamp(e)}
                                             </div>
-                                            {/* Show concierge note if present */}
                                             {Boolean(e.meta?.note) && (
                                                 <div className="mt-2 text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
                                                     {String(e.meta?.note)}

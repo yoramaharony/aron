@@ -176,7 +176,7 @@ export default function AdminDonorsPage() {
       </div>
 
       <Card className="p-4 md:p-6 space-y-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-end justify-between gap-4">
           <div className="flex-1">
             <label className="label">Search</label>
             <input
@@ -189,7 +189,7 @@ export default function AdminDonorsPage() {
               }}
             />
           </div>
-          <div className="pt-6 flex items-center gap-3">
+          <div className="flex items-end gap-3">
             <div className="min-w-[180px]">
               <label className="label">Status</label>
               <select

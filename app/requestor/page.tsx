@@ -4,8 +4,9 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Check, ChevronRight, Upload, FileText, Globe, DollarSign } from 'lucide-react';
+import { Check, ChevronRight, Upload, FileText, Globe, DollarSign, Sparkles } from 'lucide-react';
 import { JEWISH_DEMO_CATEGORIES, type JewishDemoCategory } from '@/lib/categories';
+import { getRequestWizardDemoData } from '@/lib/demo-autofill';
 
 function RequestWizardInner() {
     const router = useRouter();
@@ -647,7 +648,25 @@ function RequestWizardInner() {
                             </div>
                         ) : null}
                         {step < 4 && (
-                            <div className="flex justify-end pt-6 mt-6 border-t border-[var(--border-subtle)]">
+                            <div className="flex justify-between items-center pt-6 mt-6 border-t border-[var(--border-subtle)]">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const demo = getRequestWizardDemoData();
+                                        setFormData({
+                                            title: demo.title,
+                                            category: demo.category as JewishDemoCategory,
+                                            location: demo.location,
+                                            target: demo.target,
+                                            summary: demo.summary,
+                                        });
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs text-purple-400 border border-purple-400/25 bg-purple-400/8 hover:bg-purple-400/15 transition-colors"
+                                    title="Auto-fill with demo data"
+                                >
+                                    <Sparkles size={14} />
+                                    AI Fill
+                                </button>
                                 <Button
                                     onClick={() => {
                                         if (!validateStep(step)) return;

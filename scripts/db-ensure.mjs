@@ -282,6 +282,10 @@ async function main() {
     `ALTER TABLE submission_entries ADD COLUMN details_json TEXT;`,
     `ALTER TABLE requests ADD COLUMN cover_url TEXT;`,
     `ALTER TABLE requests ADD COLUMN evidence_json TEXT;`,
+    `ALTER TABLE requests ADD COLUMN more_info_token TEXT;`,
+    `ALTER TABLE requests ADD COLUMN more_info_requested_at INTEGER;`,
+    `ALTER TABLE requests ADD COLUMN more_info_submitted_at INTEGER;`,
+    `ALTER TABLE requests ADD COLUMN details_json TEXT;`,
     `ALTER TABLE donor_opportunity_state ADD COLUMN notes TEXT;`,
 
     // Seed default email templates (B"H prefix is customary in Hasidic community).

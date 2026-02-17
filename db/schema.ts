@@ -25,6 +25,10 @@ export const requests = sqliteTable('requests', {
     createdBy: text('created_by').references(() => users.id),
     coverUrl: text('cover_url'),
     evidenceJson: text('evidence_json'), // JSON: { budget?: UploadedFile, files?: UploadedFile[] }
+    moreInfoToken: text('more_info_token'),
+    moreInfoRequestedAt: integer('more_info_requested_at', { mode: 'timestamp' }),
+    moreInfoSubmittedAt: integer('more_info_submitted_at', { mode: 'timestamp' }),
+    detailsJson: text('details_json'),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 

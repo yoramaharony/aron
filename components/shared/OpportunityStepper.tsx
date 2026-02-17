@@ -47,32 +47,35 @@ export function OpportunityStepper(props: {
                         const displayLabel = orgLabels ? STAGE_LABELS_ORG[label] : label.replace('_', ' ');
                         return (
                             <div key={label} className="text-center">
-                                <button
-                                    type="button"
-                                    onClick={() => onStepClick?.(label)}
-                                    className="w-full"
-                                    title={compact ? undefined : `Stage: ${displayLabel}`}
-                                >
-                                    <div
-                                        className={[
-                                            `mx-auto ${nodeSize} rounded-full border flex items-center justify-center`,
-                                            'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]',
-                                            isCurrent ? 'border-[var(--color-gold)] bg-[rgba(24,24,28,1)] shadow-[0_0_18px_rgba(212,175,55,0.42)]' : '',
-                                            isDone ? 'border-[var(--color-gold)] bg-[var(--color-gold)] text-black shadow-[0_0_20px_rgba(212,175,55,0.35)]' : '',
-                                            isPassedNode ? 'border-red-400/50 bg-[rgba(127,29,29,0.22)] text-red-300' : '',
-                                            !isCurrent && !isDone && !isPassedNode ? 'border-[var(--border-subtle)] bg-[rgba(34,35,39,1)]' : '',
-                                        ].join(' ')}
-                                    >
-                                        {isPassedNode ? (
-                                            <XIcon size={12} />
-                                        ) : isDone ? (
-                                            <Check size={12} />
-                                        ) : isCurrent ? (
-                                            <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-gold)] shadow-[0_0_10px_rgba(212,175,55,0.55)]" />
-                                        ) : null}
-                                    </div>
-                                    <div className={labelClass}>{displayLabel}</div>
-                                </button>
+                                {(() => {
+                                    const Wrapper = onStepClick ? 'button' : 'div';
+                                    return (
+                                        <Wrapper
+                                            {...(onStepClick ? { type: 'button' as const, onClick: () => onStepClick(label), title: compact ? undefined : `Stage: ${displayLabel}` } : {})}
+                                            className="w-full"
+                                        >
+                                            <div
+                                                className={[
+                                                    `mx-auto ${nodeSize} rounded-full border flex items-center justify-center`,
+                                                    'shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]',
+                                                    isCurrent ? 'border-[var(--color-gold)] bg-[rgba(24,24,28,1)] shadow-[0_0_18px_rgba(212,175,55,0.42)]' : '',
+                                                    isDone ? 'border-[var(--color-gold)] bg-[var(--color-gold)] text-black shadow-[0_0_20px_rgba(212,175,55,0.35)]' : '',
+                                                    isPassedNode ? 'border-red-400/50 bg-[rgba(127,29,29,0.22)] text-red-300' : '',
+                                                    !isCurrent && !isDone && !isPassedNode ? 'border-[var(--border-subtle)] bg-[rgba(34,35,39,1)]' : '',
+                                                ].join(' ')}
+                                            >
+                                                {isPassedNode ? (
+                                                    <XIcon size={12} />
+                                                ) : isDone ? (
+                                                    <Check size={12} />
+                                                ) : isCurrent ? (
+                                                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-gold)] shadow-[0_0_10px_rgba(212,175,55,0.55)]" />
+                                                ) : null}
+                                            </div>
+                                            <div className={labelClass}>{displayLabel}</div>
+                                        </Wrapper>
+                                    );
+                                })()}
                             </div>
                         );
                     })}

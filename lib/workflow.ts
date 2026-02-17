@@ -25,6 +25,7 @@ export function deriveWorkflow(detail: { state?: string; events?: { type: string
     if (has('meeting_completed')) return { stage: 'due_diligence', isPassed: false, isCommitted: false };
     if (has('leverage_created')) return { stage: 'due_diligence', isPassed: false, isCommitted: false };
     if (has('scheduled')) return { stage: 'meeting', isPassed: false, isCommitted: false };
+    if (has('info_received')) return { stage: 'meeting', isPassed: false, isCommitted: false };
     if (has('request_info')) return { stage: 'info_requested', isPassed: false, isCommitted: false };
     if (state === 'scheduled') return { stage: 'meeting', isPassed: false, isCommitted: false };
     if (state === 'requested_info') return { stage: 'info_requested', isPassed: false, isCommitted: false };

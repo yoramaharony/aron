@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState, submissionEntries, users } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, requests, submissionEntries, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -121,6 +121,22 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
 
         emailSent = { to, id: sent?.id };
       }
+    }
+  }
+
+  // Progressive disclosure: on request_info for org requests (non-sub_ keys), mint token + link
+  if (action === 'request_info' && !safeKey.startsWith('sub_') && !moreInfoUrl) {
+    const reqRow = await db.select().from(requests).where(eq(requests.id, safeKey)).get();
+    if (reqRow) {
+      const token = reqRow.moreInfoToken || uuidv4();
+      if (!reqRow.moreInfoToken) {
+        await db
+          .update(requests)
+          .set({ moreInfoToken: token, moreInfoRequestedAt: new Date(), status: 'more_info_requested' })
+          .where(eq(requests.id, safeKey));
+      }
+      const origin = new URL(request.url).origin;
+      moreInfoUrl = `${origin}/more-info/${token}`;
     }
   }
 
