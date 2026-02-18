@@ -49,7 +49,8 @@ export async function POST(request: Request) {
             createdBy: session.userId,
             coverUrl: typeof coverUrl === 'string' && coverUrl.trim() ? coverUrl.trim() : null,
             evidenceJson,
-            status: 'pending' // Default to pending
+            status: 'pending', // Default to pending
+            createdAt: new Date(),
         });
 
         return NextResponse.json({ success: true, id: newId });

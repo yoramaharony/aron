@@ -288,6 +288,11 @@ async function main() {
     `ALTER TABLE requests ADD COLUMN details_json TEXT;`,
     `ALTER TABLE donor_opportunity_state ADD COLUMN notes TEXT;`,
 
+    // Backfill: DEFAULT (CURRENT_TIMESTAMP) stores a text string in INTEGER columns,
+    // which SQLite truncates to just the year (e.g. 2026). Fix any bad values.
+    `UPDATE requests SET created_at = unixepoch() WHERE created_at IS NULL OR created_at < 1000000;`,
+    `UPDATE submission_entries SET created_at = unixepoch() WHERE created_at IS NULL OR created_at < 1000000;`,
+
     // Seed default email templates (B"H prefix is customary in Hasidic community).
     `
     INSERT INTO email_templates (key, name, subject, text_body, html_body, enabled)

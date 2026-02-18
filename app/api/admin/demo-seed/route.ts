@@ -342,6 +342,7 @@ export async function POST(req: Request) {
       status: 'active',
       // Use the seeded donor as createdBy to avoid foreign-key issues if the admin session user isn't present in this DB.
       createdBy: donorId,
+      createdAt: new Date(),
     });
   } else {
     // Keep the curated request aligned to the chosen theme.
