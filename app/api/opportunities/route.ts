@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityState, requests, submissionEntries } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, donorProfiles, requests, submissionEntries } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
 import { toIsoTime } from '@/lib/time';
@@ -17,6 +17,8 @@ type OpportunityRow = {
   amount?: number | null;
   createdAt?: string | null;
   state: string; // new/shortlisted/passed/...
+  conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
+  conciergeReason?: string | null;
 };
 
 export async function GET() {
@@ -35,11 +37,6 @@ export async function GET() {
   // Requests: MVP curated list (global)
   const reqs = await db.select().from(requests).orderBy(desc(requests.createdAt)).limit(200);
 
-  const allKeys = [
-    ...subs.map((s) => `sub_${s.id}`),
-    ...reqs.map((r) => String(r.id)),
-  ];
-
   // Load donor state rows for these opportunities
   const states = await db
     .select()
@@ -52,10 +49,38 @@ export async function GET() {
     stateByKey.set(String(s.opportunityKey), String(s.state || 'new'));
   }
 
+  // Load concierge events for annotation
+  const events = await db
+    .select()
+    .from(donorOpportunityEvents)
+    .where(eq(donorOpportunityEvents.donorId, session.userId))
+    .limit(2000);
+
+  const conciergeByKey = new Map<string, { action: string; reason: string }>();
+  for (const evt of events) {
+    if (!evt.metaJson) continue;
+    try {
+      const meta = JSON.parse(evt.metaJson);
+      if (meta?.source !== 'concierge') continue;
+      const action =
+        evt.type === 'pass' ? 'pass'
+          : evt.type === 'request_info' ? 'request_info'
+            : 'keep';
+      conciergeByKey.set(String(evt.opportunityKey), { action, reason: meta.reason || '' });
+    } catch { /* ignore bad JSON */ }
+  }
+
+  // Load donor vision status
+  const profile = await db.select().from(donorProfiles).where(eq(donorProfiles.donorId, session.userId)).get();
+  const vision = profile?.visionJson ? JSON.parse(profile.visionJson) : null;
+  const hasVision = Boolean(profile && profile.visionJson);
+  const visionStage: string | null = vision?.stage ?? null;
+
   const rows: OpportunityRow[] = [];
 
   for (const s of subs) {
     const key = `sub_${s.id}`;
+    const cc = conciergeByKey.get(key);
     rows.push({
       key,
       source: 'submission',
@@ -65,11 +90,14 @@ export async function GET() {
       amount: s.amountRequested ?? null,
       createdAt: toIsoTime(s.createdAt),
       state: stateByKey.get(key) ?? 'new',
+      conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
+      conciergeReason: cc?.reason ?? null,
     });
   }
 
   for (const r of reqs) {
     const key = String(r.id);
+    const cc = conciergeByKey.get(key);
     rows.push({
       key,
       source: 'request',
@@ -81,11 +109,14 @@ export async function GET() {
       amount: r.targetAmount ? Number(r.targetAmount) - Number(r.currentAmount ?? 0) : null,
       createdAt: toIsoTime(r.createdAt),
       state: stateByKey.get(key) ?? 'new',
+      conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
+      conciergeReason: cc?.reason ?? null,
     });
   }
 
   for (const c of CHARIDY_CURATED) {
     const key = c.key;
+    const cc = conciergeByKey.get(key);
     rows.push({
       key,
       source: 'charidy',
@@ -97,12 +128,13 @@ export async function GET() {
       amount: c.fundingGap,
       createdAt: null,
       state: stateByKey.get(key) ?? 'new',
+      conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
+      conciergeReason: cc?.reason ?? null,
     });
   }
 
   // Sort newest first
   rows.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
 
-  return NextResponse.json({ opportunities: rows });
+  return NextResponse.json({ opportunities: rows, hasVision, visionStage });
 }
-

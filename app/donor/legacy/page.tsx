@@ -91,6 +91,8 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                 setSuggestions(data.suggestions);
             }
             onUpdated();
+            // Fire-and-forget: trigger concierge review of opportunities after vision update
+            fetch('/api/opportunities/concierge-review', { method: 'POST' }).catch(() => {});
         } catch (e: any) {
             setError(e?.message || 'Failed to send');
         } finally {

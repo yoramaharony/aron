@@ -17,8 +17,7 @@ import {
     Calendar,
     Check,
     CheckCircle2,
-    ChevronDown,
-    ChevronUp,
+    ChevronRight,
     Clock3,
     Copy,
     DollarSign,
@@ -60,6 +59,93 @@ interface EventData {
     type: string;
     meta: Record<string, unknown> | null;
     createdAt: string | null;
+}
+
+type TabKey = 'overview' | 'tasks' | 'details' | 'documents';
+
+/* ─── Task model ─── */
+interface TaskItem {
+    id: string;
+    label: string;
+    description: string;
+    status: 'pending' | 'completed';
+    action?: 'open-more-info' | 'meeting-action';
+    completedAt?: string | null;
+}
+
+function computeTasks(
+    hasInfoRequest: boolean,
+    hasSubmittedInfo: boolean,
+    moreInfoSubmittedAt: string | null | undefined,
+    scheduledEvent: EventData | undefined,
+    meetingEvent: EventData | undefined,
+    diligenceEvent: EventData | undefined,
+    fundedEvent: EventData | undefined,
+): { pending: TaskItem[]; completed: TaskItem[] } {
+    const pending: TaskItem[] = [];
+    const completed: TaskItem[] = [];
+
+    if (hasInfoRequest) {
+        if (!hasSubmittedInfo) {
+            pending.push({
+                id: 'more-info',
+                label: 'Provide additional information',
+                description: 'A donor has requested more details about your submission.',
+                status: 'pending',
+                action: 'open-more-info',
+            });
+        } else {
+            completed.push({
+                id: 'more-info',
+                label: 'Additional information submitted',
+                description: 'You submitted the requested details.',
+                status: 'completed',
+                completedAt: moreInfoSubmittedAt ?? null,
+            });
+        }
+    }
+
+    if (scheduledEvent) {
+        if (!meetingEvent) {
+            pending.push({
+                id: 'meeting',
+                label: 'Accept or reschedule meeting',
+                description: 'A meeting has been scheduled. Please confirm or propose a new time.',
+                status: 'pending',
+                action: 'meeting-action',
+            });
+        } else {
+            completed.push({
+                id: 'meeting',
+                label: 'Meeting completed',
+                description: 'The meeting was held.',
+                status: 'completed',
+                completedAt: meetingEvent.createdAt,
+            });
+        }
+    }
+
+    if (diligenceEvent) {
+        completed.push({
+            id: 'diligence',
+            label: 'Due diligence completed',
+            description: 'The due diligence review has been finalized.',
+            status: 'completed',
+            completedAt: diligenceEvent.createdAt,
+        });
+    }
+
+    if (fundedEvent) {
+        completed.push({
+            id: 'funded',
+            label: 'Funding approved',
+            description: 'Your request has been approved for funding.',
+            status: 'completed',
+            completedAt: fundedEvent.createdAt,
+        });
+    }
+
+    return { pending, completed };
 }
 
 /* ─── Helpers ─── */
@@ -104,6 +190,12 @@ function advanceStageForWorkflow(stage: WorkflowStage): string | null {
         decision: 'funded',
     };
     return map[stage] ?? null;
+}
+
+function taskIcon(task: TaskItem) {
+    if (task.id === 'more-info') return <MessageSquare size={16} className="text-amber-400" />;
+    if (task.id === 'meeting') return <Calendar size={16} className="text-amber-400" />;
+    return <Clock3 size={16} className="text-amber-400" />;
 }
 
 /* ─── More-info inline form ─── */
@@ -343,11 +435,9 @@ export default function RequestDetailPage() {
     const [error, setError] = useState('');
     const [advancing, setAdvancing] = useState(false);
     const [advanceToast, setAdvanceToast] = useState<string | null>(null);
-    const [timelineOpen, setTimelineOpen] = useState(true);
-    const [meetingOpen, setMeetingOpen] = useState(true);
-    const [diligenceOpen, setDiligenceOpen] = useState(true);
     const [linkCopied, setLinkCopied] = useState(false);
     const [moreInfoModalOpen, setMoreInfoModalOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
     const load = useCallback(async () => {
         try {
@@ -411,6 +501,26 @@ export default function RequestDetailPage() {
     const hasSubmittedInfo = Boolean(request?.moreInfoSubmittedAt);
     const moreInfoLink = request?.moreInfoToken ? `${typeof window !== 'undefined' ? window.location.origin : ''}/more-info/${request.moreInfoToken}` : null;
 
+    /* Task computation */
+    const { pending: pendingTasks, completed: completedTasks } = computeTasks(
+        hasInfoRequest,
+        hasSubmittedInfo,
+        request?.moreInfoSubmittedAt,
+        scheduledEvent,
+        meetingEvent,
+        diligenceEvent,
+        fundedEvent,
+    );
+    const pendingCount = pendingTasks.length;
+
+    const handleTaskAction = (task: TaskItem) => {
+        if (task.action === 'open-more-info') {
+            setMoreInfoModalOpen(true);
+        } else if (task.action === 'meeting-action') {
+            setActiveTab('tasks');
+        }
+    };
+
     const copyLink = () => {
         if (moreInfoLink) {
             navigator.clipboard.writeText(moreInfoLink);
@@ -418,6 +528,13 @@ export default function RequestDetailPage() {
             setTimeout(() => setLinkCopied(false), 2000);
         }
     };
+
+    /* Documents check */
+    const hasDocuments = Boolean(
+        request?.evidence?.budget ||
+        (request?.evidence?.files && request.evidence.files.length > 0) ||
+        (Array.isArray((request?.details as any)?.supportingDocs) && (request?.details as any).supportingDocs.length > 0),
+    );
 
     if (loading) {
         return (
@@ -463,7 +580,40 @@ export default function RequestDetailPage() {
                 )}
             </AnimatePresence>
 
-            {/* ── 1. Progress Stepper ── */}
+            {/* ── Tab Navigation ── */}
+            <div className="flex gap-8 border-b border-[var(--border-subtle)]">
+                {([
+                    { key: 'overview' as TabKey, label: 'Overview' },
+                    { key: 'tasks' as TabKey, label: 'Tasks', badge: pendingCount },
+                    { key: 'details' as TabKey, label: 'Request Details' },
+                    { key: 'documents' as TabKey, label: 'Documents' },
+                ]).map((tab) => (
+                    <button
+                        key={tab.key}
+                        type="button"
+                        onClick={() => setActiveTab(tab.key)}
+                        className={`pb-3 text-sm font-medium transition-colors relative ${
+                            activeTab === tab.key
+                                ? 'text-[var(--text-primary)]'
+                                : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                        }`}
+                    >
+                        <span className="flex items-center gap-1.5">
+                            {tab.label}
+                            {tab.badge != null && tab.badge > 0 && (
+                                <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full text-[11px] font-bold bg-[rgba(212,175,55,0.15)] text-[var(--color-gold)] border border-[rgba(212,175,55,0.3)]">
+                                    {tab.badge}
+                                </span>
+                            )}
+                        </span>
+                        {activeTab === tab.key && (
+                            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-gold)]" />
+                        )}
+                    </button>
+                ))}
+            </div>
+
+            {/* ── Progress Stepper (below tabs, always visible) ── */}
             <Card className="p-6">
                 <div className="flex items-center justify-between mb-3">
                     <h2 className="text-lg font-medium text-[var(--text-primary)]">Progress</h2>
@@ -485,114 +635,7 @@ export default function RequestDetailPage() {
                 )}
             </Card>
 
-            {/* ── 2. Main Info Card ── */}
-            <Card className="p-6 space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                        <h1 className="text-3xl font-light text-[var(--text-primary)]">{request.title}</h1>
-                        <p className="text-sm text-[var(--text-secondary)] mt-2">{request.summary}</p>
-                    </div>
-                    <span
-                        className={[
-                            'shrink-0 text-[10px] px-3 py-1.5 rounded-full uppercase tracking-wider font-bold border',
-                            request.status === 'active'
-                                ? 'bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border-[rgba(34,197,94,0.22)]'
-                                : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[rgba(255,255,255,0.10)]',
-                        ].join(' ')}
-                    >
-                        {request.status}
-                    </span>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div>
-                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Category</div>
-                        <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><Heart size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.category}</div>
-                    </div>
-                    <div>
-                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Amount</div>
-                        <div className="text-[var(--color-gold)] inline-flex items-start gap-1.5"><DollarSign size={16} className="shrink-0 mt-0.5" />${request.targetAmount.toLocaleString()}</div>
-                    </div>
-                    <div>
-                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Location</div>
-                        <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><MapPin size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.location}</div>
-                    </div>
-                    <div>
-                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Submitted</div>
-                        <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><Calendar size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}</div>
-                    </div>
-                </div>
-            </Card>
-
-            {/* ── 3. Action Card — More Info Request ── */}
-            {hasInfoRequest && !hasSubmittedInfo && (
-                <Card className="p-6 space-y-4 border-[rgba(234,179,8,0.35)]">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
-                            <MessageSquare size={18} className="text-amber-400" />
-                            Action Required — Provide Additional Information
-                        </div>
-                        <span className="text-[10px] px-2 py-1 rounded-full bg-[rgba(234,179,8,0.12)] text-amber-400 border border-[rgba(234,179,8,0.2)]">
-                            Pending
-                        </span>
-                    </div>
-                    <p className="text-sm text-[var(--text-secondary)]">
-                        A donor has requested additional details about your submission. Fill out the form to strengthen your request and move to the next stage.
-                    </p>
-
-                    {/* Concierge note if present */}
-                    {infoRequestEvent && Boolean(infoRequestEvent.meta?.note) && (
-                        <div className="text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
-                            {String(infoRequestEvent.meta?.note)}
-                        </div>
-                    )}
-
-                    {/* Required docs list */}
-                    {infoRequestEvent && Array.isArray(infoRequestEvent.meta?.requestedDocs) && (
-                        <div className="space-y-2">
-                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">Required Documents</div>
-                            <ul className="space-y-1.5">
-                                {(infoRequestEvent.meta?.requestedDocs as string[]).map((doc, i) => (
-                                    <li key={i} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                                        <FileText size={13} className="text-[var(--color-gold)] shrink-0" />
-                                        {doc}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )}
-
-                    {/* CTA + share link */}
-                    <div className="flex items-center gap-3 pt-2">
-                        <Button variant="gold" onClick={() => setMoreInfoModalOpen(true)}>
-                            Fill Out Form
-                        </Button>
-                        {moreInfoLink && (
-                            <>
-                                <button
-                                    type="button"
-                                    onClick={copyLink}
-                                    className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
-                                >
-                                    <Copy size={12} />
-                                    {linkCopied ? 'Copied!' : 'Copy link'}
-                                </button>
-                                <a
-                                    href={moreInfoLink}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
-                                >
-                                    <ExternalLink size={12} />
-                                    Open in new tab
-                                </a>
-                            </>
-                        )}
-                    </div>
-                </Card>
-            )}
-
-            {/* ── More Info Modal ── */}
+            {/* ── More Info Modal (fixed overlay — always accessible) ── */}
             <AnimatePresence>
                 {moreInfoModalOpen && request.moreInfoToken && (
                     <motion.div
@@ -620,7 +663,6 @@ export default function RequestDetailPage() {
                                     </button>
                                 </div>
 
-                                {/* Concierge note inside modal */}
                                 {infoRequestEvent && Boolean(infoRequestEvent.meta?.note) && (
                                     <div className="text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
                                         {String(infoRequestEvent.meta?.note)}
@@ -642,67 +684,342 @@ export default function RequestDetailPage() {
                 )}
             </AnimatePresence>
 
-            {/* ── 3b. Submitted info (read-only) ── */}
-            {hasInfoRequest && hasSubmittedInfo && request.details && (
-                <Card className="p-6 space-y-4 border-[rgba(34,197,94,0.25)]">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
-                            <CheckCircle2 size={18} className="text-emerald-400" />
-                            Additional Information Submitted
-                        </div>
-                        <span className="text-[10px] px-2 py-1 rounded-full bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border border-[rgba(34,197,94,0.22)]">
-                            Submitted
-                        </span>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                        {Object.entries(request.details).filter(([k, v]) => v && k !== 'updatedAt').map(([key, value]) => (
-                            <div key={key}>
-                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-0.5">
-                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
-                                </div>
-                                <div className="text-[var(--text-secondary)] whitespace-pre-line">{String(value)}</div>
+            {/* ════════════════════════════════════════════════════════════ */}
+            {/* ── TAB: Overview ── */}
+            {/* ════════════════════════════════════════════════════════════ */}
+            {activeTab === 'overview' && (
+                <>
+                    {/* Main Info Card */}
+                    <Card className="p-6 space-y-4">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="min-w-0">
+                                <h1 className="text-3xl font-light text-[var(--text-primary)]">{request.title}</h1>
+                                <p className="text-sm text-[var(--text-secondary)] mt-2">{request.summary}</p>
                             </div>
-                        ))}
-                    </div>
-                    {/* Allow re-editing */}
-                    {moreInfoLink && (
-                        <div className="pt-2 flex items-center gap-3">
-                            <a
-                                href={moreInfoLink}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs inline-flex items-center gap-1 text-[var(--color-gold)] hover:underline"
+                            <span
+                                className={[
+                                    'shrink-0 text-[10px] px-3 py-1.5 rounded-full uppercase tracking-wider font-bold border',
+                                    request.status === 'active'
+                                        ? 'bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border-[rgba(34,197,94,0.22)]'
+                                        : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[rgba(255,255,255,0.10)]',
+                                ].join(' ')}
                             >
-                                <ExternalLink size={11} />
-                                Edit / update information
-                            </a>
+                                {request.status}
+                            </span>
                         </div>
+
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Category</div>
+                                <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><Heart size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.category}</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Amount</div>
+                                <div className="text-[var(--color-gold)] inline-flex items-start gap-1.5"><DollarSign size={16} className="shrink-0 mt-0.5" />${request.targetAmount.toLocaleString()}</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Location</div>
+                                <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><MapPin size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.location}</div>
+                            </div>
+                            <div>
+                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Submitted</div>
+                                <div className="text-[var(--text-primary)] inline-flex items-start gap-1.5"><Calendar size={16} className="text-[var(--color-gold)] shrink-0 mt-0.5" />{request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}</div>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* What to do next */}
+                    {pendingTasks.length > 0 && (
+                        <Card className="p-6 space-y-4 border-[rgba(212,175,55,0.25)]">
+                            <div className="flex items-center justify-between">
+                                <h2 className="text-lg font-medium text-[var(--text-primary)]">What to do next</h2>
+                                <span className="text-xs text-[var(--text-tertiary)]">
+                                    {pendingCount} task{pendingCount !== 1 ? 's' : ''} remaining
+                                </span>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => handleTaskAction(pendingTasks[0])}
+                                className="w-full flex items-center justify-between p-4 rounded-xl bg-[rgba(212,175,55,0.06)] border border-[rgba(212,175,55,0.2)] hover:bg-[rgba(212,175,55,0.10)] transition-colors text-left"
+                            >
+                                <div className="flex items-center gap-3 min-w-0">
+                                    <div className="h-10 w-10 rounded-xl bg-[rgba(212,175,55,0.12)] flex items-center justify-center text-[var(--color-gold)]">
+                                        {taskIcon(pendingTasks[0])}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="text-sm font-medium text-[var(--text-primary)]">
+                                            {pendingTasks[0].label}
+                                        </div>
+                                        <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                                            {pendingTasks[0].description}
+                                        </div>
+                                    </div>
+                                </div>
+                                <ChevronRight size={18} className="text-[var(--text-tertiary)] shrink-0 ml-3" />
+                            </button>
+
+                            {pendingCount > 1 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('tasks')}
+                                    className="text-sm text-[var(--color-gold)] hover:underline"
+                                >
+                                    View all {pendingCount} tasks
+                                </button>
+                            )}
+                        </Card>
                     )}
-                </Card>
+
+                    {/* Timeline */}
+                    <Card className="p-6">
+                        <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)] mb-4">
+                            <Clock3 size={18} className="text-[var(--color-gold)]" />
+                            Timeline
+                        </div>
+                        {events.length === 0 ? (
+                            <div className="text-sm text-[var(--text-tertiary)]">No activity yet. Click the stepper dots above to simulate concierge progress.</div>
+                        ) : (
+                            <div className="relative">
+                                <div className="absolute z-0 left-[22px] top-2 bottom-2 w-px bg-[var(--border-subtle)]" />
+                                <div className="relative z-10 space-y-4">
+                                    {events.map((e, i) => (
+                                        <div key={i} className="relative pl-16">
+                                            <div className="absolute left-0 top-0 h-11 w-11 rounded-xl border border-[rgba(var(--accent-rgb),0.45)] bg-[linear-gradient(180deg,rgba(18,19,22,1),rgba(18,19,22,1)),linear-gradient(135deg,rgba(212,175,55,0.18),rgba(212,175,55,0.10))] text-[var(--color-gold)] flex items-center justify-center">
+                                                {timelineIcon(e.type)}
+                                            </div>
+                                            <div className="text-xl font-light text-[var(--text-primary)] leading-none pt-1">
+                                                {humanizeEventTypeOrg(e.type)}
+                                            </div>
+                                            <div className="text-xs text-[var(--text-tertiary)] mt-1">
+                                                {eventTimestamp(e)}
+                                            </div>
+                                            {Boolean(e.meta?.note) && (
+                                                <div className="mt-2 text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
+                                                    {String(e.meta?.note)}
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </Card>
+                </>
             )}
 
-            {/* ── 4. Stage-specific detail cards ── */}
+            {/* ════════════════════════════════════════════════════════════ */}
+            {/* ── TAB: Tasks ── */}
+            {/* ════════════════════════════════════════════════════════════ */}
+            {activeTab === 'tasks' && (
+                <>
+                    {/* Tasks to complete */}
+                    {pendingTasks.length > 0 && (
+                        <Card className="p-6 space-y-4">
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center justify-center min-w-[28px] h-[28px] px-1.5 rounded-lg text-sm font-bold bg-[rgba(234,179,8,0.12)] text-amber-400">
+                                    {pendingCount}
+                                </span>
+                                <h2 className="text-lg font-medium text-[var(--text-primary)]">Tasks to complete</h2>
+                            </div>
+                            <div className="divide-y divide-[var(--border-subtle)]">
+                                {pendingTasks.map((task) => (
+                                    <div key={task.id}>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleTaskAction(task)}
+                                            className="w-full flex items-center justify-between py-4 hover:bg-[rgba(255,255,255,0.02)] transition-colors text-left -mx-2 px-2 rounded-lg"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="text-sm font-medium text-[var(--text-primary)]">{task.label}</div>
+                                                <div className="text-xs text-[var(--text-tertiary)] mt-0.5">{task.description}</div>
+                                            </div>
+                                            <ChevronRight size={18} className="text-[var(--text-tertiary)] shrink-0 ml-3" />
+                                        </button>
 
-            {/* Meeting Scheduling */}
-            {scheduledEvent && (
-                <Card className="p-6 space-y-4">
-                    <button
-                        type="button"
-                        onClick={() => setMeetingOpen(v => !v)}
-                        className="w-full flex items-center justify-between"
-                    >
-                        <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
-                            <Calendar size={18} className="text-[var(--color-gold)]" />
-                            Meeting Details
-                        </div>
-                        {meetingOpen ? <ChevronUp size={16} className="text-[var(--text-tertiary)]" /> : <ChevronDown size={16} className="text-[var(--text-tertiary)]" />}
-                    </button>
-                    {meetingOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="space-y-3"
-                        >
+                                        {/* Inline: more-info concierge note + share links */}
+                                        {task.id === 'more-info' && (
+                                            <div className="pb-4 space-y-3">
+                                                {infoRequestEvent && Boolean(infoRequestEvent.meta?.note) && (
+                                                    <div className="text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
+                                                        {String(infoRequestEvent.meta?.note)}
+                                                    </div>
+                                                )}
+                                                {infoRequestEvent && Array.isArray(infoRequestEvent.meta?.requestedDocs) && (
+                                                    <div className="space-y-1.5">
+                                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)]">Required Documents</div>
+                                                        {(infoRequestEvent.meta?.requestedDocs as string[]).map((doc, i) => (
+                                                            <div key={i} className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
+                                                                <FileText size={13} className="text-[var(--color-gold)] shrink-0" />
+                                                                {doc}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {moreInfoLink && (
+                                                    <div className="flex items-center gap-3">
+                                                        <button
+                                                            type="button"
+                                                            onClick={copyLink}
+                                                            className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
+                                                        >
+                                                            <Copy size={12} />
+                                                            {linkCopied ? 'Copied!' : 'Copy link'}
+                                                        </button>
+                                                        <a
+                                                            href={moreInfoLink}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
+                                                        >
+                                                            <ExternalLink size={12} />
+                                                            Open in new tab
+                                                        </a>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {/* Inline: meeting action buttons */}
+                                        {task.id === 'meeting' && scheduledEvent && (
+                                            <div className="pb-4 space-y-3">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                                    {Boolean(scheduledEvent.meta?.scheduledDate) && (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Date</div>
+                                                            <div className="text-[var(--text-primary)]">{String(scheduledEvent.meta?.scheduledDate)}</div>
+                                                        </div>
+                                                    )}
+                                                    {Boolean(scheduledEvent.meta?.scheduledTime) && (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Time</div>
+                                                            <div className="text-[var(--text-primary)]">{String(scheduledEvent.meta?.scheduledTime)}</div>
+                                                        </div>
+                                                    )}
+                                                    {Boolean(scheduledEvent.meta?.meetingType) && (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Type</div>
+                                                            <div className="text-[var(--text-primary)] capitalize">{String(scheduledEvent.meta?.meetingType)}</div>
+                                                        </div>
+                                                    )}
+                                                    {Boolean(scheduledEvent.meta?.location) && (
+                                                        <div>
+                                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Location</div>
+                                                            <div className="text-[var(--text-primary)]">{String(scheduledEvent.meta?.location)}</div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <Button variant="gold" size="sm" onClick={() => alert('Meeting accepted. (Demo — in production, this would confirm with the concierge.)')}>
+                                                        Accept
+                                                    </Button>
+                                                    <Button variant="outline" size="sm" onClick={() => alert('Reschedule request sent. (Demo — in production, the concierge would receive this.)')}>
+                                                        Reschedule
+                                                    </Button>
+                                                    <Button variant="outline" size="sm" onClick={() => alert('Alternative time proposed. (Demo — in production, you would pick a new time.)')}>
+                                                        Propose New Time
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    )}
+
+                    {/* Tasks completed */}
+                    {completedTasks.length > 0 && (
+                        <Card className="p-6 space-y-4">
+                            <div className="flex items-center gap-2">
+                                <span className="inline-flex items-center justify-center min-w-[28px] h-[28px] px-1.5 rounded-lg text-sm font-bold bg-[rgba(34,197,94,0.12)] text-emerald-400">
+                                    {completedTasks.length}
+                                </span>
+                                <h2 className="text-lg font-medium text-[var(--text-primary)]">Tasks completed</h2>
+                            </div>
+                            <div className="divide-y divide-[var(--border-subtle)]">
+                                {completedTasks.map((task) => (
+                                    <div
+                                        key={task.id}
+                                        className="flex items-center gap-3 py-4"
+                                    >
+                                        <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="text-sm text-[var(--text-secondary)]">{task.label}</div>
+                                            {task.completedAt && (
+                                                <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
+                                                    {new Date(task.completedAt).toLocaleDateString()}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <ChevronRight size={16} className="text-[var(--text-tertiary)] shrink-0" />
+                                    </div>
+                                ))}
+                            </div>
+                        </Card>
+                    )}
+
+                    {/* Empty state */}
+                    {pendingTasks.length === 0 && completedTasks.length === 0 && (
+                        <Card className="p-6 text-center">
+                            <div className="text-[var(--text-tertiary)] text-sm py-8">
+                                No tasks yet. Tasks will appear as your request progresses through the review process.
+                            </div>
+                        </Card>
+                    )}
+                </>
+            )}
+
+            {/* ════════════════════════════════════════════════════════════ */}
+            {/* ── TAB: Request Details ── */}
+            {/* ════════════════════════════════════════════════════════════ */}
+            {activeTab === 'details' && (
+                <>
+                    {/* Submitted more-info data (read-only) */}
+                    {hasInfoRequest && hasSubmittedInfo && request.details && (
+                        <Card className="p-6 space-y-4 border-[rgba(34,197,94,0.25)]">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
+                                    <CheckCircle2 size={18} className="text-emerald-400" />
+                                    Additional Information Submitted
+                                </div>
+                                <span className="text-[10px] px-2 py-1 rounded-full bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border border-[rgba(34,197,94,0.22)]">
+                                    Submitted
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                {Object.entries(request.details).filter(([k, v]) => v && k !== 'updatedAt').map(([key, value]) => (
+                                    <div key={key}>
+                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-0.5">
+                                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
+                                        </div>
+                                        <div className="text-[var(--text-secondary)] whitespace-pre-line">{String(value)}</div>
+                                    </div>
+                                ))}
+                            </div>
+                            {moreInfoLink && (
+                                <div className="pt-2 flex items-center gap-3">
+                                    <a
+                                        href={moreInfoLink}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="text-xs inline-flex items-center gap-1 text-[var(--color-gold)] hover:underline"
+                                    >
+                                        <ExternalLink size={11} />
+                                        Edit / update information
+                                    </a>
+                                </div>
+                            )}
+                        </Card>
+                    )}
+
+                    {/* Meeting Details (read-only — no action buttons) */}
+                    {scheduledEvent && (
+                        <Card className="p-6 space-y-4">
+                            <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
+                                <Calendar size={18} className="text-[var(--color-gold)]" />
+                                Meeting Details
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                 {Boolean(scheduledEvent.meta?.scheduledDate) && (
                                     <div>
@@ -741,112 +1058,82 @@ export default function RequestDetailPage() {
                                     <p className="text-sm text-[var(--text-secondary)]">{String(scheduledEvent.meta?.agenda)}</p>
                                 </div>
                             )}
+                        </Card>
+                    )}
 
-                            {/* Meeting action buttons for org */}
-                            {!meetingEvent && (
-                                <div className="flex items-center gap-3 pt-2">
-                                    <Button variant="gold" size="sm" onClick={() => alert('Meeting accepted. (Demo — in production, this would confirm with the concierge.)')}>
-                                        Accept
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => alert('Reschedule request sent. (Demo — in production, the concierge would receive this.)')}>
-                                        Reschedule
-                                    </Button>
-                                    <Button variant="outline" size="sm" onClick={() => alert('Alternative time proposed. (Demo — in production, you would pick a new time.)')}>
-                                        Propose New Time
-                                    </Button>
+                    {/* Meeting Outcomes (AI-generated) */}
+                    {meetingEvent?.meta && (
+                        <Card className="p-6 space-y-4">
+                            <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
+                                <CheckCircle2 size={18} className="text-[var(--color-gold)]" />
+                                Meeting Outcomes
+                                {Boolean(meetingEvent.meta?.aiGenerated) && (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(96,165,250,0.12)] text-blue-400 border border-[rgba(96,165,250,0.2)]">
+                                        AI Generated
+                                    </span>
+                                )}
+                            </div>
+
+                            {Boolean(meetingEvent.meta?.summary) && (
+                                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{String(meetingEvent.meta?.summary)}</p>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                {Boolean(meetingEvent.meta?.tone) && (
+                                    <div>
+                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Tone</div>
+                                        <div className={
+                                            String(meetingEvent.meta?.tone).toLowerCase() === 'promising' ? 'text-sky-400' :
+                                            String(meetingEvent.meta?.tone).toLowerCase() === 'very positive' ? 'text-emerald-400' :
+                                            'text-[var(--text-primary)]'
+                                        }>
+                                            {String(meetingEvent.meta?.tone)}
+                                        </div>
+                                    </div>
+                                )}
+                                {Boolean(meetingEvent.meta?.confirmRequestedAmount) && (
+                                    <div>
+                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Amount Confirmed</div>
+                                        <div className="text-[var(--text-primary)] capitalize">{String(meetingEvent.meta?.confirmRequestedAmount)}</div>
+                                    </div>
+                                )}
+                                {Boolean(meetingEvent.meta?.expectedTimeline) && (
+                                    <div>
+                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Expected Timeline</div>
+                                        <div className="text-[var(--text-primary)]">{String(meetingEvent.meta?.expectedTimeline)}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {(meetingEvent.meta?.followUps != null && typeof meetingEvent.meta?.followUps === 'object') && (
+                                <div>
+                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Follow-up Items</div>
+                                    <div className="space-y-1.5">
+                                        {Object.entries(meetingEvent.meta?.followUps as Record<string, boolean>).map(([key, value]) => (
+                                            <div key={key} className="flex items-center gap-2 text-sm">
+                                                {value ? (
+                                                    <CheckCircle2 size={14} className="text-emerald-400" />
+                                                ) : (
+                                                    <XIcon size={14} className="text-[var(--text-tertiary)]" />
+                                                )}
+                                                <span className={value ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}>
+                                                    {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
-                        </motion.div>
-                    )}
-                </Card>
-            )}
-
-            {/* Meeting Outcomes (AI-generated) */}
-            {meetingEvent?.meta && (
-                <Card className="p-6 space-y-4">
-                    <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
-                        <CheckCircle2 size={18} className="text-[var(--color-gold)]" />
-                        Meeting Outcomes
-                        {Boolean(meetingEvent.meta?.aiGenerated) && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(96,165,250,0.12)] text-blue-400 border border-[rgba(96,165,250,0.2)]">
-                                AI Generated
-                            </span>
-                        )}
-                    </div>
-
-                    {Boolean(meetingEvent.meta?.summary) && (
-                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{String(meetingEvent.meta?.summary)}</p>
+                        </Card>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                        {Boolean(meetingEvent.meta?.tone) && (
-                            <div>
-                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Tone</div>
-                                <div className={
-                                    String(meetingEvent.meta?.tone).toLowerCase() === 'promising' ? 'text-sky-400' :
-                                    String(meetingEvent.meta?.tone).toLowerCase() === 'very positive' ? 'text-emerald-400' :
-                                    'text-[var(--text-primary)]'
-                                }>
-                                    {String(meetingEvent.meta?.tone)}
-                                </div>
+                    {/* Due Diligence (read-only) */}
+                    {diligenceEvent?.meta && (
+                        <Card className="p-6 space-y-4">
+                            <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
+                                <Shield size={18} className="text-[var(--color-gold)]" />
+                                Due Diligence Review
                             </div>
-                        )}
-                        {Boolean(meetingEvent.meta?.confirmRequestedAmount) && (
-                            <div>
-                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Amount Confirmed</div>
-                                <div className="text-[var(--text-primary)] capitalize">{String(meetingEvent.meta?.confirmRequestedAmount)}</div>
-                            </div>
-                        )}
-                        {Boolean(meetingEvent.meta?.expectedTimeline) && (
-                            <div>
-                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Expected Timeline</div>
-                                <div className="text-[var(--text-primary)]">{String(meetingEvent.meta?.expectedTimeline)}</div>
-                            </div>
-                        )}
-                    </div>
-
-                    {(meetingEvent.meta?.followUps != null && typeof meetingEvent.meta?.followUps === 'object') && (
-                        <div>
-                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Follow-up Items</div>
-                            <div className="space-y-1.5">
-                                {Object.entries(meetingEvent.meta?.followUps as Record<string, boolean>).map(([key, value]) => (
-                                    <div key={key} className="flex items-center gap-2 text-sm">
-                                        {value ? (
-                                            <CheckCircle2 size={14} className="text-emerald-400" />
-                                        ) : (
-                                            <XIcon size={14} className="text-[var(--text-tertiary)]" />
-                                        )}
-                                        <span className={value ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}>
-                                            {key.replace(/([A-Z])/g, ' $1').replace(/^./, c => c.toUpperCase())}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </Card>
-            )}
-
-            {/* Due Diligence (read-only) */}
-            {diligenceEvent?.meta && (
-                <Card className="p-6 space-y-4">
-                    <button
-                        type="button"
-                        onClick={() => setDiligenceOpen(v => !v)}
-                        className="w-full flex items-center justify-between"
-                    >
-                        <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
-                            <Shield size={18} className="text-[var(--color-gold)]" />
-                            Due Diligence Review
-                        </div>
-                        {diligenceOpen ? <ChevronUp size={16} className="text-[var(--text-tertiary)]" /> : <ChevronDown size={16} className="text-[var(--text-tertiary)]" />}
-                    </button>
-                    {diligenceOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            className="space-y-4"
-                        >
                             {Boolean(diligenceEvent.meta?.assessment) && (
                                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{String(diligenceEvent.meta?.assessment)}</p>
                             )}
@@ -896,39 +1183,51 @@ export default function RequestDetailPage() {
                                     </div>
                                 </div>
                             )}
-                        </motion.div>
+                        </Card>
                     )}
-                </Card>
+
+                    {/* Funded / Decision */}
+                    {fundedEvent?.meta && (
+                        <Card className="p-6 space-y-3">
+                            <div className="flex items-center gap-2 text-lg font-medium text-emerald-400">
+                                <DollarSign size={18} />
+                                Funding Approved
+                            </div>
+                            {Boolean(fundedEvent.meta?.note) && (
+                                <p className="text-sm text-[var(--text-secondary)]">{String(fundedEvent.meta?.note)}</p>
+                            )}
+                            {Boolean(fundedEvent.meta?.pledgeAmount) && (
+                                <div className="text-2xl font-light text-[var(--color-gold)]">
+                                    ${Number(fundedEvent.meta?.pledgeAmount).toLocaleString()}
+                                </div>
+                            )}
+                            {Boolean(fundedEvent.meta?.recommendation) && (
+                                <p className="text-sm text-[var(--text-secondary)]">{String(fundedEvent.meta?.recommendation)}</p>
+                            )}
+                        </Card>
+                    )}
+
+                    {/* Empty state */}
+                    {!hasSubmittedInfo && !scheduledEvent && !meetingEvent?.meta && !diligenceEvent?.meta && !fundedEvent?.meta && (
+                        <Card className="p-6 text-center">
+                            <div className="text-[var(--text-tertiary)] text-sm py-8">
+                                No details available yet. Information will appear here as your request progresses.
+                            </div>
+                        </Card>
+                    )}
+                </>
             )}
 
-            {/* Funded / Decision */}
-            {fundedEvent?.meta && (
-                <Card className="p-6 space-y-3">
-                    <div className="flex items-center gap-2 text-lg font-medium text-emerald-400">
-                        <DollarSign size={18} />
-                        Funding Approved
-                    </div>
-                    {Boolean(fundedEvent.meta?.note) && (
-                        <p className="text-sm text-[var(--text-secondary)]">{String(fundedEvent.meta?.note)}</p>
-                    )}
-                    {Boolean(fundedEvent.meta?.pledgeAmount) && (
-                        <div className="text-2xl font-light text-[var(--color-gold)]">
-                            ${Number(fundedEvent.meta?.pledgeAmount).toLocaleString()}
-                        </div>
-                    )}
-                    {Boolean(fundedEvent.meta?.recommendation) && (
-                        <p className="text-sm text-[var(--text-secondary)]">{String(fundedEvent.meta?.recommendation)}</p>
-                    )}
-                </Card>
-            )}
-
-            {/* ── 5. Materials ── */}
-            {(request.evidence || (Array.isArray((request.details as any)?.supportingDocs) && (request.details as any).supportingDocs.length > 0)) && (
+            {/* ════════════════════════════════════════════════════════════ */}
+            {/* ── TAB: Documents ── */}
+            {/* ════════════════════════════════════════════════════════════ */}
+            {activeTab === 'documents' && (
                 <Card className="p-6 space-y-4">
                     <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
                         <Paperclip size={18} className="text-[var(--color-gold)]" />
-                        Materials
+                        Documents
                     </div>
+
                     {request.evidence?.budget && (
                         <div>
                             <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1.5">Budget</div>
@@ -943,6 +1242,7 @@ export default function RequestDetailPage() {
                             </a>
                         </div>
                     )}
+
                     {request.evidence?.files && request.evidence.files.length > 0 && (
                         <div>
                             <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1.5">Supporting Documents</div>
@@ -962,9 +1262,10 @@ export default function RequestDetailPage() {
                             </div>
                         </div>
                     )}
+
                     {Array.isArray((request.details as any)?.supportingDocs) && (request.details as any).supportingDocs.length > 0 && (
                         <div>
-                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1.5">More Info Documents</div>
+                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1.5">Additional Information Documents</div>
                             <div className="space-y-1.5">
                                 {((request.details as any).supportingDocs as { name: string; url: string }[]).map((f, i) => (
                                     <a
@@ -981,54 +1282,14 @@ export default function RequestDetailPage() {
                             </div>
                         </div>
                     )}
+
+                    {!hasDocuments && (
+                        <div className="text-[var(--text-tertiary)] text-sm py-4">
+                            No documents uploaded yet.
+                        </div>
+                    )}
                 </Card>
             )}
-
-            {/* ── 6. Engagement Timeline ── */}
-            <Card className="p-6">
-                <button
-                    type="button"
-                    onClick={() => setTimelineOpen(v => !v)}
-                    className="w-full flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-2 text-lg font-medium text-[var(--text-primary)]">
-                        <Clock3 size={18} className="text-[var(--color-gold)]" />
-                        Timeline
-                    </div>
-                    {timelineOpen ? <ChevronUp size={16} className="text-[var(--text-tertiary)]" /> : <ChevronDown size={16} className="text-[var(--text-tertiary)]" />}
-                </button>
-                {timelineOpen && (
-                    <div className="mt-4">
-                        {events.length === 0 ? (
-                            <div className="text-sm text-[var(--text-tertiary)]">No activity yet. Click the stepper dots above to simulate concierge progress.</div>
-                        ) : (
-                            <div className="relative">
-                                <div className="absolute z-0 left-[22px] top-2 bottom-2 w-px bg-[var(--border-subtle)]" />
-                                <div className="relative z-10 space-y-4">
-                                    {events.map((e, i) => (
-                                        <div key={i} className="relative pl-16">
-                                            <div className="absolute left-0 top-0 h-11 w-11 rounded-xl border border-[rgba(var(--accent-rgb),0.45)] bg-[linear-gradient(180deg,rgba(18,19,22,1),rgba(18,19,22,1)),linear-gradient(135deg,rgba(212,175,55,0.18),rgba(212,175,55,0.10))] text-[var(--color-gold)] flex items-center justify-center">
-                                                {timelineIcon(e.type)}
-                                            </div>
-                                            <div className="text-xl font-light text-[var(--text-primary)] leading-none pt-1">
-                                                {humanizeEventTypeOrg(e.type)}
-                                            </div>
-                                            <div className="text-xs text-[var(--text-tertiary)] mt-1">
-                                                {eventTimestamp(e)}
-                                            </div>
-                                            {Boolean(e.meta?.note) && (
-                                                <div className="mt-2 text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
-                                                    {String(e.meta?.note)}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </Card>
         </div>
     );
 }

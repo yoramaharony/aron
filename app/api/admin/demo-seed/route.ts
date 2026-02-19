@@ -12,10 +12,11 @@ import {
   users,
 } from '@/db/schema';
 import { getSession, hashPassword } from '@/lib/auth';
-import { eq, sql } from 'drizzle-orm';
+import { desc, eq, sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { generateSubmissionToken } from '@/lib/submission-links';
 import { extractSubmissionSignals } from '@/lib/extract-submission';
+import { buildBoard, extractVision } from '@/lib/vision-extract';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -174,6 +175,58 @@ function seedPreset(theme: SeedTheme) {
   };
 }
 
+/**
+ * Light reset: clears concierge opportunity states/events and re-extracts the
+ * vision from existing chat history (with the fixed donor-only extraction).
+ * Chat messages and submissions are preserved.
+ */
+async function resetConciergeOnly(donorId: string) {
+  // 1. Delete all opportunity states (reset to 'new')
+  await db.delete(donorOpportunityState).where(eq(donorOpportunityState.donorId, donorId));
+
+  // 2. Delete concierge-sourced events only (preserve manual donor actions)
+  const allEvents = await db
+    .select()
+    .from(donorOpportunityEvents)
+    .where(eq(donorOpportunityEvents.donorId, donorId))
+    .limit(5000);
+
+  let deletedEvents = 0;
+  for (const evt of allEvents) {
+    if (!evt.metaJson) continue;
+    try {
+      const meta = JSON.parse(evt.metaJson);
+      if (meta?.source === 'concierge') {
+        await db.delete(donorOpportunityEvents).where(eq(donorOpportunityEvents.id, evt.id));
+        deletedEvents++;
+      }
+    } catch { /* ignore bad JSON */ }
+  }
+
+  // 3. Re-extract vision from existing chat messages (donor-only extraction)
+  const msgs = await db
+    .select({ role: conciergeMessages.role, content: conciergeMessages.content })
+    .from(conciergeMessages)
+    .where(eq(conciergeMessages.donorId, donorId))
+    .orderBy(desc(conciergeMessages.createdAt))
+    .limit(50);
+
+  let vision = null;
+  if (msgs.length > 0) {
+    vision = extractVision(msgs.slice().reverse().map((m) => ({ role: m.role, content: m.content })));
+    const board = buildBoard(vision);
+    const now = new Date();
+    const profile = await db.select().from(donorProfiles).where(eq(donorProfiles.donorId, donorId)).get();
+    if (profile) {
+      await db.update(donorProfiles)
+        .set({ visionJson: JSON.stringify(vision), boardJson: JSON.stringify(board), updatedAt: now })
+        .where(eq(donorProfiles.donorId, donorId));
+    }
+  }
+
+  return { deletedEvents, vision };
+}
+
 async function resetDemoData(opts: { donorId?: string | null; orgId?: string | null }) {
   const donorId = opts.donorId ?? null;
   const orgId = opts.orgId ?? null;
@@ -190,11 +243,23 @@ async function resetDemoData(opts: { donorId?: string | null; orgId?: string | n
   }
 
   if (orgId) {
+    // Delete ALL requests created by the demo org user (not just req_demo)
+    await db.delete(requests).where(eq(requests.createdBy, orgId));
     // In case any submission entry got linked to the authenticated org user.
     await db.delete(submissionEntries).where(eq(submissionEntries.requestorUserId, orgId));
   }
 
-  // Curated request is stable ID, safe to delete.
+  // Also clean up requests created by ALL demo org users (@aron.local requestors)
+  const demoOrgs = await db.select({ id: users.id })
+    .from(users)
+    .where(sql`${users.role} = 'requestor' AND ${users.email} LIKE '%@aron.local'`)
+    .limit(50);
+
+  for (const org of demoOrgs) {
+    await db.delete(requests).where(eq(requests.createdBy, org.id));
+  }
+
+  // Curated request is stable ID, safe to delete as well.
   await db.delete(requests).where(eq(requests.id, 'req_demo'));
 }
 
@@ -203,6 +268,17 @@ export async function POST(req: Request) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (session.role !== 'admin') return forbidden();
+
+    const { searchParams } = new URL(req.url);
+    const conciergeOnly = searchParams.get('concierge_only') === '1';
+
+    // Light reset: only clear concierge states + re-extract vision
+    if (conciergeOnly) {
+      const donor = await db.select().from(users).where(eq(users.email, 'demo-donor@aron.local')).get();
+      if (!donor) return NextResponse.json({ error: 'Demo donor not found — run full seed first' }, { status: 404 });
+      const result = await resetConciergeOnly(donor.id);
+      return NextResponse.json({ success: true, conciergeOnly: true, ...result });
+    }
 
     const theme = getTheme(req);
     const doReset = getReset(req);

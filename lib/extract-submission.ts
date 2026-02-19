@@ -76,15 +76,15 @@ function parseCause(text: string): string | undefined {
   // Jewish / Yiddish common terms (demo-friendly; respectful; not exhaustive)
   if (t.includes('bikur cholim') || t.includes('bikkur cholim') || t.includes('refuah') || t.includes('refua'))
     return 'Refuah / Bikur Cholim';
-  if (t.includes('hatzalah') || t.includes('emergency response')) return 'Hatzalah / Emergency response';
+  if (t.includes('hatzalah') || t.includes('hatzolah') || t.includes('hatzoloh') || t.includes('pikuach nefesh') || t.includes('emergency response')) return 'Hatzolah / Pikuach Nefesh';
   if (t.includes('hachnasas kallah') || t.includes('hachnasat kallah') || t.includes('kallah')) return 'Hachnasas Kallah';
   if (t.includes('tzedakah') || t.includes('tzedaka') || t.includes('tzedokeh') || t.includes('kimcha d\'pischa'))
     return 'Tzedakah / Family assistance';
   if (t.includes('yeshiva') || t.includes('yeshivah') || t.includes('kollel') || t.includes('chinuch') || t.includes('talmud torah'))
-    return 'Torah & Chinuch (Education)';
+    return 'Torah & Chinuch';
   if (t.includes('kiruv') || t.includes('outreach')) return 'Kiruv / Outreach';
-  if (t.includes('mikvah') || t.includes('mikveh') || t.includes('eruv') || t.includes('erub')) return 'Community infrastructure';
-  if (t.includes('gemach') || t.includes('g\'mach') || t.includes('gmach')) return 'Gemach / Community support';
+  if (t.includes('mikvah') || t.includes('mikveh') || t.includes('eruv') || t.includes('erub')) return 'Mikveh & Taharas Hamishpacha';
+  if (t.includes('gemach') || t.includes('g\'mach') || t.includes('gmach')) return "Gemach (G'mach) / Free loans";
   if (t.includes('chessed') || t.includes('chesed')) return 'Chesed / Community support';
 
   if (t.includes('emergency') || t.includes('kits') || t.includes('relief')) return 'Emergency relief';

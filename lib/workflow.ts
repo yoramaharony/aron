@@ -46,6 +46,7 @@ export function humanizeEventType(type: string): string {
         diligence_completed: 'Due diligence completed',
         funded: 'Committed',
         reset: 'Reset',
+        concierge_review: 'Reviewed by concierge',
     };
     return map[type] || type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
@@ -63,6 +64,7 @@ export function humanizeEventTypeOrg(type: string): string {
         diligence_completed: 'Due diligence completed',
         funded: 'Funding approved',
         reset: 'Status reset',
+        concierge_review: 'Auto-reviewed by donor concierge',
     };
     return map[type] || type.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }

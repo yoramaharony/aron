@@ -7,14 +7,17 @@ import { ShareButton } from '@/components/ui/ShareButton';
 
 export default function AdminHappyPathPage() {
   const [loading, setLoading] = useState(false);
+  const [resettingConcierge, setResettingConcierge] = useState(false);
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState('');
+  const [conciergeResult, setConciergeResult] = useState<any>(null);
   const [theme, setTheme] = useState<'general' | 'jewish'>('jewish');
   const [resetFirst, setResetFirst] = useState(true);
 
   const seed = async () => {
     setLoading(true);
     setError('');
+    setConciergeResult(null);
     try {
       const qp = new URLSearchParams();
       qp.set('theme', theme);
@@ -38,6 +41,22 @@ export default function AdminHappyPathPage() {
       setError(e?.message || 'Seed failed');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetConcierge = async () => {
+    setResettingConcierge(true);
+    setError('');
+    setConciergeResult(null);
+    try {
+      const res = await fetch('/api/admin/demo-seed?concierge_only=1', { method: 'POST' });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || 'Reset failed');
+      setConciergeResult(json);
+    } catch (e: any) {
+      setError(e?.message || 'Concierge reset failed');
+    } finally {
+      setResettingConcierge(false);
     }
   };
 
@@ -74,10 +93,26 @@ export default function AdminHappyPathPage() {
           <Button variant="gold" onClick={seed} isLoading={loading}>
             Seed Demo Data
           </Button>
+          <Button variant="outline" onClick={resetConcierge} isLoading={resettingConcierge}>
+            Reset Concierge
+          </Button>
         </div>
       </div>
 
-      {error ? <div className="text-sm text-red-300">{error}</div> : null}
+      {error ? <div className="text-sm text-red-300 whitespace-pre-wrap">{error}</div> : null}
+
+      {conciergeResult ? (
+        <Card className="p-4 border-[var(--color-gold)]/30">
+          <div className="text-sm text-[var(--text-primary)]">
+            Concierge reset complete — {conciergeResult.deletedEvents} events cleared.
+            {conciergeResult.vision ? (
+              <span className="text-[var(--text-secondary)]">
+                {' '}Vision re-extracted: Pillars: {conciergeResult.vision.pillars?.join(', ')} | Geo: {conciergeResult.vision.geoFocus?.join(', ')}
+              </span>
+            ) : null}
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="p-6 space-y-4">
         <div className="text-sm font-semibold text-[var(--text-primary)]">Steps</div>

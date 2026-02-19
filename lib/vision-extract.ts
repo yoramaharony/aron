@@ -14,6 +14,7 @@ export type ImpactVision = {
 };
 
 export type QuestionKey =
+  | 'pillar'
   | 'outcome12m'
   | 'budget'
   | 'horizon'
@@ -94,13 +95,18 @@ function extractMoney(text: string): string | null {
 
 function extractTimeHorizon(text: string): string | null {
   const m = text.match(/(\d+)\s*(year|years|month|months|weeks|week)/i);
-  if (!m) return null;
-  return `${m[1]} ${m[2].toLowerCase()}`;
+  if (m) return `${m[1]} ${m[2].toLowerCase()}`;
+  // Handle "this year" / "next year" as 1 year
+  if (/\b(this|next)\s+year\b/i.test(text)) return '1 year';
+  return null;
 }
 
 export function extractVision(messages: { role: string; content: string }[]): ImpactVision {
-  const all = messages.map((m) => m.content).join('\n');
-  const lower = all.toLowerCase();
+  // IMPORTANT: extract pillars, geo, budget, horizon from DONOR messages only.
+  // Assistant replies mention example geos/pillars in question templates which
+  // would pollute extraction (e.g. "Examples: Lakewood, NYC" in the geo prompt).
+  const donorOnly = messages.filter((m) => m.role === 'donor').map((m) => m.content).join('\n');
+  const lower = donorOnly.toLowerCase();
 
   const pillars: string[] = [];
   const geo: string[] = [];
@@ -124,7 +130,7 @@ export function extractVision(messages: { role: string; content: string }[]): Im
   addIf(lower.includes('yeshiva') || lower.includes('yeshivah') || lower.includes('kollel') || lower.includes('chinuch') || lower.includes('talmud torah'), 'Torah & Chinuch');
   addIf(lower.includes('kiruv'), 'Kiruv / Outreach');
   addIf(lower.includes('mikvah') || lower.includes('mikveh') || lower.includes('eruv') || lower.includes('erub'), 'Community infrastructure');
-  addIf(lower.includes('hatzalah'), 'Hatzalah / Emergency response');
+  addIf(lower.includes('hatzalah') || lower.includes('hatzolah') || lower.includes('hatzoloh'), 'Hatzalah / Emergency response');
 
   if (lower.includes('africa')) geo.push('Africa');
   if (lower.includes('israel')) geo.push('Israel');
@@ -136,10 +142,8 @@ export function extractVision(messages: { role: string; content: string }[]): Im
   if (lower.includes('monsey')) geo.push('Monsey');
   if (lower.includes('boro park') || lower.includes('borough park') || lower.includes('boropark')) geo.push('Boro Park');
 
-  // Budget should reflect what the donor said, not assistant suggestions.
-  const donorOnly = messages.filter((m) => m.role === 'donor').map((m) => m.content).join('\n');
-  const money = extractMoney(donorOnly) ?? extractMoney(all);
-  const horizon = extractTimeHorizon(all);
+  const money = extractMoney(donorOnly);
+  const horizon = extractTimeHorizon(donorOnly);
 
   // Very small "outcome" detector: if donor mentions "in 12 months" or "12 months" store the sentence.
   let outcome12m: string | undefined = undefined;
@@ -276,10 +280,12 @@ function computeStage(v: ImpactVision): ImpactVision['stage'] {
 
 export function nextBestQuestionKey(vision: ImpactVision): QuestionKey {
   if (vision.stage === 'activated') return 'activated';
-  if (!vision.outcome12m) return 'outcome12m';
+  // Pillar MUST be the first question — without it, concierge matching has no criteria
+  if (vision.pillars.length === 0 || (vision.pillars.length === 1 && vision.pillars[0] === 'Impact Discovery')) return 'pillar';
   if (!vision.givingBudget) return 'budget';
-  if (!vision.timeHorizon) return 'horizon';
   if (!vision.geoFocus || vision.geoFocus[0] === 'Global') return 'geo';
+  if (!vision.timeHorizon) return 'horizon';
+  if (!vision.outcome12m) return 'outcome12m';
   if (!vision.constraints || vision.constraints.length === 0) return 'constraints';
   if (!vision.updateCadence) return 'update_cadence';
   if (!vision.verificationLevel) return 'verification_level';
@@ -300,6 +306,24 @@ export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[]
   const isTorah = hasPillar(vision, 'Torah') || hasPillar(vision, 'Chinuch') || hasPillar(vision, 'Yeshiva');
 
   switch (key) {
+    case 'pillar':
+      return [
+        {
+          label: 'Demo: Hachnasas Kallah',
+          content:
+            'Hachnasas Kallah: discreet matching + wedding essentials in Yerushalayim and Bnei Brak. Budget: $2M over 24 months.',
+        },
+        {
+          label: 'Demo: Torah & Chinuch',
+          content:
+            'Torah & Chinuch: yeshiva ketana dorm beds, meals, and rebbeim stipends. Focus: Lakewood + Monsey. Budget: $250K over 12 months.',
+        },
+        {
+          label: 'I have a different focus',
+          content:
+            'I want to explore causes and build my impact vision.',
+        },
+      ];
     case 'outcome12m':
       return [
         {
@@ -378,7 +402,7 @@ export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[]
         {
           label: 'Demo: Yeshiva fund',
           content:
-            'Yeshiva ketana growth fund: sponsor dorm beds, meals, and rebbeim stipends. Focus: Lakewood + Monsey. Budget $250K this year.',
+            'Yeshiva ketana growth fund: sponsor dorm beds, meals, and rebbeim stipends. Focus: Lakewood + Monsey. Budget $250K over 12 months.',
         },
       ];
   }
@@ -386,8 +410,10 @@ export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[]
 
 function questionText(key: QuestionKey): string {
   switch (key) {
+    case 'pillar':
+      return 'What causes are closest to your heart? Choose a focus or tell me in your own words.';
     case 'outcome12m':
-      return 'What is the single measurable outcome you’d be proud to see in 12 months?';
+      return "What is the single measurable outcome you'd be proud to see in 12 months?";
     case 'budget':
       return 'What annual range feels comfortable to deploy (rough order of magnitude is fine)?';
     case 'horizon':
@@ -395,7 +421,8 @@ function questionText(key: QuestionKey): string {
     case 'geo':
       return 'Which geographies matter most to you (and which should we avoid)?';
     case 'constraints':
-      return 'What’s your biggest non-negotiable constraint (privacy, verification, overhead cap, political neutrality, etc.)?';
+      return "What's your biggest non-negotiable constraint (privacy, verification, overhead cap, political neutrality, etc.)?";
+
     case 'update_cadence':
       return 'How often do you want updates from organizations?';
     case 'verification_level':
@@ -411,6 +438,8 @@ function questionText(key: QuestionKey): string {
 
 function guidedPrompt(key: QuestionKey): string {
   switch (key) {
+    case 'pillar':
+      return `Choose a cause area or describe your focus:\n- Tzedakah / Family assistance\n- Chesed / Community support\n- Refuah / Bikur Cholim\n- Hatzolah / Pikuach Nefesh\n- Torah & Chinuch\n- Hachnasas Kallah\n- Mikveh & Taharas Hamishpacha\n- Gemach (G'mach) / Free loans\n- or type your own`;
     case 'budget':
       return `Pick a range:\n- $25–100k / year\n- $100–500k / year\n- $500k–$3M / year\n- other (type your own)`;
     case 'horizon':

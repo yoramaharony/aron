@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { submissionEntries, submissionLinks } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, donorProfiles, submissionEntries, submissionLinks } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { extractSubmissionSignals } from '@/lib/extract-submission';
+import { matchOpportunity, determineInfoTier } from '@/lib/concierge-match';
+import type { ImpactVision } from '@/lib/vision-extract';
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
@@ -87,7 +89,66 @@ export async function POST(request: Request) {
       .where(eq(submissionLinks.id, link.id)),
   ]);
 
-  return NextResponse.json({ success: true, id: submissionId });
+  // ── Auto-trigger concierge review if donor has an Impact Vision ──
+  let conciergeAction: string | null = null;
+  try {
+    const profile = await db.select().from(donorProfiles).where(eq(donorProfiles.donorId, link.donorId)).get();
+    const vision: ImpactVision | null = profile?.visionJson ? JSON.parse(profile.visionJson) : null;
+
+    if (vision && !(vision.pillars.length === 1 && vision.pillars[0] === 'Impact Discovery')) {
+      const oppKey = `sub_${submissionId}`;
+      const result = matchOpportunity(
+        {
+          key: oppKey,
+          category: extracted.cause ?? null,
+          location: extracted.geo?.join(', ') ?? null,
+          title: title || null,
+          summary,
+          amount: amountRequested,
+        },
+        vision,
+      );
+
+      const now = new Date();
+
+      if (!result.matched) {
+        // Auto-pass: doesn't match donor's vision
+        await db.insert(donorOpportunityState).values({
+          id: uuidv4(), donorId: link.donorId, opportunityKey: oppKey, state: 'passed', updatedAt: now,
+        }).onConflictDoUpdate({
+          target: [donorOpportunityState.donorId, donorOpportunityState.opportunityKey],
+          set: { state: 'passed', updatedAt: now },
+        });
+        await db.insert(donorOpportunityEvents).values({
+          id: uuidv4(), donorId: link.donorId, opportunityKey: oppKey,
+          type: 'pass', metaJson: JSON.stringify({ source: 'concierge', reason: result.reason }), createdAt: now,
+        });
+        conciergeAction = 'pass';
+      } else if (result.infoTier !== 'none') {
+        // Matches + needs more info → mint token and request info
+        await db.update(submissionEntries)
+          .set({ moreInfoToken: uuidv4(), moreInfoRequestedAt: now, status: 'more_info_requested' })
+          .where(eq(submissionEntries.id, submissionId));
+        await db.insert(donorOpportunityEvents).values({
+          id: uuidv4(), donorId: link.donorId, opportunityKey: oppKey,
+          type: 'request_info', metaJson: JSON.stringify({ source: 'concierge', infoTier: result.infoTier, reason: result.reason }), createdAt: now,
+        });
+        conciergeAction = 'request_info';
+      } else {
+        // Matches, no extra info needed — annotate
+        await db.insert(donorOpportunityEvents).values({
+          id: uuidv4(), donorId: link.donorId, opportunityKey: oppKey,
+          type: 'concierge_review', metaJson: JSON.stringify({ source: 'concierge', matched: true, reason: result.reason }), createdAt: now,
+        });
+        conciergeAction = 'keep';
+      }
+    }
+  } catch (err) {
+    // Non-fatal: submission succeeded even if concierge fails
+    console.error('Concierge auto-review failed for submission', submissionId, err);
+  }
+
+  return NextResponse.json({ success: true, id: submissionId, conciergeAction });
 }
 
 // Donor-only: list submissions for this donor (for UI/visibility)
