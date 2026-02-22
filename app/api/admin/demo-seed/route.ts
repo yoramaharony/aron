@@ -59,10 +59,10 @@ function seedPreset(theme: SeedTheme) {
           includeMoreInfo: true,
         },
         {
-          orgName: 'Hatzolah Support Committee',
-          orgEmail: 'hatzolah-demo@aron.local',
-          contactName: 'Demo Dispatcher',
-          contactEmail: 'hatzolah-demo@aron.local',
+          orgName: 'Bikur Cholim & Chesed Fund',
+          orgEmail: 'demo-org@aron.local',
+          contactName: 'Demo Contact',
+          contactEmail: 'demo-org@aron.local',
           title: 'Hatzolah: new ambulance + cardiac response equipment',
           summary:
             'Hatzolah is adding a new ambulance and upgrading AED units and response kits. Need $1.2M for vehicle + equipment + readiness. Serving Monsey and Boro Park.',
@@ -71,10 +71,10 @@ function seedPreset(theme: SeedTheme) {
           includeMoreInfo: false,
         },
         {
-          orgName: "Kimcha d'Pischa / Maos Chitim",
-          orgEmail: 'kimcha-demo@aron.local',
-          contactName: 'Demo Coordinator',
-          contactEmail: 'kimcha-demo@aron.local',
+          orgName: 'Bikur Cholim & Chesed Fund',
+          orgEmail: 'demo-org@aron.local',
+          contactName: 'Demo Contact',
+          contactEmail: 'demo-org@aron.local',
           title: "Kimcha d'Pischa: Pesach packages for families",
           summary:
             "We distribute kimcha d'Pischa / maos chitim to families before Pesach. Need $120k to cover 800 packages. Target delivery within 10 days. Serving Yerushalayim and Bnei Brak.",
@@ -83,10 +83,10 @@ function seedPreset(theme: SeedTheme) {
           includeMoreInfo: false,
         },
         {
-          orgName: 'Chinuch Crisis Fund',
-          orgEmail: 'chinuch-demo@aron.local',
-          contactName: 'Demo Director',
-          contactEmail: 'chinuch-demo@aron.local',
+          orgName: 'Bikur Cholim & Chesed Fund',
+          orgEmail: 'demo-org@aron.local',
+          contactName: 'Demo Contact',
+          contactEmail: 'demo-org@aron.local',
           title: 'Chinuch: tuition relief for 200 families',
           summary:
             'Chinuch tuition relief (scholarships) for 200 families for the coming zman. Need $500k to prevent mid-year dropouts. Serving Lakewood and Boro Park.',
@@ -95,10 +95,10 @@ function seedPreset(theme: SeedTheme) {
           includeMoreInfo: false,
         },
         {
-          orgName: 'Mikveh Expansion Committee',
-          orgEmail: 'mikveh-demo@aron.local',
-          contactName: 'Demo Coordinator',
-          contactEmail: 'mikveh-demo@aron.local',
+          orgName: 'Bikur Cholim & Chesed Fund',
+          orgEmail: 'demo-org@aron.local',
+          contactName: 'Demo Contact',
+          contactEmail: 'demo-org@aron.local',
           title: 'Mikveh: expansion + renovation (capital project)',
           summary:
             'Mikveh expansion and renovation: new preparation rooms, plumbing, and ADA access. Need $950k to complete the buildout this year. Serving Monsey.',
@@ -107,10 +107,10 @@ function seedPreset(theme: SeedTheme) {
           includeMoreInfo: false,
         },
         {
-          orgName: 'Yeshiva Building Fund',
-          orgEmail: 'yeshiva-demo@aron.local',
-          contactName: 'Demo Administrator',
-          contactEmail: 'yeshiva-demo@aron.local',
+          orgName: 'Bikur Cholim & Chesed Fund',
+          orgEmail: 'demo-org@aron.local',
+          contactName: 'Demo Contact',
+          contactEmail: 'demo-org@aron.local',
           title: 'Yeshiva: new wing + beis medrash expansion',
           summary:
             'Yeshiva capital campaign: new classrooms + beis medrash expansion. Need $2.5M to complete the next phase. Serving Yerushalayim.',
@@ -119,10 +119,10 @@ function seedPreset(theme: SeedTheme) {
           includeMoreInfo: false,
         },
         {
-          orgName: 'Gemach (Free-Loan) Fund',
-          orgEmail: 'gemach-demo@aron.local',
-          contactName: 'Demo Treasurer',
-          contactEmail: 'gemach-demo@aron.local',
+          orgName: 'Bikur Cholim & Chesed Fund',
+          orgEmail: 'demo-org@aron.local',
+          contactName: 'Demo Contact',
+          contactEmail: 'demo-org@aron.local',
           title: "Gemach: interest-free loan pool (G'mach)",
           summary:
             "G'mach seed pool for short-term emergency loans. Need $25k to start a revolving fund and cover basic operations. Serving Bnei Brak.",
@@ -390,7 +390,7 @@ export async function POST(req: Request) {
       extractedAmount: typeof extracted.amount === 'number' ? extracted.amount : null,
       moreInfoToken: s.includeMoreInfo ? moreInfoToken : null,
       moreInfoRequestedAt: s.includeMoreInfo ? new Date() : null,
-      requestorUserId: i === 0 ? orgId : null,
+      requestorUserId: orgId,
     });
 
     const key = `sub_${entryId}`;
