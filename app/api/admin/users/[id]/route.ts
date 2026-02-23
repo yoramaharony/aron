@@ -10,8 +10,7 @@ import {
   leverageOffers,
   orgKyc,
   passwordResets,
-  requests,
-  submissionEntries,
+  opportunities,
   submissionLinks,
   users,
 } from '@/db/schema';
@@ -192,7 +191,7 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
       const hashed = await hashPassword(newPassword);
 
       await bestEffort(() => db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id)));
-      await bestEffort(() => db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id)));
+      await bestEffort(() => db.update(opportunities).set({ createdBy: null }).where(eq(opportunities.createdBy, id)));
       await bestEffort(() => db.update(passwordResets).set({ usedAt: new Date() }).where(eq(passwordResets.userId, id)));
 
       await db
@@ -237,13 +236,13 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
     // 1) Null out optional references (preserve global rows)
     await bestEffort(() => db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id)));
-    await bestEffort(() => db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id)));
+    await bestEffort(() => db.update(opportunities).set({ createdBy: null }).where(eq(opportunities.createdBy, id)));
 
-    // Requests: preserve by re-assigning created_by (or nulling out if schema allows).
+    // Opportunities: preserve by re-assigning createdBy (or nulling out if schema allows).
     if (reassignToUserId) {
-      await bestEffort(() => db.update(requests).set({ createdBy: reassignToUserId }).where(eq(requests.createdBy, id)));
+      await bestEffort(() => db.update(opportunities).set({ createdBy: reassignToUserId }).where(eq(opportunities.createdBy, id)));
     } else {
-      await bestEffort(() => db.update(requests).set({ createdBy: null }).where(eq(requests.createdBy, id)));
+      await bestEffort(() => db.update(opportunities).set({ createdBy: null }).where(eq(opportunities.createdBy, id)));
     }
 
     // Campaigns: DB schema allows created_by to be NULL (and it FK's to users).
@@ -283,8 +282,8 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
     await bestEffort(() => db.delete(conciergeMessages).where(eq(conciergeMessages.donorId, id)));
     await bestEffort(() => db.delete(donorProfiles).where(eq(donorProfiles.donorId, id)));
 
-    // 3) Submissions & links (order matters: entries -> links)
-    await bestEffort(() => db.delete(submissionEntries).where(eq(submissionEntries.donorId, id)));
+    // 3) Donor-owned opportunities & links
+    await bestEffort(() => db.delete(opportunities).where(eq(opportunities.originDonorId, id)));
     await bestEffort(() => db.delete(submissionLinks).where(eq(submissionLinks.donorId, id)));
     await bestEffort(() => db.delete(submissionLinks).where(eq(submissionLinks.createdBy, id)));
 
@@ -308,7 +307,7 @@ export async function DELETE(_request: NextRequest, context: { params: Promise<{
 
           // best-effort detach optional refs
           try { await db.update(orgKyc).set({ verifiedBy: null }).where(eq(orgKyc.verifiedBy, id)); } catch {}
-          try { await db.update(submissionEntries).set({ requestorUserId: null }).where(eq(submissionEntries.requestorUserId, id)); } catch {}
+          try { await db.update(opportunities).set({ createdBy: null }).where(eq(opportunities.createdBy, id)); } catch {}
           try { await db.update(passwordResets).set({ usedAt: new Date() }).where(eq(passwordResets.userId, id)); } catch {}
 
           await db

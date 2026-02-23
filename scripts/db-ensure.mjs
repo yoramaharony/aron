@@ -57,6 +57,42 @@ async function main() {
     `CREATE INDEX IF NOT EXISTS invitation_requests_created_at_idx ON invitation_requests(created_at);`,
 
     `
+    CREATE TABLE IF NOT EXISTS opportunities (
+      id TEXT PRIMARY KEY NOT NULL,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL,
+      location TEXT NOT NULL,
+      summary TEXT NOT NULL,
+      target_amount INTEGER NOT NULL,
+      current_amount INTEGER DEFAULT 0,
+      created_by TEXT REFERENCES users(id),
+      org_name TEXT,
+      org_email TEXT,
+      contact_name TEXT,
+      contact_email TEXT,
+      source TEXT NOT NULL DEFAULT 'portal',
+      origin_donor_id TEXT REFERENCES users(id),
+      link_id TEXT,
+      more_info_token TEXT,
+      more_info_requested_at INTEGER,
+      more_info_submitted_at INTEGER,
+      details_json TEXT,
+      evidence_json TEXT,
+      cover_url TEXT,
+      video_url TEXT,
+      extracted_json TEXT,
+      status TEXT DEFAULT 'active',
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS opportunities_created_at_idx ON opportunities(created_at);`,
+    `CREATE INDEX IF NOT EXISTS opportunities_status_idx ON opportunities(status);`,
+    `CREATE INDEX IF NOT EXISTS opportunities_source_idx ON opportunities(source);`,
+    `CREATE INDEX IF NOT EXISTS opportunities_origin_donor_idx ON opportunities(origin_donor_id);`,
+    `CREATE INDEX IF NOT EXISTS opportunities_more_info_token_idx ON opportunities(more_info_token);`,
+
+    // Legacy tables kept for backwards compat (not actively used)
+    `
     CREATE TABLE IF NOT EXISTS requests (
       id TEXT PRIMARY KEY NOT NULL,
       title TEXT NOT NULL,
@@ -72,8 +108,6 @@ async function main() {
       created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
     );
     `,
-    `CREATE INDEX IF NOT EXISTS requests_created_at_idx ON requests(created_at);`,
-    `CREATE INDEX IF NOT EXISTS requests_status_idx ON requests(status);`,
 
     `
     CREATE TABLE IF NOT EXISTS email_templates (
@@ -290,6 +324,7 @@ async function main() {
 
     // Backfill: DEFAULT (CURRENT_TIMESTAMP) stores a text string in INTEGER columns,
     // which SQLite truncates to just the year (e.g. 2026). Fix any bad values.
+    `UPDATE opportunities SET created_at = unixepoch() WHERE created_at IS NULL OR created_at < 1000000;`,
     `UPDATE requests SET created_at = unixepoch() WHERE created_at IS NULL OR created_at < 1000000;`,
     `UPDATE submission_entries SET created_at = unixepoch() WHERE created_at IS NULL OR created_at < 1000000;`,
 

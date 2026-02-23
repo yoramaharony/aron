@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { requests, donorOpportunityState, donorOpportunityEvents, users } from '@/db/schema';
+import { opportunities, donorOpportunityState, donorOpportunityEvents, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,7 +30,7 @@ const STATE_MAP: Record<AdvanceStage, string> = {
 
 function generateConciergeData(stage: AdvanceStage, request: { title: string; targetAmount: number | null }): Record<string, unknown> {
   const now = new Date();
-  const meetingDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000); // 3 days from now
+  const meetingDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
   const amount = request.targetAmount ?? 50000;
 
   switch (stage) {
@@ -112,21 +112,24 @@ export async function POST(
     return NextResponse.json({ error: 'Invalid stage. Use: info_requested, scheduled, meeting_completed, diligence_completed, funded' }, { status: 400 });
   }
 
-  // Verify the request belongs to this requestor
-  const reqRow = await db
+  // Verify the opportunity belongs to this requestor
+  const row = await db
     .select()
-    .from(requests)
-    .where(and(eq(requests.id, id), eq(requests.createdBy, session.userId)))
+    .from(opportunities)
+    .where(and(eq(opportunities.id, id), eq(opportunities.createdBy, session.userId)))
     .get();
 
-  if (!reqRow) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const opportunityKey = id;
+  const title = row.title;
+  const targetAmount = row.targetAmount ?? null;
 
   // Find or create a donor state for this opportunity.
-  // In demo mode, we pick the first donor in the system (or create a fake state).
   let stateRow = await db
     .select()
     .from(donorOpportunityState)
-    .where(eq(donorOpportunityState.opportunityKey, id))
+    .where(eq(donorOpportunityState.opportunityKey, opportunityKey))
     .get();
 
   let donorId: string;
@@ -134,16 +137,14 @@ export async function POST(
   if (stateRow) {
     donorId = stateRow.donorId;
   } else {
-    // Find any donor user to attach state to (demo only)
     const donor = await db.select().from(users).where(eq(users.role, 'donor')).get();
     if (!donor) return NextResponse.json({ error: 'No donor user found in DB (needed for demo)' }, { status: 400 });
     donorId = donor.id;
 
-    // Create initial state
     await db.insert(donorOpportunityState).values({
       id: uuidv4(),
       donorId,
-      opportunityKey: id,
+      opportunityKey,
       state: 'shortlisted',
       updatedAt: new Date(),
     });
@@ -156,20 +157,17 @@ export async function POST(
     .where(
       and(
         eq(donorOpportunityState.donorId, donorId),
-        eq(donorOpportunityState.opportunityKey, id),
+        eq(donorOpportunityState.opportunityKey, opportunityKey),
       ),
     );
 
   // Insert event with concierge-generated data
-  const meta = generateConciergeData(stage, {
-    title: reqRow.title,
-    targetAmount: reqRow.targetAmount,
-  });
+  const meta = generateConciergeData(stage, { title, targetAmount });
 
   await db.insert(donorOpportunityEvents).values({
     id: uuidv4(),
     donorId,
-    opportunityKey: id,
+    opportunityKey,
     type: ACTION_MAP[stage],
     metaJson: JSON.stringify(meta),
     createdAt: new Date(),

@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState, donorProfiles, requests, submissionEntries } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, donorProfiles, opportunities } from '@/db/schema';
 import { getSession } from '@/lib/auth';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, or, isNull } from 'drizzle-orm';
 import { toIsoTime } from '@/lib/time';
-import { CHARIDY_CURATED } from '@/lib/charidy-curated';
 
 type OpportunityRow = {
   key: string;
-  source: 'request' | 'submission' | 'charidy';
+  source: string;
   title: string;
   orgName: string;
   location?: string;
@@ -16,7 +15,7 @@ type OpportunityRow = {
   summary: string;
   amount?: number | null;
   createdAt?: string | null;
-  state: string; // new/shortlisted/passed/...
+  state: string;
   conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
   conciergeReason?: string | null;
 };
@@ -26,18 +25,20 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (session.role !== 'donor') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  // Submissions: donor-specific
-  const subs = await db
+  // Single query: donor sees their submissions + all portal/curated opportunities
+  const allOpps = await db
     .select()
-    .from(submissionEntries)
-    .where(eq(submissionEntries.donorId, session.userId))
-    .orderBy(desc(submissionEntries.createdAt))
-    .limit(200);
+    .from(opportunities)
+    .where(
+      or(
+        eq(opportunities.originDonorId, session.userId),
+        isNull(opportunities.originDonorId),
+      ),
+    )
+    .orderBy(desc(opportunities.createdAt))
+    .limit(500);
 
-  // Requests: MVP curated list (global)
-  const reqs = await db.select().from(requests).orderBy(desc(requests.createdAt)).limit(200);
-
-  // Load donor state rows for these opportunities
+  // Load donor state rows
   const states = await db
     .select()
     .from(donorOpportunityState)
@@ -78,55 +79,19 @@ export async function GET() {
 
   const rows: OpportunityRow[] = [];
 
-  for (const s of subs) {
-    const key = `sub_${s.id}`;
+  for (const opp of allOpps) {
+    const key = opp.id;
     const cc = conciergeByKey.get(key);
     rows.push({
       key,
-      source: 'submission',
-      title: s.title || 'Submission',
-      orgName: s.orgName || s.orgEmail || 'Unknown',
-      summary: s.summary,
-      amount: s.amountRequested ?? null,
-      createdAt: toIsoTime(s.createdAt),
-      state: stateByKey.get(key) ?? 'new',
-      conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
-      conciergeReason: cc?.reason ?? null,
-    });
-  }
-
-  for (const r of reqs) {
-    const key = String(r.id);
-    const cc = conciergeByKey.get(key);
-    rows.push({
-      key,
-      source: 'request',
-      title: r.title,
-      orgName: 'Curated',
-      location: r.location,
-      category: r.category,
-      summary: r.summary,
-      amount: r.targetAmount ? Number(r.targetAmount) - Number(r.currentAmount ?? 0) : null,
-      createdAt: toIsoTime(r.createdAt),
-      state: stateByKey.get(key) ?? 'new',
-      conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
-      conciergeReason: cc?.reason ?? null,
-    });
-  }
-
-  for (const c of CHARIDY_CURATED) {
-    const key = c.key;
-    const cc = conciergeByKey.get(key);
-    rows.push({
-      key,
-      source: 'charidy',
-      title: c.title,
-      orgName: c.orgName,
-      location: c.location,
-      category: c.category,
-      summary: c.summary,
-      amount: c.fundingGap,
-      createdAt: null,
+      source: opp.source,
+      title: opp.title,
+      orgName: opp.orgName || opp.orgEmail || 'Unknown',
+      location: opp.location,
+      category: opp.category,
+      summary: opp.summary,
+      amount: opp.targetAmount ? Number(opp.targetAmount) - Number(opp.currentAmount ?? 0) : null,
+      createdAt: toIsoTime(opp.createdAt),
       state: stateByKey.get(key) ?? 'new',
       conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
       conciergeReason: cc?.reason ?? null,

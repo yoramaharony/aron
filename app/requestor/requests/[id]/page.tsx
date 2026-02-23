@@ -436,6 +436,7 @@ export default function RequestDetailPage() {
     const [advancing, setAdvancing] = useState(false);
     const [advanceToast, setAdvanceToast] = useState<string | null>(null);
     const [linkCopied, setLinkCopied] = useState(false);
+    const [copiedId, setCopiedId] = useState(false);
     const [moreInfoModalOpen, setMoreInfoModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
@@ -694,6 +695,23 @@ export default function RequestDetailPage() {
                         <div className="flex items-start justify-between gap-4">
                             <div className="min-w-0">
                                 <h1 className="text-3xl font-light text-[var(--text-primary)]">{request.title}</h1>
+                                <button
+                                    type="button"
+                                    className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] tracking-wide text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors group"
+                                    title="Copy opportunity ID"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(request.id).catch(() => {});
+                                        setCopiedId(true);
+                                        setTimeout(() => setCopiedId(false), 2000);
+                                    }}
+                                >
+                                    <span className="font-mono opacity-70 group-hover:opacity-100">{request.id}</span>
+                                    {copiedId ? (
+                                        <Check size={11} className="text-emerald-400" />
+                                    ) : (
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:opacity-100"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    )}
+                                </button>
                                 <p className="text-sm text-[var(--text-secondary)] mt-2">{request.summary}</p>
                             </div>
                             <span

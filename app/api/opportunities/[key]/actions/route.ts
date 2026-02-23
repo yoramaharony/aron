@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState, requests, submissionEntries, users } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, opportunities, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -28,7 +28,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
     shortlist: 'shortlisted',
     pass: 'passed',
     reset: 'new',
-    // Requesting info also implies donor intent, so keep it in shortlist.
     request_info: 'shortlisted',
     scheduled: 'scheduled',
     meeting_completed: 'scheduled',
@@ -44,9 +43,16 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
   const donorId = session.userId;
   const state = actionToState[action];
   let moreInfoUrl: string | null = null;
+
+  // Sync opportunities.status for terminal donor actions
+  if (action === 'pass') {
+    await db.update(opportunities).set({ status: 'passed' }).where(eq(opportunities.id, safeKey));
+  } else if (action === 'funded') {
+    await db.update(opportunities).set({ status: 'funded' }).where(eq(opportunities.id, safeKey));
+  }
   let emailSent: { to: string; id?: string } | null = null;
 
-  // Upsert state row (via unique index donor+key)
+  // Upsert state row
   const existing = await db
     .select()
     .from(donorOpportunityState)
@@ -70,17 +76,16 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
       .where(eq(donorOpportunityState.id, row.id));
   }
 
-  // Progressive disclosure: on request_info for submissions, mint token + link
-  if (action === 'request_info' && safeKey.startsWith('sub_')) {
-    const submissionId = safeKey.slice('sub_'.length);
-    const sub = await db.select().from(submissionEntries).where(eq(submissionEntries.id, submissionId)).get();
-    if (sub && String(sub.donorId) === String(donorId)) {
-      const token = sub.moreInfoToken || uuidv4();
-      if (!sub.moreInfoToken) {
+  // Progressive disclosure: on request_info, mint token + link on the opportunity
+  if (action === 'request_info') {
+    const opp = await db.select().from(opportunities).where(eq(opportunities.id, safeKey)).get();
+    if (opp) {
+      const token = opp.moreInfoToken || uuidv4();
+      if (!opp.moreInfoToken) {
         await db
-          .update(submissionEntries)
+          .update(opportunities)
           .set({ moreInfoToken: token, moreInfoRequestedAt: new Date(), status: 'more_info_requested' })
-          .where(eq(submissionEntries.id, submissionId));
+          .where(eq(opportunities.id, safeKey));
       }
       const origin = new URL(request.url).origin;
       moreInfoUrl = `${origin}/more-info/${token}`;
@@ -90,10 +95,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
       const note = typeof (meta as any)?.note === 'string' ? String((meta as any).note).trim() : '';
 
       if (sendEmail) {
-        const to = (sub.orgEmail || sub.contactEmail || '').trim();
+        const to = (opp.orgEmail || opp.contactEmail || '').trim();
         if (!to) {
           return NextResponse.json(
-            { error: 'No organization email on file for this submission (orgEmail/contactEmail is missing).' },
+            { error: 'No organization email on file for this opportunity (orgEmail/contactEmail is missing).' },
             { status: 400 }
           );
         }
@@ -105,7 +110,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
           key: 'request_more_info',
           vars: {
             inviter_name: inviterName,
-            opportunity_title: sub.title || 'Submission',
+            opportunity_title: opp.title || 'Opportunity',
             more_info_url: moreInfoUrl,
             note,
           },
@@ -124,36 +129,19 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
     }
   }
 
-  // Progressive disclosure: on request_info for org requests (non-sub_ keys), mint token + link
-  if (action === 'request_info' && !safeKey.startsWith('sub_') && !moreInfoUrl) {
-    const reqRow = await db.select().from(requests).where(eq(requests.id, safeKey)).get();
-    if (reqRow) {
-      const token = reqRow.moreInfoToken || uuidv4();
-      if (!reqRow.moreInfoToken) {
-        await db
-          .update(requests)
-          .set({ moreInfoToken: token, moreInfoRequestedAt: new Date(), status: 'more_info_requested' })
-          .where(eq(requests.id, safeKey));
-      }
-      const origin = new URL(request.url).origin;
-      moreInfoUrl = `${origin}/more-info/${token}`;
-    }
-  }
-
-  // When info_received comes with details, persist them on the submission record.
-  if (action === 'info_received' && safeKey.startsWith('sub_')) {
+  // When info_received comes with details, persist them on the opportunity record
+  if (action === 'info_received') {
     const meta = body?.meta && typeof body.meta === 'object' ? body.meta : null;
     const details = (meta as any)?.details;
     if (details && typeof details === 'object') {
-      const submissionId = safeKey.slice('sub_'.length);
       await db
-        .update(submissionEntries)
+        .update(opportunities)
         .set({
           detailsJson: JSON.stringify(details),
           moreInfoSubmittedAt: new Date(),
           status: 'more_info_submitted',
         })
-        .where(eq(submissionEntries.id, submissionId));
+        .where(eq(opportunities.id, safeKey));
     }
   }
 
@@ -174,4 +162,3 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
 
   return NextResponse.json({ success: true, state, moreInfoUrl, emailSent });
 }
-

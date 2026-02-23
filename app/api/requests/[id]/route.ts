@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { requests } from '@/db/schema';
+import { opportunities } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, eq } from 'drizzle-orm';
 
@@ -15,13 +15,12 @@ export async function GET(_request: Request, ctx: Ctx) {
   const { id } = (await ctx.params) ?? {};
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
-  // Requestors can only access their own requests.
   const where =
     session.role === 'requestor'
-      ? and(eq(requests.id, id), eq(requests.createdBy, session.userId))
-      : eq(requests.id, id);
+      ? and(eq(opportunities.id, id), eq(opportunities.createdBy, session.userId))
+      : eq(opportunities.id, id);
 
-  const rows = await db.select().from(requests).where(where);
+  const rows = await db.select().from(opportunities).where(where);
   const row = rows?.[0] ?? null;
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -69,9 +68,9 @@ export async function PATCH(request: Request, ctx: Ctx) {
     }
 
     await db
-      .update(requests)
+      .update(opportunities)
       .set(patch)
-      .where(and(eq(requests.id, id), eq(requests.createdBy, session.userId)));
+      .where(and(eq(opportunities.id, id), eq(opportunities.createdBy, session.userId)));
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -79,4 +78,3 @@ export async function PATCH(request: Request, ctx: Ctx) {
     return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
   }
 }
-

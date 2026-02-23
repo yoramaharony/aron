@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@libsql/client"],
   // Avoid Next.js picking the parent workspace as "root" when multiple lockfiles exist.
   outputFileTracingRoot: path.join(__dirname),
+  devIndicators: false,
 };
 
 export default nextConfig;

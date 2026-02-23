@@ -19,7 +19,17 @@ export function deriveWorkflow(detail: { state?: string; events?: { type: string
     const events = Array.isArray(detail?.events) ? detail.events : [];
     const has = (t: string) => events.some((e) => String(e?.type || '') === t);
 
-    if (state === 'passed') return { stage: 'decision', isPassed: true, isCommitted: false };
+    if (state === 'passed') {
+        // Determine the actual stage reached based on events, then advance by one
+        // so completed stages show gold checks and the next stage shows the decline marker.
+        let reachedIdx = 0; // discover
+        if (has('request_info')) reachedIdx = 1; // info_requested
+        if (has('info_received') || has('scheduled')) reachedIdx = 2; // meeting
+        if (has('meeting_completed') || has('leverage_created')) reachedIdx = 3; // due_diligence
+        if (has('diligence_completed')) reachedIdx = 4; // decision
+        const declineIdx = Math.min(reachedIdx + 1, WORKFLOW_STAGES.length - 1);
+        return { stage: WORKFLOW_STAGES[declineIdx], isPassed: true, isCommitted: false };
+    }
     if (state === 'funded') return { stage: 'decision', isPassed: false, isCommitted: true };
     if (has('diligence_completed')) return { stage: 'decision', isPassed: false, isCommitted: false };
     if (has('meeting_completed')) return { stage: 'due_diligence', isPassed: false, isCommitted: false };

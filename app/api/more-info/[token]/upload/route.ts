@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { requests, submissionEntries } from '@/db/schema';
+import { opportunities } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { mkdir, writeFile } from 'fs/promises';
 import path from 'path';
@@ -21,13 +21,8 @@ function sanitizeFilename(name: string) {
 }
 
 async function findByToken(safeToken: string) {
-  const sub = await db.select().from(submissionEntries).where(eq(submissionEntries.moreInfoToken, safeToken)).get();
-  if (sub) return { source: 'submission' as const, row: sub };
-
-  const req = await db.select().from(requests).where(eq(requests.moreInfoToken, safeToken)).get();
-  if (req) return { source: 'request' as const, row: req };
-
-  return null;
+  const row = await db.select().from(opportunities).where(eq(opportunities.moreInfoToken, safeToken)).get();
+  return row ?? null;
 }
 
 export async function POST(request: NextRequest, context: { params: Promise<{ token: string }> }) {

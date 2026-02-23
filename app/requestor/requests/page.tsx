@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { OpportunityStepper } from '@/components/shared/OpportunityStepper';
@@ -24,10 +24,13 @@ interface ProgressData {
     events: { type: string }[];
 }
 
+type OrgTab = 'active' | 'declined';
+
 export default function MyRequestsPage() {
     const [requests, setRequests] = useState<RequestRow[]>([]);
     const [progressMap, setProgressMap] = useState<Record<string, ProgressData>>({});
     const [loading, setLoading] = useState(true);
+    const [activeTab, setActiveTab] = useState<OrgTab>('active');
     const router = useRouter();
 
     useEffect(() => {
@@ -57,11 +60,20 @@ export default function MyRequestsPage() {
             .finally(() => setLoading(false));
     }, []);
 
+    const isDeclined = (req: RequestRow) => req.status === 'passed';
+
+    const activeCount = useMemo(() => requests.filter((r) => !isDeclined(r)).length, [requests]);
+    const declinedCount = useMemo(() => requests.filter((r) => isDeclined(r)).length, [requests]);
+    const filtered = useMemo(
+        () => requests.filter((r) => (activeTab === 'declined' ? isDeclined(r) : !isDeclined(r))),
+        [requests, activeTab],
+    );
+
     if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-gold" size={32} /></div>;
 
     return (
         <div>
-            <header className="flex justify-between items-center mb-8">
+            <header className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">My Requests</h1>
                     <p className="text-secondary">Track submissions and donor progress.</p>
@@ -71,6 +83,32 @@ export default function MyRequestsPage() {
                 </Button>
             </header>
 
+            {/* Tabs */}
+            <div className="flex gap-8 border-b border-[var(--border-subtle)] mb-6">
+                {(['active', 'declined'] as const).map((tab) => {
+                    const count = tab === 'active' ? activeCount : declinedCount;
+                    return (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`pb-3 text-sm font-medium transition-colors relative ${
+                                activeTab === tab
+                                    ? 'text-[var(--text-primary)]'
+                                    : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                            }`}
+                        >
+                            {tab === 'active' ? 'Active' : 'Declined'}
+                            {count > 0 && (
+                                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(212,175,55,0.12)] text-[var(--color-gold)]">
+                                    {count}
+                                </span>
+                            )}
+                            {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-gold)]" />}
+                        </button>
+                    );
+                })}
+            </div>
+
             {requests.length === 0 ? (
                 <Card className="text-center py-16">
                     <h3 className="text-lg font-medium mb-2">No Requests Yet</h3>
@@ -79,9 +117,15 @@ export default function MyRequestsPage() {
                         <Link href="/requestor">Create Request</Link>
                     </Button>
                 </Card>
+            ) : filtered.length === 0 ? (
+                <Card className="text-center py-16">
+                    <p className="text-secondary">
+                        {activeTab === 'declined' ? 'No declined requests.' : 'No active requests.'}
+                    </p>
+                </Card>
             ) : (
                 <div className="grid grid-cols-1 gap-4">
-                    {requests.map((req) => {
+                    {filtered.map((req) => {
                         const progress = progressMap[req.id];
                         const workflow = progress ? deriveWorkflow(progress) : null;
                         return (
@@ -99,12 +143,16 @@ export default function MyRequestsPage() {
                                                 <span
                                                     className={[
                                                         'shrink-0 text-[10px] px-2 py-1 rounded-full uppercase tracking-wider font-bold border',
-                                                        req.status === 'active'
+                                                        req.status === 'active' || req.status === 'more_info_requested' || req.status === 'more_info_submitted'
                                                             ? 'bg-[rgba(34,197,94,0.12)] text-[rgba(34,197,94,0.92)] border-[rgba(34,197,94,0.22)]'
-                                                            : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[rgba(255,255,255,0.10)]',
+                                                            : req.status === 'passed'
+                                                                ? 'bg-[rgba(239,68,68,0.10)] text-[rgba(239,68,68,0.85)] border-[rgba(239,68,68,0.22)]'
+                                                                : req.status === 'funded'
+                                                                    ? 'bg-[rgba(212,175,55,0.12)] text-[var(--color-gold)] border-[rgba(212,175,55,0.22)]'
+                                                                    : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)] border-[rgba(255,255,255,0.10)]',
                                                     ].join(' ')}
                                                 >
-                                                    {req.status}
+                                                    {req.status === 'passed' ? 'Declined' : req.status === 'funded' ? 'Funded' : req.status === 'more_info_requested' ? 'In Progress' : req.status === 'more_info_submitted' ? 'In Progress' : req.status}
                                                 </span>
                                             </div>
                                             <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)]">

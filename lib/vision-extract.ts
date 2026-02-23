@@ -309,14 +309,14 @@ export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[]
     case 'pillar':
       return [
         {
-          label: 'Demo: Hachnasas Kallah',
+          label: 'Demo: Chesed path (Israel + NYC, $1M/yr)',
           content:
-            'Hachnasas Kallah: discreet matching + wedding essentials in Yerushalayim and Bnei Brak. Budget: $2M over 24 months.',
+            'Hachnasas Kallah, chesed, tzedakah, and gemach — supporting families through discreet giving, Shabbos meals, and interest-free loans. Focus: Yerushalayim, Bnei Brak, and NYC. Budget: $1M / year.',
         },
         {
-          label: 'Demo: Torah & Chinuch',
+          label: 'Demo: Torah path (Lakewood + Israel, $3M/yr)',
           content:
-            'Torah & Chinuch: yeshiva ketana dorm beds, meals, and rebbeim stipends. Focus: Lakewood + Monsey. Budget: $250K over 12 months.',
+            'Torah & Chinuch — yeshiva dormitory, kollel stipends, chinuch tuition, and talmud torah renovation. Focus: Lakewood, Monsey, and Yerushalayim. Budget: $3M / year.',
         },
         {
           label: 'I have a different focus',
@@ -327,26 +327,26 @@ export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[]
     case 'outcome12m':
       return [
         {
-          label: '12-month outcome (kallah)',
+          label: '12-month outcome (chesed)',
           content:
-            'In 12 months: 120 kallahs matched discreetly, with audited receipts and a clear cost-per-kallah report.',
+            'In 12 months: 60 kallahs supported, 250 families receiving Shabbos meals, gemach network serving 1,500 families, with audited quarterly reporting.',
         },
         {
           label: '12-month outcome (yeshiva)',
           content:
-            'In 12 months: stabilize monthly overhead for 120 bochurim (beds + meals + rebbeim), with quarterly reporting.',
+            'In 12 months: 80 new dorm beds, 45 kollel stipends stabilized, 200 students in renovated classrooms, with quarterly reporting.',
         },
         {
-          label: '12-month outcome (hatzalah)',
+          label: '12-month outcome (general)',
           content:
-            'In 12 months: 2 new ambulances equipped + volunteer coverage expanded, with response-time targets.',
+            'In 12 months: measurable outcomes across all funded projects, with audited receipts and impact dashboard.',
         },
       ];
     case 'budget':
       return [
-        { label: '$25k–$100k / year', content: '$100k / year' },
         { label: '$100k–$500k / year', content: '$250k / year' },
-        { label: '$500k–$3M / year', content: isKallah ? '$2M over 24 months' : '$1M / year' },
+        { label: '$500k–$2M / year', content: '$1M / year' },
+        { label: '$2M–$5M / year', content: isTorah ? '$3M / year' : '$2M / year' },
       ];
     case 'horizon':
       return [
@@ -384,8 +384,8 @@ export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[]
     case 'confirm':
       return [
         { label: 'Confirm (happy path)', content: 'confirm' },
-        { label: 'Change geo focus', content: prefersIsrael ? 'Add Lakewood too' : 'Israel only (Jerusalem)' },
-        { label: 'Change budget', content: isTorah ? '$250k / year' : '$1M / year' },
+        { label: 'Broaden geo', content: prefersIsrael ? 'Add Lakewood and Boro Park too' : 'Add Yerushalayim and Bnei Brak too' },
+        { label: 'Raise budget', content: isTorah ? '$5M / year' : '$3M / year' },
       ];
     case 'activated':
       return [
@@ -395,14 +395,14 @@ export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[]
     default:
       return [
         {
-          label: 'Demo: Hachnasas Kallah',
+          label: 'Demo: Chesed path (Israel + NYC, $1M/yr)',
           content:
-            'Hachnasas Kallah (Chesed): discreet matching + wedding essentials in Yerushalayim and Bnei Brak. Target $2M over 24 months.',
+            'Hachnasas Kallah, chesed, tzedakah, and gemach — supporting families through discreet giving, Shabbos meals, and interest-free loans. Focus: Yerushalayim, Bnei Brak, and NYC. Budget: $1M / year.',
         },
         {
-          label: 'Demo: Yeshiva fund',
+          label: 'Demo: Torah path (Lakewood + Israel, $3M/yr)',
           content:
-            'Yeshiva ketana growth fund: sponsor dorm beds, meals, and rebbeim stipends. Focus: Lakewood + Monsey. Budget $250K over 12 months.',
+            'Torah & Chinuch — yeshiva dormitory, kollel stipends, chinuch tuition, and talmud torah renovation. Focus: Lakewood, Monsey, and Yerushalayim. Budget: $3M / year.',
         },
       ];
   }

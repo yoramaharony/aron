@@ -4,13 +4,11 @@ import {
   donorOpportunityState,
   donorOpportunityEvents,
   leverageOffers,
-  requests,
-  submissionEntries,
+  opportunities,
 } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, desc, eq } from 'drizzle-orm';
 import { toIsoTime } from '@/lib/time';
-import { CHARIDY_CURATED } from '@/lib/charidy-curated';
 
 function generateGrantId(key: string, fundedDate: Date | null): string {
   const year = fundedDate ? fundedDate.getFullYear() : new Date().getFullYear();
@@ -79,46 +77,20 @@ export async function GET() {
     offersByKey.get(k)!.push(o);
   }
 
-  // 4. Resolve each funded opportunity
+  // 4. Resolve each funded opportunity from the unified table
   const pledges = [];
   for (const key of fundedKeys) {
-    let title = 'Unknown';
-    let orgName = 'Unknown';
-    let category: string | null = null;
-    let location: string | null = null;
-    let summary = '';
-    let amount: number | null = null;
+    const row = await db.select().from(opportunities).where(eq(opportunities.id, key)).get();
 
-    const curated = CHARIDY_CURATED.find((c) => c.key === key);
-    if (curated) {
-      title = curated.title;
-      orgName = curated.orgName;
-      category = curated.category;
-      location = curated.location;
-      summary = curated.summary;
-      amount = curated.fundingGap;
-    } else if (key.startsWith('sub_')) {
-      const id = key.slice('sub_'.length);
-      const row = await db.select().from(submissionEntries).where(eq(submissionEntries.id, id)).get();
-      if (row) {
-        title = row.title || 'Submission';
-        orgName = row.orgName || row.orgEmail || 'Unknown';
-        summary = row.summary;
-        amount = row.amountRequested ?? null;
-      }
-    } else {
-      const row = await db.select().from(requests).where(eq(requests.id, key)).get();
-      if (row) {
-        title = row.title;
-        orgName = 'Curated';
-        category = row.category;
-        location = row.location;
-        summary = row.summary;
-        amount = row.targetAmount
-          ? Number(row.targetAmount) - Number(row.currentAmount ?? 0)
-          : null;
-      }
-    }
+    const title = row?.title ?? 'Unknown';
+    const orgName = row?.orgName || row?.orgEmail || 'Unknown';
+    const category = row?.category ?? null;
+    const location = row?.location ?? null;
+    const summary = row?.summary ?? '';
+    const amount = row?.targetAmount
+      ? Number(row.targetAmount) - Number(row.currentAmount ?? 0)
+      : null;
+    const source = row?.source ?? 'unknown';
 
     const commitmentDateRaw = fundedDateByKey.get(key) ?? null;
     const commitmentDate = commitmentDateRaw ? new Date(commitmentDateRaw) : null;
@@ -136,7 +108,7 @@ export async function GET() {
 
     pledges.push({
       opportunityKey: key,
-      source: curated ? 'charidy' : key.startsWith('sub_') ? 'submission' : 'request',
+      source,
       title,
       orgName,
       category,

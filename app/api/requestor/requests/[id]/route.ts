@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { requests, donorOpportunityState, donorOpportunityEvents } from '@/db/schema';
+import { opportunities, donorOpportunityState, donorOpportunityEvents } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, desc, eq } from 'drizzle-orm';
 import { toIsoTime } from '@/lib/time';
@@ -17,17 +17,20 @@ export async function GET(
 
   const row = await db
     .select()
-    .from(requests)
-    .where(and(eq(requests.id, id), eq(requests.createdBy, session.userId)))
+    .from(opportunities)
+    .where(and(eq(opportunities.id, id), eq(opportunities.createdBy, session.userId)))
     .get();
 
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  // Find donor-side progress for this request (anonymized — no donor identity exposed)
+  // opportunityKey is just the id — no prefix
+  const opportunityKey = id;
+
+  // Find donor-side progress (anonymized — no donor identity exposed)
   const stateRows = await db
     .select()
     .from(donorOpportunityState)
-    .where(eq(donorOpportunityState.opportunityKey, id))
+    .where(eq(donorOpportunityState.opportunityKey, opportunityKey))
     .limit(1);
 
   const donorState = stateRows[0] ?? null;
@@ -42,7 +45,7 @@ export async function GET(
       .where(
         and(
           eq(donorOpportunityEvents.donorId, donorId),
-          eq(donorOpportunityEvents.opportunityKey, id),
+          eq(donorOpportunityEvents.opportunityKey, opportunityKey),
         ),
       )
       .orderBy(desc(donorOpportunityEvents.createdAt));
@@ -55,7 +58,6 @@ export async function GET(
   }
 
   const evidence = row.evidenceJson ? JSON.parse(row.evidenceJson) : null;
-
   return NextResponse.json({
     request: {
       id: row.id,

@@ -1,17 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState, requests, submissionEntries, users } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, opportunities, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 async function findByToken(safeToken: string) {
-  // Check submission_entries first, then requests
-  const sub = await db.select().from(submissionEntries).where(eq(submissionEntries.moreInfoToken, safeToken)).get();
-  if (sub) return { source: 'submission' as const, row: sub };
-
-  const req = await db.select().from(requests).where(eq(requests.moreInfoToken, safeToken)).get();
-  if (req) return { source: 'request' as const, row: req };
-
+  const row = await db.select().from(opportunities).where(eq(opportunities.moreInfoToken, safeToken)).get();
+  if (row) return row;
   return null;
 }
 
@@ -20,34 +15,19 @@ export async function GET(_request: NextRequest, context: { params: Promise<{ to
   const safeToken = String(token || '');
   if (!safeToken) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
-  const found = await findByToken(safeToken);
-  if (!found) return NextResponse.json({ error: 'Invalid token' }, { status: 404 });
+  const row = await findByToken(safeToken);
+  if (!row) return NextResponse.json({ error: 'Invalid token' }, { status: 404 });
 
-  if (found.source === 'submission') {
-    const row = found.row;
-    return NextResponse.json({
-      valid: true,
-      submissionId: row.id,
-      orgName: row.orgName ?? null,
-      orgEmail: row.orgEmail ?? null,
-      title: row.title ?? null,
-      amountRequested: row.amountRequested ?? row.extractedAmount ?? null,
-      submittedAt: row.moreInfoSubmittedAt ?? null,
-      existing: row.detailsJson ? JSON.parse(row.detailsJson) : null,
-    });
-  }
-
-  // source === 'request' — look up the creator's name/email
-  const row = found.row;
+  // Look up the creator's name/email for display
   const creator = row.createdBy
     ? await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, row.createdBy)).get()
     : null;
 
   return NextResponse.json({
     valid: true,
-    requestId: row.id,
-    orgName: creator?.name ?? null,
-    orgEmail: creator?.email ?? null,
+    opportunityId: row.id,
+    orgName: row.orgName ?? creator?.name ?? null,
+    orgEmail: row.orgEmail ?? creator?.email ?? null,
     title: row.title ?? null,
     amountRequested: row.targetAmount ?? null,
     submittedAt: row.moreInfoSubmittedAt ?? null,
@@ -60,8 +40,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ to
   const safeToken = String(token || '');
   if (!safeToken) return NextResponse.json({ error: 'Missing token' }, { status: 400 });
 
-  const found = await findByToken(safeToken);
-  if (!found) return NextResponse.json({ error: 'Invalid token' }, { status: 404 });
+  const row = await findByToken(safeToken);
+  if (!row) return NextResponse.json({ error: 'Invalid token' }, { status: 404 });
 
   const body = await request.json().catch(() => ({}));
 
@@ -81,29 +61,17 @@ export async function POST(request: NextRequest, context: { params: Promise<{ to
     updatedAt: new Date().toISOString(),
   };
 
-  // Determine the opportunity key used for donor tracking
-  let opportunityKey: string;
-  if (found.source === 'submission') {
-    opportunityKey = `sub_${found.row.id}`;
-    await db
-      .update(submissionEntries)
-      .set({
-        detailsJson: JSON.stringify(details),
-        moreInfoSubmittedAt: new Date(),
-        status: 'more_info_submitted',
-      })
-      .where(eq(submissionEntries.id, found.row.id));
-  } else {
-    opportunityKey = found.row.id;
-    await db
-      .update(requests)
-      .set({
-        detailsJson: JSON.stringify(details),
-        moreInfoSubmittedAt: new Date(),
-        status: 'more_info_submitted',
-      })
-      .where(eq(requests.id, found.row.id));
-  }
+  // opportunityKey is just the row id — no prefix
+  const opportunityKey = row.id;
+
+  await db
+    .update(opportunities)
+    .set({
+      detailsJson: JSON.stringify(details),
+      moreInfoSubmittedAt: new Date(),
+      status: 'more_info_submitted',
+    })
+    .where(eq(opportunities.id, row.id));
 
   // Record info_received event on the donor side so timeline + stepper update
   const stateRow = await db
@@ -121,6 +89,34 @@ export async function POST(request: NextRequest, context: { params: Promise<{ to
       metaJson: null,
       createdAt: new Date(),
     });
+
+    // Concierge auto-schedules a meeting 3 days out
+    const now = new Date();
+    const meetingDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+    await db.insert(donorOpportunityEvents).values({
+      id: uuidv4(),
+      donorId: stateRow.donorId,
+      opportunityKey,
+      type: 'scheduled',
+      metaJson: JSON.stringify({
+        concierge: true,
+        meetingType: 'zoom',
+        scheduledFor: meetingDate.toISOString().slice(0, 16),
+        scheduledDate: meetingDate.toISOString().slice(0, 10),
+        scheduledTime: '14:00',
+        location: 'Zoom (link will be sent)',
+        agenda: `Review ${row.title} — program overview, financial sustainability, and impact metrics.`,
+        conciergeName: 'David Goldstein',
+      }),
+      createdAt: new Date(),
+    });
+
+    // Advance state to scheduled
+    await db
+      .update(donorOpportunityState)
+      .set({ state: 'scheduled', updatedAt: new Date() })
+      .where(eq(donorOpportunityState.id, stateRow.id));
   }
 
   return NextResponse.json({ success: true });

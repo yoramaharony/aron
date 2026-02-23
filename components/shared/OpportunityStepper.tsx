@@ -43,7 +43,7 @@ export function OpportunityStepper(props: {
                         const isCurrent = idx === currentIndex;
                         const isDone = idx < currentIndex || (idx === WORKFLOW_STAGES.length - 1 && isCommitted);
                         const isDecision = idx === WORKFLOW_STAGES.length - 1;
-                        const isPassedNode = isDecision && isPassed;
+                        const isPassedNode = isCurrent && isPassed;
                         const displayLabel = orgLabels ? STAGE_LABELS_ORG[label] : label.replace('_', ' ');
                         return (
                             <div key={label} className="text-center">
@@ -72,7 +72,7 @@ export function OpportunityStepper(props: {
                                                     <span className="h-2.5 w-2.5 rounded-full bg-[var(--color-gold)] shadow-[0_0_10px_rgba(212,175,55,0.55)]" />
                                                 ) : null}
                                             </div>
-                                            <div className={labelClass}>{displayLabel}</div>
+                                            <div className={labelClass}>{isPassedNode && orgLabels ? 'Declined' : displayLabel}</div>
                                         </Wrapper>
                                     );
                                 })()}

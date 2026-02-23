@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { submissionEntries, submissionLinks, users } from '@/db/schema';
+import { opportunities, submissionLinks, users } from '@/db/schema';
 import { getSession, hashPassword } from '@/lib/auth';
+import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 function forbidden() {
@@ -23,7 +24,7 @@ export async function GET() {
 
   try {
     // Fetch recent submissions and links and aggregate into "soft orgs"
-    const entries = await db.select().from(submissionEntries).limit(500);
+    const entries = await db.select().from(opportunities).where(eq(opportunities.source, 'submission')).limit(500);
     const links = await db.select().from(submissionLinks).limit(500);
 
     type Agg = {
@@ -65,7 +66,7 @@ export async function GET() {
         const ts = new Date(e.createdAt).toISOString();
         if (!agg.lastSubmittedAt || ts > agg.lastSubmittedAt) agg.lastSubmittedAt = ts;
       }
-      if (e.donorId) agg.donorsTouched.add(String(e.donorId));
+      if (e.originDonorId) agg.donorsTouched.add(String(e.originDonorId));
     }
 
     for (const l of links) {

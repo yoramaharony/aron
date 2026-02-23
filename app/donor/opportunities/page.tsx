@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { AlertCircle, Bot, Building2, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock3, DollarSign, FileText, Heart, Loader2, MapPin, Paperclip, StickyNote, X as XIcon, Zap } from 'lucide-react';
+import { AlertCircle, Bot, Building2, Calendar, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock3, DollarSign, FileText, Heart, Loader2, MapPin, Paperclip, StickyNote, X as XIcon, Zap } from 'lucide-react';
 import { useLeverage } from '@/components/providers/LeverageContext';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -93,20 +93,27 @@ function timelineIcon(type: string) {
 }
 
 export default function DonorFeed() {
-    const [activeTab, setActiveTab] = useState<'discover' | 'shortlist' | 'passed'>('discover');
+    const [activeTab, setActiveTab] = useState<'discover' | 'passed'>('discover');
     const [rows, setRows] = useState<OpportunityRow[]>([]);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
     const [detail, setDetail] = useState<any>(null);
     const [detailLoading, setDetailLoading] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [seeMoreOpen, setSeeMoreOpen] = useState(false);
+    const [seeMoreOpen, setSeeMoreOpen] = useState(true);
     const [timelineOpen, setTimelineOpen] = useState(false);
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [rescheduleOpen, setRescheduleOpen] = useState(false);
+    const [rescheduleDate, setRescheduleDate] = useState('');
+    const [rescheduleTime, setRescheduleTime] = useState('14:00');
+    const [rescheduleType, setRescheduleType] = useState('zoom');
+    const [rescheduling, setRescheduling] = useState(false);
     const [notesText, setNotesText] = useState('');
     const [notesEditing, setNotesEditing] = useState(false);
     const [notesSaving, setNotesSaving] = useState(false);
     const notesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const detailCache = useRef<Map<string, any>>(new Map());
+    const latestRequestRef = useRef<string>('');
     const [passedFilter, setPassedFilter] = useState<'all' | 'concierge' | 'manual'>('all');
     const [hasVision, setHasVision] = useState(true); // optimistic default
     const [conciergeReviewing, setConciergeReviewing] = useState(false);
@@ -115,13 +122,12 @@ export default function DonorFeed() {
     const router = useRouter();
     const { lastOpportunityUpdate, openLeverageDrawer } = useLeverage();
 
-    const stateToTab = (s: string) => {
+    const stateToTab = (s: string): 'discover' | 'passed' => {
         if (s === 'passed') return 'passed';
-        if (s === 'shortlisted' || s === 'scheduled' || s === 'funded') return 'shortlist';
         return 'discover';
     };
 
-    const filterRows = (all: OpportunityRow[], tab: 'discover' | 'shortlist' | 'passed') =>
+    const filterRows = (all: OpportunityRow[], tab: 'discover' | 'passed') =>
         all.filter((r) => stateToTab(r.state) === tab);
 
     const nextKeyAfter = (list: OpportunityRow[], currentKey: string) => {
@@ -185,22 +191,48 @@ export default function DonorFeed() {
     }, [rows, activeTab, passedFilter]);
 
     const loadDetail = async (key: string) => {
+        latestRequestRef.current = key;
         setSelectedKey(key);
-        setSeeMoreOpen(false);
         setTimelineOpen(false);
-        try {
+        setNotesEditing(false);
+        setRescheduleOpen(false);
+
+        // Use cache for instant transition
+        const cached = detailCache.current.get(key);
+        if (cached) {
+            setDetail(cached);
+            setNotesText(cached?.notes || '');
+            setDetailLoading(false);
+        } else {
             setDetailLoading(true);
+        }
+
+        try {
             const res = await fetch(`/api/opportunities/${encodeURIComponent(key)}`);
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || 'Failed to load');
-            setDetail(data);
-            setNotesText(data?.notes || '');
-            setNotesEditing(false);
+            detailCache.current.set(key, data);
+            if (latestRequestRef.current === key) {
+                setDetail(data);
+                setNotesText(data?.notes || '');
+                setDetailLoading(false);
+            }
         } catch {
-            setDetail(null);
-        } finally {
-            setDetailLoading(false);
+            if (latestRequestRef.current === key && !cached) {
+                setDetail(null);
+            }
+            if (latestRequestRef.current === key) {
+                setDetailLoading(false);
+            }
         }
+    };
+
+    const prefetchDetail = (key: string) => {
+        if (detailCache.current.has(key)) return;
+        fetch(`/api/opportunities/${encodeURIComponent(key)}`)
+            .then((res) => res.json())
+            .then((data) => { detailCache.current.set(key, data); })
+            .catch(() => {});
     };
 
     const saveNotes = (text: string) => {
@@ -229,6 +261,7 @@ export default function DonorFeed() {
 
     const act = async (key: string, action: string, meta?: any) => {
         try {
+            detailCache.current.delete(key); // invalidate before re-fetch
             const listBefore = filterRows(rows, activeTab);
             const nextAfterBefore = nextKeyAfter(listBefore, key);
 
@@ -296,9 +329,35 @@ export default function DonorFeed() {
         if (Array.isArray(m.documentNames)) return m.documentNames.filter(Boolean).map((n: string) => ({ name: n, url: '' }));
         return [] as Array<{ name: string; url: string }>;
     }, [timelineEvents]);
+    const scheduledEvent = useMemo(() => {
+        const src = Array.isArray(detail?.events) ? detail.events : [];
+        return src.find((e: any) => String(e?.type || '') === 'scheduled');
+    }, [detail?.events]);
+    const hasMeetingCompleted = useMemo(() => {
+        const src = Array.isArray(detail?.events) ? detail.events : [];
+        return src.some((e: any) => String(e?.type || '') === 'meeting_completed');
+    }, [detail?.events]);
     const currentKey = String(detail?.opportunity?.key || '');
-    const statusMessage = useMemo(() => deriveStatusMessage(workflow), [workflow]);
     const selectedRow = useMemo(() => rows.find((r) => r.key === selectedKey), [rows, selectedKey]);
+    const statusMessage = useMemo(() => {
+        const base = deriveStatusMessage(workflow);
+        // Override for concierge-reviewed items that were kept in Discover
+        if (workflow.stage === 'discover' && !workflow.isPassed && selectedRow?.conciergeAction === 'keep') {
+            return 'Concierge reviewed — matches your Impact Vision';
+        }
+        // Override for concierge request_info items
+        if (selectedRow?.conciergeAction === 'request_info' && workflow.stage === 'info_requested') {
+            return 'Concierge requested additional info from the organization';
+        }
+        // Differentiate meeting stage: scheduled vs just info received
+        if (workflow.stage === 'meeting') {
+            if (scheduledEvent?.meta?.scheduledDate) {
+                return `Meeting scheduled — ${String(scheduledEvent.meta.scheduledDate)}`;
+            }
+            return 'Info received — scheduling meeting...';
+        }
+        return base;
+    }, [workflow, selectedRow, scheduledEvent]);
 
     /* Prev / Next navigation */
     const currentIndex = useMemo(() => {
@@ -321,6 +380,14 @@ export default function DonorFeed() {
         };
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentIndex, filtered]);
+
+    // Prefetch adjacent items for instant prev/next navigation
+    useEffect(() => {
+        if (currentIndex < 0) return;
+        if (currentIndex > 0) prefetchDetail(filtered[currentIndex - 1].key);
+        if (currentIndex < filtered.length - 1) prefetchDetail(filtered[currentIndex + 1].key);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentIndex, filtered]);
 
@@ -370,29 +437,39 @@ export default function DonorFeed() {
                         className="rounded-lg bg-[rgba(212,175,55,0.06)] border border-[var(--border-subtle)] px-4 py-3 text-xs text-[var(--text-secondary)] flex items-center gap-2"
                     >
                         <Bot size={13} className="text-[var(--color-gold)]" />
-                        Concierge reviewed {conciergeStats.passed + conciergeStats.infoRequested + conciergeStats.keptInDiscover} opportunities:
-                        {conciergeStats.passed > 0 ? ` ${conciergeStats.passed} auto-passed,` : ''}
-                        {conciergeStats.infoRequested > 0 ? ` ${conciergeStats.infoRequested} info requested,` : ''}
-                        {conciergeStats.keptInDiscover > 0 ? ` ${conciergeStats.keptInDiscover} kept for review.` : ''}
+                        <span>
+                            Concierge reviewed {conciergeStats.passed + conciergeStats.infoRequested + conciergeStats.keptInDiscover} opportunities:
+                            {conciergeStats.passed > 0 ? ` ${conciergeStats.passed} auto-passed,` : ''}
+                            {conciergeStats.infoRequested > 0 ? ` ${conciergeStats.infoRequested} matched (info requested),` : ''}
+                            {conciergeStats.keptInDiscover > 0 ? ` ${conciergeStats.keptInDiscover} matched.` : ''}
+                        </span>
                     </motion.div>
                 )}
             </AnimatePresence>
 
             {/* TABS */}
             <div className="flex gap-8 border-b border-[var(--border-subtle)]">
-                {(['discover', 'shortlist', 'passed'] as const).map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === tab
-                            ? 'text-[var(--text-primary)]'
-                            : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
-                            }`}
-                    >
-                        {tab === 'discover' ? 'Discover' : tab === 'shortlist' ? 'Shortlist' : 'Passed'}
-                        {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-gold)]" />}
-                    </button>
-                ))}
+                {(['discover', 'passed'] as const).map((tab) => {
+                    const count = filterRows(rows, tab).length;
+                    return (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === tab
+                                ? 'text-[var(--text-primary)]'
+                                : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                                }`}
+                        >
+                            {tab === 'discover' ? 'Discover' : 'Passed'}
+                            {count > 0 && (
+                                <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-[rgba(212,175,55,0.12)] text-[var(--color-gold)]">
+                                    {count}
+                                </span>
+                            )}
+                            {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-gold)]" />}
+                        </button>
+                    );
+                })}
             </div>
 
             {error ? <div className="text-sm text-red-300">{error}</div> : null}
@@ -402,7 +479,7 @@ export default function DonorFeed() {
                 <Card className="p-0 lg:col-span-1 overflow-hidden">
                     <div className="px-5 py-4 border-b border-[var(--border-subtle)]">
                         <div className="text-sm font-semibold text-[var(--text-primary)]">
-                            {activeTab === 'discover' ? 'Discover' : activeTab === 'shortlist' ? 'Shortlist' : 'Passed'}
+                            {activeTab === 'discover' ? 'Discover' : 'Passed'}
                         </div>
                         {activeTab === 'passed' && (
                             <div className="flex gap-1 mt-2">
@@ -457,6 +534,16 @@ export default function DonorFeed() {
                                             {r.conciergeAction === 'pass' && (
                                                 <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
                                                     concierge pass
+                                                </span>
+                                            )}
+                                            {r.conciergeAction === 'request_info' && (
+                                                <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
+                                                    info requested
+                                                </span>
+                                            )}
+                                            {r.conciergeAction === 'keep' && (
+                                                <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.08)] text-green-400">
+                                                    matched
                                                 </span>
                                             )}
                                             <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
@@ -546,7 +633,10 @@ export default function DonorFeed() {
 
                                 {/* Status message */}
                                 <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] px-4 py-3 flex items-center gap-2">
-                                    {workflow.isCommitted ? <CheckCircle2 size={16} className="text-[var(--color-gold)]" /> : workflow.isPassed ? <XIcon size={16} className="text-red-400" /> : <AlertCircle size={16} className="text-[var(--color-gold)]" />}
+                                    {workflow.isCommitted ? <CheckCircle2 size={16} className="text-[var(--color-gold)]" />
+                                        : workflow.isPassed ? <XIcon size={16} className="text-red-400" />
+                                            : (selectedRow?.conciergeAction === 'keep' || selectedRow?.conciergeAction === 'request_info') ? <Bot size={16} className="text-green-400" />
+                                                : <AlertCircle size={16} className="text-[var(--color-gold)]" />}
                                     <span className="text-sm text-[var(--text-secondary)]">{statusMessage}</span>
                                 </div>
 
@@ -556,6 +646,15 @@ export default function DonorFeed() {
                                         <Bot size={16} className="text-[var(--color-gold)]" />
                                         <span className="text-sm text-[var(--text-secondary)]">
                                             Auto-passed by concierge: {selectedRow?.conciergeReason || 'Does not match your Impact Vision'}
+                                        </span>
+                                    </div>
+                                )}
+                                {/* Concierge match explanation */}
+                                {(selectedRow?.conciergeAction === 'keep' || selectedRow?.conciergeAction === 'request_info') && (
+                                    <div className="rounded-xl border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.04)] px-4 py-3 flex items-center gap-2">
+                                        <Bot size={16} className="text-green-400" />
+                                        <span className="text-sm text-[var(--text-secondary)]">
+                                            {selectedRow?.conciergeReason || 'Matches your Impact Vision'}
                                         </span>
                                     </div>
                                 )}
@@ -769,6 +868,133 @@ export default function DonorFeed() {
                                         </div>
                                     );
                                 })()}
+
+                                {/* Scheduled Meeting — shown when scheduled but not yet completed */}
+                                {scheduledEvent?.meta && !hasMeetingCompleted ? (
+                                    <div className="rounded-2xl border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(255,255,255,0.02)] p-6 space-y-5">
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2">
+                                                <Calendar size={18} className="text-[var(--color-gold)]" />Scheduled Meeting
+                                            </div>
+                                            {scheduledEvent.meta?.concierge && (
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[rgba(212,175,55,0.12)] text-[var(--color-gold)] border border-[rgba(212,175,55,0.25)]">
+                                                    Concierge
+                                                </span>
+                                            )}
+                                        </div>
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                                            {scheduledEvent.meta?.scheduledDate && (
+                                                <div>
+                                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Date</div>
+                                                    <div className="text-[var(--text-primary)]">{String(scheduledEvent.meta.scheduledDate)}</div>
+                                                </div>
+                                            )}
+                                            {scheduledEvent.meta?.scheduledTime && (
+                                                <div>
+                                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Time</div>
+                                                    <div className="text-[var(--text-primary)]">{String(scheduledEvent.meta.scheduledTime)}</div>
+                                                </div>
+                                            )}
+                                            {scheduledEvent.meta?.meetingType && (
+                                                <div>
+                                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Type</div>
+                                                    <div className="text-[var(--text-primary)]">{humanizeMeetingType(scheduledEvent.meta.meetingType)}</div>
+                                                </div>
+                                            )}
+                                            {scheduledEvent.meta?.location && (
+                                                <div>
+                                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Location</div>
+                                                    <div className="text-[var(--text-primary)]">{String(scheduledEvent.meta.location)}</div>
+                                                </div>
+                                            )}
+                                            {scheduledEvent.meta?.conciergeName && (
+                                                <div>
+                                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Concierge</div>
+                                                    <div className="text-[var(--text-primary)]">{String(scheduledEvent.meta.conciergeName)}</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {scheduledEvent.meta?.agenda && (
+                                            <div>
+                                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Agenda</div>
+                                                <p className="text-sm text-[var(--text-secondary)]">{String(scheduledEvent.meta.agenda)}</p>
+                                            </div>
+                                        )}
+
+                                        {!rescheduleOpen ? (
+                                            <Button variant="outline" onClick={() => {
+                                                setRescheduleDate(String(scheduledEvent.meta?.scheduledDate || ''));
+                                                setRescheduleTime(String(scheduledEvent.meta?.scheduledTime || '14:00'));
+                                                setRescheduleType(String(scheduledEvent.meta?.meetingType || 'zoom'));
+                                                setRescheduleOpen(true);
+                                            }}>
+                                                Reschedule
+                                            </Button>
+                                        ) : (
+                                            <div className="space-y-3 pt-2 border-t border-[var(--border-subtle)]">
+                                                <div className="text-sm font-medium text-[var(--text-primary)]">Reschedule Meeting</div>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1 block">Date</label>
+                                                        <input
+                                                            type="date"
+                                                            value={rescheduleDate}
+                                                            onChange={(e) => setRescheduleDate(e.target.value)}
+                                                            className="w-full rounded-lg px-3 py-2 bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] outline-none focus:border-[rgba(var(--accent-rgb),0.35)]"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1 block">Time</label>
+                                                        <input
+                                                            type="time"
+                                                            value={rescheduleTime}
+                                                            onChange={(e) => setRescheduleTime(e.target.value)}
+                                                            className="w-full rounded-lg px-3 py-2 bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] outline-none focus:border-[rgba(var(--accent-rgb),0.35)]"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1 block">Type</label>
+                                                        <select
+                                                            value={rescheduleType}
+                                                            onChange={(e) => setRescheduleType(e.target.value)}
+                                                            className="w-full rounded-lg px-3 py-2 bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] outline-none focus:border-[rgba(var(--accent-rgb),0.35)]"
+                                                        >
+                                                            <option value="zoom">Zoom</option>
+                                                            <option value="phone">Phone</option>
+                                                            <option value="in_person">In Person</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <Button
+                                                        variant="gold"
+                                                        isLoading={rescheduling}
+                                                        onClick={async () => {
+                                                            if (!rescheduleDate) return;
+                                                            setRescheduling(true);
+                                                            await act(detail.opportunity.key, 'scheduled', {
+                                                                concierge: false,
+                                                                meetingType: rescheduleType,
+                                                                scheduledFor: `${rescheduleDate}T${rescheduleTime}`,
+                                                                scheduledDate: rescheduleDate,
+                                                                scheduledTime: rescheduleTime,
+                                                                location: rescheduleType === 'zoom' ? 'Zoom (link will be sent)' : rescheduleType === 'phone' ? 'Phone call' : 'TBD',
+                                                                agenda: scheduledEvent.meta?.agenda ? String(scheduledEvent.meta.agenda) : '',
+                                                            });
+                                                            setRescheduling(false);
+                                                            setRescheduleOpen(false);
+                                                        }}
+                                                    >
+                                                        Confirm New Time
+                                                    </Button>
+                                                    <Button variant="outline" onClick={() => setRescheduleOpen(false)}>
+                                                        Cancel
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : null}
 
                                 {/* History — collapsible */}
                                 <button

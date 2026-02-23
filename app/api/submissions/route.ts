@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState, donorProfiles, submissionEntries, submissionLinks } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, donorProfiles, opportunities, submissionLinks } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { extractSubmissionSignals } from '@/lib/extract-submission';
-import { matchOpportunity, determineInfoTier } from '@/lib/concierge-match';
+import { matchOpportunity } from '@/lib/concierge-match';
 import type { ImpactVision } from '@/lib/vision-extract';
 
 export async function POST(request: Request) {
@@ -37,16 +37,9 @@ export async function POST(request: Request) {
   }
 
   const session = await getSession(); // optional
-  const requestorUserId = session?.role === 'requestor' ? session.userId : null;
+  const createdBy = session?.role === 'requestor' ? session.userId : null;
 
-  // Capture basic request metadata
-  const ua = request.headers.get('user-agent') || null;
-  const ip =
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    request.headers.get('x-real-ip') ||
-    null;
-
-  const submissionId = uuidv4();
+  const oppId = uuidv4();
   const extracted = extractSubmissionSignals({
     title: title || null,
     summary,
@@ -56,38 +49,36 @@ export async function POST(request: Request) {
     amountRequested,
   });
 
-  // Best-effort "atomic" update in sqlite/libsql
-  await db.batch([
-    db.insert(submissionEntries).values({
-      id: submissionId,
-      linkId: link.id,
-      donorId: link.donorId,
-      contactName: contactName || null,
-      contactEmail: contactEmail || null,
-      orgName: orgName || link.orgName || null,
-      orgEmail: orgEmail || link.orgEmail || null,
-      title: title || null,
-      summary,
-      amountRequested,
-      videoUrl: videoUrl || null,
-      extractedJson: JSON.stringify(extracted),
-      extractedCause: extracted.cause ?? null,
-      extractedGeo: extracted.geo?.length ? extracted.geo.join(', ') : null,
-      extractedUrgency: extracted.urgency ?? null,
-      extractedAmount: typeof extracted.amount === 'number' ? extracted.amount : null,
-      requestorUserId,
-      status: 'new',
-      userAgent: ua,
-      ip,
-    }),
-    db
-      .update(submissionLinks)
-      .set({
-        submissionsCount: (link.submissionsCount ?? 0) + 1,
-        lastSubmittedAt: new Date(),
-      })
-      .where(eq(submissionLinks.id, link.id)),
-  ]);
+  // Insert into unified opportunities table
+  await db.insert(opportunities).values({
+    id: oppId,
+    title: title || 'Submission',
+    category: extracted.cause || 'Uncategorized',
+    location: extracted.geo?.length ? extracted.geo.join(', ') : '',
+    summary,
+    targetAmount: amountRequested ?? 0,
+    source: 'submission',
+    originDonorId: link.donorId,
+    linkId: link.id,
+    createdBy,
+    orgName: orgName || link.orgName || null,
+    orgEmail: orgEmail || link.orgEmail || null,
+    contactName: contactName || null,
+    contactEmail: contactEmail || null,
+    videoUrl: videoUrl || null,
+    extractedJson: JSON.stringify(extracted),
+    status: 'active',
+    createdAt: new Date(),
+  });
+
+  // Update submission link usage
+  await db
+    .update(submissionLinks)
+    .set({
+      submissionsCount: (link.submissionsCount ?? 0) + 1,
+      lastSubmittedAt: new Date(),
+    })
+    .where(eq(submissionLinks.id, link.id));
 
   // ── Auto-trigger concierge review if donor has an Impact Vision ──
   let conciergeAction: string | null = null;
@@ -96,10 +87,9 @@ export async function POST(request: Request) {
     const vision: ImpactVision | null = profile?.visionJson ? JSON.parse(profile.visionJson) : null;
 
     if (vision && !(vision.pillars.length === 1 && vision.pillars[0] === 'Impact Discovery')) {
-      const oppKey = `sub_${submissionId}`;
       const result = matchOpportunity(
         {
-          key: oppKey,
+          key: oppId,
           category: extracted.cause ?? null,
           location: extracted.geo?.join(', ') ?? null,
           title: title || null,
@@ -112,46 +102,43 @@ export async function POST(request: Request) {
       const now = new Date();
 
       if (!result.matched) {
-        // Auto-pass: doesn't match donor's vision
+        await db.update(opportunities).set({ status: 'passed' }).where(eq(opportunities.id, oppId));
         await db.insert(donorOpportunityState).values({
-          id: uuidv4(), donorId: link.donorId, opportunityKey: oppKey, state: 'passed', updatedAt: now,
+          id: uuidv4(), donorId: link.donorId, opportunityKey: oppId, state: 'passed', updatedAt: now,
         }).onConflictDoUpdate({
           target: [donorOpportunityState.donorId, donorOpportunityState.opportunityKey],
           set: { state: 'passed', updatedAt: now },
         });
         await db.insert(donorOpportunityEvents).values({
-          id: uuidv4(), donorId: link.donorId, opportunityKey: oppKey,
+          id: uuidv4(), donorId: link.donorId, opportunityKey: oppId,
           type: 'pass', metaJson: JSON.stringify({ source: 'concierge', reason: result.reason }), createdAt: now,
         });
         conciergeAction = 'pass';
       } else if (result.infoTier !== 'none') {
-        // Matches + needs more info → mint token and request info
-        await db.update(submissionEntries)
+        await db.update(opportunities)
           .set({ moreInfoToken: uuidv4(), moreInfoRequestedAt: now, status: 'more_info_requested' })
-          .where(eq(submissionEntries.id, submissionId));
+          .where(eq(opportunities.id, oppId));
         await db.insert(donorOpportunityEvents).values({
-          id: uuidv4(), donorId: link.donorId, opportunityKey: oppKey,
+          id: uuidv4(), donorId: link.donorId, opportunityKey: oppId,
           type: 'request_info', metaJson: JSON.stringify({ source: 'concierge', infoTier: result.infoTier, reason: result.reason }), createdAt: now,
         });
         conciergeAction = 'request_info';
       } else {
-        // Matches, no extra info needed — annotate
         await db.insert(donorOpportunityEvents).values({
-          id: uuidv4(), donorId: link.donorId, opportunityKey: oppKey,
+          id: uuidv4(), donorId: link.donorId, opportunityKey: oppId,
           type: 'concierge_review', metaJson: JSON.stringify({ source: 'concierge', matched: true, reason: result.reason }), createdAt: now,
         });
         conciergeAction = 'keep';
       }
     }
   } catch (err) {
-    // Non-fatal: submission succeeded even if concierge fails
-    console.error('Concierge auto-review failed for submission', submissionId, err);
+    console.error('Concierge auto-review failed for submission', oppId, err);
   }
 
-  return NextResponse.json({ success: true, id: submissionId, conciergeAction });
+  return NextResponse.json({ success: true, id: oppId, conciergeAction });
 }
 
-// Donor-only: list submissions for this donor (for UI/visibility)
+// Donor-only: list submissions for this donor
 export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -159,10 +146,9 @@ export async function GET() {
 
   const rows = await db
     .select()
-    .from(submissionEntries)
-    .where(eq(submissionEntries.donorId, session.userId))
+    .from(opportunities)
+    .where(and(eq(opportunities.originDonorId, session.userId), eq(opportunities.source, 'submission')))
     .limit(100);
 
   return NextResponse.json({ submissions: rows });
 }
-

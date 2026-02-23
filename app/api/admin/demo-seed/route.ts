@@ -6,8 +6,7 @@ import {
   donorOpportunityState,
   donorProfiles,
   leverageOffers,
-  requests,
-  submissionEntries,
+  opportunities,
   submissionLinks,
   users,
 } from '@/db/schema';
@@ -17,6 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { generateSubmissionToken } from '@/lib/submission-links';
 import { extractSubmissionSignals } from '@/lib/extract-submission';
 import { buildBoard, extractVision } from '@/lib/vision-extract';
+import { CHARIDY_CURATED } from '@/lib/charidy-curated';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -42,7 +42,6 @@ function seedPreset(theme: SeedTheme) {
       donorName: 'Demo Donor (Jewish Causes)',
       orgName: 'Bikur Cholim & Chesed Fund',
       orgEmail: 'demo-org@aron.local',
-      // Keep the same Zoom URL used previously (demo expects it), but content is now themed.
       demoVideoUrl:
         'https://us06web.zoom.us/rec/component-page?eagerLoadZvaPages=sidemenu.billing.plan_management&accessLevel=meeting&action=viewdetailpage&sharelevel=meeting&useWhichPasswd=meeting&requestFrom=pwdCheck&clusterId=us06&componentName=need-password&meetingId=QRH1BktKpBgg_-v7eX2drb4YTzcMXQxSqfPFwG9H0mXBfaclalI6K566Khun711V.1kwuhLrFEMJhpZWl&originRequestUrl=https%3A%2F%2Fus06web.zoom.us%2Frec%2Fshare%2FUdhC9IEPLBhGMOJmya1goqGu7-UgsUuVwy2BFDBBQWzFDRqKwQ92byW4j_9R2LgL.2M8jQlvIh5L_XavM%3FstartTime%3D1768907539000%2520Passcode%3A%2520R*%26z6gdU',
       submissions: [
@@ -131,16 +130,6 @@ function seedPreset(theme: SeedTheme) {
           includeMoreInfo: false,
         },
       ],
-      curatedRequest: {
-        id: 'req_demo',
-        title: 'Curated: Hachnasas Kallah matching campaign',
-        category: 'Hachnasas Kallah (Chesed)',
-        location: 'Jerusalem, Israel',
-        summary:
-          'Curated opportunity for demo purposes: discreet matching for hachnasas kallah with concierge-reviewed verification.',
-        targetAmount: 2000000,
-        currentAmount: 650000,
-      },
     };
   }
 
@@ -163,28 +152,17 @@ function seedPreset(theme: SeedTheme) {
         includeMoreInfo: true,
       },
     ],
-    curatedRequest: {
-      id: 'req_demo',
-      title: 'Curated: Pediatric oncology expansion',
-      category: 'Healthcare',
-      location: 'New York, NY',
-      summary: 'Curated opportunity for demo purposes (DB-backed).',
-      targetAmount: 500000,
-      currentAmount: 200000,
-    },
   };
 }
 
 /**
  * Light reset: clears concierge opportunity states/events and re-extracts the
  * vision from existing chat history (with the fixed donor-only extraction).
- * Chat messages and submissions are preserved.
+ * Opportunities are preserved.
  */
 async function resetConciergeOnly(donorId: string) {
-  // 1. Delete all opportunity states (reset to 'new')
   await db.delete(donorOpportunityState).where(eq(donorOpportunityState.donorId, donorId));
 
-  // 2. Delete concierge-sourced events only (preserve manual donor actions)
   const allEvents = await db
     .select()
     .from(donorOpportunityEvents)
@@ -203,7 +181,6 @@ async function resetConciergeOnly(donorId: string) {
     } catch { /* ignore bad JSON */ }
   }
 
-  // 3. Re-extract vision from existing chat messages (donor-only extraction)
   const msgs = await db
     .select({ role: conciergeMessages.role, content: conciergeMessages.content })
     .from(conciergeMessages)
@@ -231,36 +208,37 @@ async function resetDemoData(opts: { donorId?: string | null; orgId?: string | n
   const donorId = opts.donorId ?? null;
   const orgId = opts.orgId ?? null;
 
-  // Delete leaf tables first.
   if (donorId) {
     await db.delete(leverageOffers).where(eq(leverageOffers.donorId, donorId));
     await db.delete(donorOpportunityEvents).where(eq(donorOpportunityEvents.donorId, donorId));
     await db.delete(donorOpportunityState).where(eq(donorOpportunityState.donorId, donorId));
     await db.delete(conciergeMessages).where(eq(conciergeMessages.donorId, donorId));
     await db.delete(donorProfiles).where(eq(donorProfiles.donorId, donorId));
-    await db.delete(submissionEntries).where(eq(submissionEntries.donorId, donorId));
+    // Delete opportunities owned by this donor (submissions)
+    await db.delete(opportunities).where(eq(opportunities.originDonorId, donorId));
+    // Clean up legacy submission_entries (FK blocks submission_links delete)
+    await db.run(sql`DELETE FROM submission_entries WHERE donor_id = ${donorId}`).catch(() => {});
     await db.delete(submissionLinks).where(eq(submissionLinks.donorId, donorId));
   }
 
   if (orgId) {
-    // Delete ALL requests created by the demo org user (not just req_demo)
-    await db.delete(requests).where(eq(requests.createdBy, orgId));
-    // In case any submission entry got linked to the authenticated org user.
-    await db.delete(submissionEntries).where(eq(submissionEntries.requestorUserId, orgId));
+    await db.delete(opportunities).where(eq(opportunities.createdBy, orgId));
+    await db.run(sql`DELETE FROM requests WHERE created_by = ${orgId}`).catch(() => {});
   }
 
-  // Also clean up requests created by ALL demo org users (@aron.local requestors)
+  // Clean up opportunities created by ALL demo org users
   const demoOrgs = await db.select({ id: users.id })
     .from(users)
     .where(sql`${users.role} = 'requestor' AND ${users.email} LIKE '%@aron.local'`)
     .limit(50);
 
   for (const org of demoOrgs) {
-    await db.delete(requests).where(eq(requests.createdBy, org.id));
+    await db.delete(opportunities).where(eq(opportunities.createdBy, org.id));
+    await db.run(sql`DELETE FROM requests WHERE created_by = ${org.id}`).catch(() => {});
   }
 
-  // Curated request is stable ID, safe to delete as well.
-  await db.delete(requests).where(eq(requests.id, 'req_demo'));
+  // Delete curated seed opportunities
+  await db.delete(opportunities).where(eq(opportunities.source, 'curated'));
 }
 
 export async function POST(req: Request) {
@@ -272,7 +250,6 @@ export async function POST(req: Request) {
     const { searchParams } = new URL(req.url);
     const conciergeOnly = searchParams.get('concierge_only') === '1';
 
-    // Light reset: only clear concierge states + re-extract vision
     if (conciergeOnly) {
       const donor = await db.select().from(users).where(eq(users.email, 'demo-donor@aron.local')).get();
       if (!donor) return NextResponse.json({ error: 'Demo donor not found — run full seed first' }, { status: 404 });
@@ -284,7 +261,6 @@ export async function POST(req: Request) {
     const doReset = getReset(req);
     const preset = seedPreset(theme);
 
-    // Create or reuse demo donor + requestor users (stable emails)
     const donorEmail = 'demo-donor@aron.local';
     const orgEmail = preset.orgEmail;
 
@@ -298,13 +274,12 @@ export async function POST(req: Request) {
 
     if (doReset) {
       await resetDemoData({ donorId: donor?.id ?? null, orgId: org?.id ?? null });
-      // If user rows exist, keep them (stable credentials), but make sure names are up to date per theme.
       if (donor) await db.update(users).set({ name: preset.donorName }).where(eq(users.id, donorId));
       if (org) await db.update(users).set({ name: preset.orgName }).where(eq(users.id, orgId));
     } else {
-      // Even without full reset, keep the demo tidy by removing prior submission links/entries for this donor.
       if (donor?.id) {
-        await db.delete(submissionEntries).where(eq(submissionEntries.donorId, donor.id));
+        await db.delete(opportunities).where(eq(opportunities.originDonorId, donor.id));
+        await db.run(sql`DELETE FROM submission_entries WHERE donor_id = ${donor.id}`).catch(() => {});
         await db.delete(submissionLinks).where(eq(submissionLinks.donorId, donor.id));
       }
     }
@@ -329,112 +304,99 @@ export async function POST(req: Request) {
       });
     }
 
-  // Create a demo submission link for the donor (one per run, keep latest)
-  const demoVideoUrl = preset.demoVideoUrl;
-  const seededSubmissions: Array<{
-    key: string;
-    title: string;
-    orgName: string | null;
-    moreInfoUrl: string | null;
-  }> = [];
+    const demoVideoUrl = preset.demoVideoUrl;
+    const seededOpportunities: Array<{
+      key: string;
+      title: string;
+      orgName: string | null;
+      moreInfoUrl: string | null;
+    }> = [];
 
-  let primarySubmitUrl: string | null = null;
-  let primaryMoreInfoUrl: string | null = null;
+    let primarySubmitUrl: string | null = null;
+    let primaryMoreInfoUrl: string | null = null;
 
-  for (let i = 0; i < preset.submissions.length; i++) {
-    const s = preset.submissions[i];
-    const token = generateSubmissionToken();
-    const linkId = uuidv4();
+    // Seed org submissions as opportunities
+    for (let i = 0; i < preset.submissions.length; i++) {
+      const s = preset.submissions[i];
+      const token = generateSubmissionToken();
+      const linkId = uuidv4();
 
-    await db.insert(submissionLinks).values({
-      id: linkId,
-      token,
-      donorId,
-      createdBy: donorId,
-      orgName: s.orgName,
-      orgEmail: s.orgEmail,
-      note: s.linkNote,
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      maxSubmissions: 50,
-      submissionsCount: 0,
-      visitsCount: 0,
-    });
+      await db.insert(submissionLinks).values({
+        id: linkId,
+        token,
+        donorId,
+        createdBy: donorId,
+        orgName: s.orgName,
+        orgEmail: s.orgEmail,
+        note: s.linkNote,
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        maxSubmissions: 50,
+        submissionsCount: 0,
+        visitsCount: 0,
+      });
 
-    const entryId = uuidv4();
-    const moreInfoToken = uuidv4();
-    const extracted = extractSubmissionSignals({
-      title: s.title,
-      summary: s.summary,
-      orgName: s.orgName,
-      orgEmail: s.orgEmail,
-      videoUrl: demoVideoUrl,
-      amountRequested: s.amountRequested,
-    });
+      const oppId = uuidv4();
+      const moreInfoToken = uuidv4();
+      const extracted = extractSubmissionSignals({
+        title: s.title,
+        summary: s.summary,
+        orgName: s.orgName,
+        orgEmail: s.orgEmail,
+        videoUrl: demoVideoUrl,
+        amountRequested: s.amountRequested,
+      });
 
-    await db.insert(submissionEntries).values({
-      id: entryId,
-      linkId,
-      donorId,
-      contactName: s.contactName ?? null,
-      contactEmail: s.contactEmail ?? null,
-      orgName: s.orgName,
-      orgEmail: s.orgEmail,
-      title: s.title,
-      summary: s.summary,
-      amountRequested: s.amountRequested,
-      videoUrl: demoVideoUrl,
-      extractedJson: JSON.stringify(extracted),
-      extractedCause: extracted.cause ?? null,
-      extractedGeo: extracted.geo?.length ? extracted.geo.join(', ') : null,
-      extractedUrgency: extracted.urgency ?? null,
-      extractedAmount: typeof extracted.amount === 'number' ? extracted.amount : null,
-      moreInfoToken: s.includeMoreInfo ? moreInfoToken : null,
-      moreInfoRequestedAt: s.includeMoreInfo ? new Date() : null,
-      requestorUserId: orgId,
-    });
-
-    const key = `sub_${entryId}`;
-    const moreInfoUrl = s.includeMoreInfo ? `/more-info/${moreInfoToken}` : null;
-    seededSubmissions.push({ key, title: s.title, orgName: s.orgName ?? null, moreInfoUrl });
-
-    if (i === 0) {
-      primarySubmitUrl = `/submit/${token}`;
-      primaryMoreInfoUrl = moreInfoUrl;
-    }
-  }
-
-  // Create one curated request (optional)
-  const reqId = preset.curatedRequest.id;
-  const existingReq = await db.select().from(requests).where(eq(requests.id, reqId)).get();
-  if (!existingReq) {
-    await db.insert(requests).values({
-      id: reqId,
-      title: preset.curatedRequest.title,
-      category: preset.curatedRequest.category,
-      location: preset.curatedRequest.location,
-      summary: preset.curatedRequest.summary,
-      targetAmount: preset.curatedRequest.targetAmount,
-      currentAmount: preset.curatedRequest.currentAmount,
-      status: 'active',
-      // Use the seeded donor as createdBy to avoid foreign-key issues if the admin session user isn't present in this DB.
-      createdBy: donorId,
-      createdAt: new Date(),
-    });
-  } else {
-    // Keep the curated request aligned to the chosen theme.
-    await db
-      .update(requests)
-      .set({
-        title: preset.curatedRequest.title,
-        category: preset.curatedRequest.category,
-        location: preset.curatedRequest.location,
-        summary: preset.curatedRequest.summary,
-        targetAmount: preset.curatedRequest.targetAmount,
-        currentAmount: preset.curatedRequest.currentAmount,
+      await db.insert(opportunities).values({
+        id: oppId,
+        title: s.title,
+        category: extracted.cause || 'Uncategorized',
+        location: extracted.geo?.length ? extracted.geo.join(', ') : '',
+        summary: s.summary,
+        targetAmount: s.amountRequested,
+        source: 'submission',
+        originDonorId: donorId,
+        linkId,
+        createdBy: orgId,
+        orgName: s.orgName,
+        orgEmail: s.orgEmail,
+        contactName: s.contactName ?? null,
+        contactEmail: s.contactEmail ?? null,
+        videoUrl: demoVideoUrl,
+        extractedJson: JSON.stringify(extracted),
+        moreInfoToken: s.includeMoreInfo ? moreInfoToken : null,
+        moreInfoRequestedAt: s.includeMoreInfo ? new Date() : null,
         status: 'active',
-      })
-      .where(eq(requests.id, reqId));
-  }
+        createdAt: new Date(),
+      });
+
+      const moreInfoUrl = s.includeMoreInfo ? `/more-info/${moreInfoToken}` : null;
+      seededOpportunities.push({ key: oppId, title: s.title, orgName: s.orgName ?? null, moreInfoUrl });
+
+      if (i === 0) {
+        primarySubmitUrl = `/submit/${token}`;
+        primaryMoreInfoUrl = moreInfoUrl;
+      }
+    }
+
+    // Seed charidy curated items as real DB rows (owned by demo org)
+    for (const c of CHARIDY_CURATED) {
+      await db.insert(opportunities).values({
+        id: c.key,
+        title: c.title,
+        category: c.category,
+        location: c.location,
+        summary: c.summary,
+        targetAmount: c.fundingGap,
+        source: 'curated',
+        createdBy: orgId,
+        orgName: c.orgName,
+        orgEmail: preset.orgEmail,
+        contactName: 'Demo Contact',
+        contactEmail: preset.orgEmail,
+        status: 'active',
+        createdAt: new Date(),
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -447,23 +409,18 @@ export async function POST(req: Request) {
       concierge: `/donor/legacy`,
       visionBoard: `/donor/impact`,
       moreInfoUrl: primaryMoreInfoUrl,
-      submissions: seededSubmissions,
+      opportunities: seededOpportunities,
     });
   } catch (e: any) {
     const msg = String(e?.message ?? e ?? '');
-    console.error('❌ demo-seed failed', e);
+    console.error('demo-seed failed', e);
     const hint =
       msg.toLowerCase().includes('no such column') || msg.toLowerCase().includes('no such table')
         ? 'Your local DB schema is out of date. Run `npm run db:ensure` (from yesod-platform/) and restart `npm run dev`.'
         : null;
     return NextResponse.json(
-      {
-        error: 'Demo seed failed',
-        detail: msg,
-        hint,
-      },
-      { status: 500 }
+      { error: 'Demo seed failed', detail: msg, hint },
+      { status: 500 },
     );
   }
 }
-

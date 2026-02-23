@@ -72,6 +72,8 @@ async function main() {
     ['invite_codes (used_by)', `SELECT COUNT(*) AS c FROM invite_codes WHERE used_by=?`, [userId]],
     ['submission_links (donor_id)', `SELECT COUNT(*) AS c FROM submission_links WHERE donor_id=?`, [userId]],
     ['submission_links (created_by)', `SELECT COUNT(*) AS c FROM submission_links WHERE created_by=?`, [userId]],
+    ['opportunities (origin_donor_id)', `SELECT COUNT(*) AS c FROM opportunities WHERE origin_donor_id=?`, [userId]],
+    ['opportunities (created_by)', `SELECT COUNT(*) AS c FROM opportunities WHERE created_by=?`, [userId]],
     ['submission_entries (donor_id)', `SELECT COUNT(*) AS c FROM submission_entries WHERE donor_id=?`, [userId]],
     ['submission_entries (requestor_user_id)', `SELECT COUNT(*) AS c FROM submission_entries WHERE requestor_user_id=?`, [userId]],
     ['donor_profiles', `SELECT COUNT(*) AS c FROM donor_profiles WHERE donor_id=?`, [userId]],
@@ -111,6 +113,7 @@ async function main() {
   };
 
   await bestEffort(() => exec(`UPDATE org_kyc SET verified_by=NULL WHERE verified_by=?`, [userId]));
+  await bestEffort(() => exec(`UPDATE opportunities SET created_by=NULL WHERE created_by=?`, [userId]));
   await bestEffort(() => exec(`UPDATE submission_entries SET requestor_user_id=NULL WHERE requestor_user_id=?`, [userId]));
 
   // Campaigns: detach if allowed; otherwise fall back to reassigning to an existing admin; otherwise delete.
@@ -144,11 +147,12 @@ async function main() {
   await bestEffort(() => exec(`DELETE FROM concierge_messages WHERE donor_id=?`, [userId]));
   await bestEffort(() => exec(`DELETE FROM donor_profiles WHERE donor_id=?`, [userId]));
 
-  // Order: entries then links
+  // Opportunities (new unified table) + legacy tables, then links
+  await bestEffort(() => exec(`DELETE FROM opportunities WHERE origin_donor_id=?`, [userId]));
   await bestEffort(() => exec(`DELETE FROM submission_entries WHERE donor_id=?`, [userId]));
   await bestEffort(() => exec(`DELETE FROM submission_links WHERE donor_id=? OR created_by=?`, [userId, userId]));
 
-  // Requests: try to null out (schema usually allows it in MVP)
+  // Legacy requests: try to null out (schema usually allows it in MVP)
   await bestEffort(() => exec(`UPDATE requests SET created_by=NULL WHERE created_by=?`, [userId]));
 
   await exec(`DELETE FROM users WHERE id=?`, [userId]);

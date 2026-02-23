@@ -12,8 +12,9 @@ export const users = sqliteTable('users', {
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
-// Requests Table
-export const requests = sqliteTable('requests', {
+// Unified opportunities table — every funding request, regardless of how it entered the system.
+// The donor calls it an "opportunity"; the org calls it a "request". Same row.
+export const opportunities = sqliteTable('opportunities', {
     id: text('id').primaryKey(),
     title: text('title').notNull(),
     category: text('category').notNull(),
@@ -21,16 +22,39 @@ export const requests = sqliteTable('requests', {
     summary: text('summary').notNull(),
     targetAmount: integer('target_amount').notNull(),
     currentAmount: integer('current_amount').default(0),
-    status: text('status').default('draft'), // draft, pending, active
-    createdBy: text('created_by').references(() => users.id),
-    coverUrl: text('cover_url'),
-    evidenceJson: text('evidence_json'), // JSON: { budget?: UploadedFile, files?: UploadedFile[] }
+
+    // Who created / owns this opportunity
+    createdBy: text('created_by').references(() => users.id), // org user
+    orgName: text('org_name'),
+    orgEmail: text('org_email'),
+    contactName: text('contact_name'),
+    contactEmail: text('contact_email'),
+
+    // How it entered the system
+    source: text('source').notNull().default('portal'), // 'submission' | 'portal' | 'curated'
+    originDonorId: text('origin_donor_id').references(() => users.id), // if submission, the inviting donor
+    linkId: text('link_id'), // if submission, the submission link
+
+    // Progressive disclosure (request more info)
     moreInfoToken: text('more_info_token'),
     moreInfoRequestedAt: integer('more_info_requested_at', { mode: 'timestamp' }),
     moreInfoSubmittedAt: integer('more_info_submitted_at', { mode: 'timestamp' }),
     detailsJson: text('details_json'),
+
+    // Evidence & media
+    evidenceJson: text('evidence_json'), // JSON: { budget?: UploadedFile, files?: UploadedFile[] }
+    coverUrl: text('cover_url'),
+    videoUrl: text('video_url'),
+
+    // Extracted signals (populated on creation from summary text)
+    extractedJson: text('extracted_json'),
+
+    // Status
+    status: text('status').default('active'), // draft | pending | active | more_info_requested | funded
+
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
+
 
 // Campaigns Table
 export const campaigns = sqliteTable('campaigns', {
@@ -120,49 +144,6 @@ export const submissionLinks = sqliteTable('submission_links', {
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
-// Lightweight request submissions created via a donor submission link
-export const submissionEntries = sqliteTable('submission_entries', {
-    id: text('id').primaryKey(), // UUID
-    linkId: text('link_id').notNull().references(() => submissionLinks.id),
-    donorId: text('donor_id').notNull().references(() => users.id),
-
-    // Requester identity (MVP: soft)
-    contactName: text('contact_name'),
-    contactEmail: text('contact_email'),
-    orgName: text('org_name'),
-    orgEmail: text('org_email'),
-
-    // Lightweight content
-    title: text('title'),
-    summary: text('summary').notNull(),
-    amountRequested: integer('amount_requested'),
-    videoUrl: text('video_url'),
-
-    // Deterministic extraction (Phase 1 "LLM auto-extraction" stub)
-    extractedJson: text('extracted_json'),
-    extractedCause: text('extracted_cause'),
-    extractedGeo: text('extracted_geo'), // comma-separated
-    extractedUrgency: text('extracted_urgency'),
-    extractedAmount: integer('extracted_amount'),
-
-    // Progressive disclosure: request more info (donor → org)
-    moreInfoToken: text('more_info_token'),
-    moreInfoRequestedAt: integer('more_info_requested_at', { mode: 'timestamp' }),
-    moreInfoSubmittedAt: integer('more_info_submitted_at', { mode: 'timestamp' }),
-    detailsJson: text('details_json'),
-
-    // Optional linkage to an authenticated requestor user (if they happened to be signed in)
-    requestorUserId: text('requestor_user_id').references(() => users.id),
-
-    // Basic workflow (later: request-more-info, pass, etc.)
-    status: text('status').notNull().default('new'),
-
-    // Audit metadata
-    userAgent: text('user_agent'),
-    ip: text('ip'),
-
-    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
-});
 
 // Org KYC/verification (MVP-lite): keyed by orgEmail when available
 export const orgKyc = sqliteTable('org_kyc', {
@@ -201,7 +182,7 @@ export const conciergeMessages = sqliteTable('concierge_messages', {
 export const donorOpportunityState = sqliteTable('donor_opportunity_state', {
     id: text('id').primaryKey(), // UUID
     donorId: text('donor_id').notNull().references(() => users.id),
-    opportunityKey: text('opportunity_key').notNull(), // e.g. 'req_1' or 'sub_<uuid>'
+    opportunityKey: text('opportunity_key').notNull(), // references opportunities.id
     state: text('state').notNull().default('new'),
     notes: text('notes'),
     updatedAt: integer('updated_at', { mode: 'timestamp' }),

@@ -1,23 +1,29 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState, donorProfiles, requests } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, donorProfiles, opportunities } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq, desc, isNotNull } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { matchOpportunity } from '@/lib/concierge-match';
+import { renderEmailFromTemplate } from '@/lib/email-templates';
+import { sendMailgunEmail } from '@/lib/mailgun';
 import type { ImpactVision } from '@/lib/vision-extract';
 
 export async function GET(request: Request) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    // If Requestor, show only their requests. If Donor, show all active/pending (simplified for MVP).
     if (session.role === 'requestor') {
-        const myRequests = await db.select().from(requests).where(eq(requests.createdBy, session.userId)).orderBy(desc(requests.createdAt));
+        const myRequests = await db
+            .select()
+            .from(opportunities)
+            .where(eq(opportunities.createdBy, session.userId))
+            .orderBy(desc(opportunities.createdAt));
+
         return NextResponse.json({ requests: myRequests });
     } else {
         // Donor sees everything for now
-        const allRequests = await db.select().from(requests).orderBy(desc(requests.createdAt));
+        const allRequests = await db.select().from(opportunities).orderBy(desc(opportunities.createdAt));
         return NextResponse.json({ requests: allRequests });
     }
 }
@@ -41,7 +47,7 @@ export async function POST(request: Request) {
                 : null;
 
         const newId = uuidv4();
-        await db.insert(requests).values({
+        await db.insert(opportunities).values({
             id: newId,
             title,
             category,
@@ -49,14 +55,14 @@ export async function POST(request: Request) {
             summary,
             targetAmount,
             createdBy: session.userId,
+            source: 'portal',
             coverUrl: typeof coverUrl === 'string' && coverUrl.trim() ? coverUrl.trim() : null,
             evidenceJson,
-            status: 'pending', // Default to pending
+            status: 'pending',
             createdAt: new Date(),
         });
 
         // ── Auto-trigger concierge for every donor with an Impact Vision ──
-        // Requests are global (shown to all donors), so process for each donor.
         try {
             const profiles = await db.select()
                 .from(donorProfiles)
@@ -76,6 +82,7 @@ export async function POST(request: Request) {
                 );
 
                 if (!result.matched) {
+                    await db.update(opportunities).set({ status: 'passed' }).where(eq(opportunities.id, newId));
                     await db.insert(donorOpportunityState).values({
                         id: uuidv4(), donorId: profile.donorId, opportunityKey: newId, state: 'passed', updatedAt: now,
                     }).onConflictDoUpdate({
@@ -87,12 +94,47 @@ export async function POST(request: Request) {
                         type: 'pass', metaJson: JSON.stringify({ source: 'concierge', reason: result.reason }), createdAt: now,
                     });
                 } else if (result.infoTier !== 'none') {
-                    const reqRow = await db.select().from(requests).where(eq(requests.id, newId)).get();
-                    if (reqRow && !reqRow.moreInfoToken) {
-                        await db.update(requests)
-                            .set({ moreInfoToken: uuidv4(), moreInfoRequestedAt: now, status: 'more_info_requested' })
-                            .where(eq(requests.id, newId));
+                    const reqRow = await db.select().from(opportunities).where(eq(opportunities.id, newId)).get();
+                    let moreInfoToken = reqRow?.moreInfoToken ?? null;
+                    if (reqRow && !moreInfoToken) {
+                        moreInfoToken = uuidv4();
+                        await db.update(opportunities)
+                            .set({ moreInfoToken, moreInfoRequestedAt: now, status: 'more_info_requested' })
+                            .where(eq(opportunities.id, newId));
+
+                        // Send request_more_info email to org (once per opportunity)
+                        const orgEmailAddr = (reqRow.orgEmail || reqRow.contactEmail || '').trim();
+                        if (orgEmailAddr) {
+                            try {
+                                const origin = new URL(request.url).origin;
+                                const rendered = await renderEmailFromTemplate({
+                                    key: 'request_more_info',
+                                    vars: {
+                                        inviter_name: 'Aron Concierge',
+                                        opportunity_title: reqRow.title || 'Opportunity',
+                                        more_info_url: `${origin}/more-info/${moreInfoToken}`,
+                                        note: '',
+                                    },
+                                });
+                                await sendMailgunEmail({
+                                    to: orgEmailAddr,
+                                    subject: rendered.subject,
+                                    text: rendered.text,
+                                    html: rendered.html,
+                                    from: rendered.from,
+                                });
+                            } catch (emailErr) {
+                                console.error('Auto-concierge request_info email failed for', newId, emailErr);
+                            }
+                        }
                     }
+                    // Upsert state so org detail API can discover donor events
+                    await db.insert(donorOpportunityState).values({
+                        id: uuidv4(), donorId: profile.donorId, opportunityKey: newId, state: 'shortlisted', updatedAt: now,
+                    }).onConflictDoUpdate({
+                        target: [donorOpportunityState.donorId, donorOpportunityState.opportunityKey],
+                        set: { state: 'shortlisted', updatedAt: now },
+                    });
                     await db.insert(donorOpportunityEvents).values({
                         id: uuidv4(), donorId: profile.donorId, opportunityKey: newId,
                         type: 'request_info', metaJson: JSON.stringify({ source: 'concierge', infoTier: result.infoTier, reason: result.reason }), createdAt: now,
@@ -105,38 +147,12 @@ export async function POST(request: Request) {
                 }
             }
         } catch (err) {
-            // Non-fatal: request was created even if concierge fails
             console.error('Concierge auto-review failed for request', newId, err);
         }
 
         return NextResponse.json({ success: true, id: newId });
     } catch (error) {
         console.error(error);
-        const msg = String((error as any)?.message || '');
-        if (
-            msg.toLowerCase().includes('no column') &&
-            msg.toLowerCase().includes('evidence_json')
-        ) {
-            return NextResponse.json(
-                {
-                    error:
-                        'DB schema is out of date (missing requests.evidence_json). Run: npm run db:ensure',
-                },
-                { status: 500 }
-            );
-        }
-        if (
-            msg.toLowerCase().includes('no column') &&
-            msg.toLowerCase().includes('cover_url')
-        ) {
-            return NextResponse.json(
-                {
-                    error:
-                        'DB schema is out of date (missing requests.cover_url). Run: npm run db:ensure',
-                },
-                { status: 500 }
-            );
-        }
         return NextResponse.json({ error: 'Internal Error' }, { status: 500 });
     }
 }

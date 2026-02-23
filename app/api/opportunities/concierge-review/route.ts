@@ -4,14 +4,15 @@ import {
     donorOpportunityEvents,
     donorOpportunityState,
     donorProfiles,
-    requests,
-    submissionEntries,
+    opportunities,
+    users,
 } from '@/db/schema';
 import { getSession } from '@/lib/auth';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, or, isNull } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
-import { CHARIDY_CURATED } from '@/lib/charidy-curated';
 import { reviewOpportunities } from '@/lib/concierge-match';
+import { renderEmailFromTemplate } from '@/lib/email-templates';
+import { sendMailgunEmail } from '@/lib/mailgun';
 import type { ImpactVision } from '@/lib/vision-extract';
 
 /** Upsert state using ON CONFLICT DO UPDATE */
@@ -40,56 +41,7 @@ type OpportunityLike = {
     state: string;
 };
 
-function loadOpportunities(
-    subs: any[],
-    reqs: any[],
-    stateByKey: Map<string, string>,
-    donorId: string,
-): OpportunityLike[] {
-    const rows: OpportunityLike[] = [];
-
-    for (const s of subs) {
-        const key = `sub_${s.id}`;
-        rows.push({
-            key,
-            title: s.title || 'Submission',
-            summary: s.summary,
-            amount: s.amountRequested ?? null,
-            category: s.extractedCause ?? null,
-            location: s.extractedGeo ?? null,
-            state: stateByKey.get(key) ?? 'new',
-        });
-    }
-
-    for (const r of reqs) {
-        const key = String(r.id);
-        rows.push({
-            key,
-            title: r.title,
-            category: r.category,
-            location: r.location,
-            summary: r.summary,
-            amount: r.targetAmount ? Number(r.targetAmount) - Number(r.currentAmount ?? 0) : null,
-            state: stateByKey.get(key) ?? 'new',
-        });
-    }
-
-    for (const c of CHARIDY_CURATED) {
-        rows.push({
-            key: c.key,
-            title: c.title,
-            category: c.category,
-            location: c.location,
-            summary: c.summary,
-            amount: c.fundingGap,
-            state: stateByKey.get(c.key) ?? 'new',
-        });
-    }
-
-    return rows;
-}
-
-export async function POST() {
+export async function POST(request: Request) {
     const session = await getSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (session.role !== 'donor') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -104,15 +56,18 @@ export async function POST() {
         return NextResponse.json({ reviewed: false, reason: 'no_vision' });
     }
 
-    // Load opportunities
-    const subs = await db
+    // Load all opportunities visible to this donor (single query)
+    const allRows = await db
         .select()
-        .from(submissionEntries)
-        .where(eq(submissionEntries.donorId, donorId))
-        .orderBy(desc(submissionEntries.createdAt))
-        .limit(200);
-
-    const reqs = await db.select().from(requests).orderBy(desc(requests.createdAt)).limit(200);
+        .from(opportunities)
+        .where(
+            or(
+                eq(opportunities.originDonorId, donorId),
+                isNull(opportunities.originDonorId),
+            ),
+        )
+        .orderBy(desc(opportunities.createdAt))
+        .limit(500);
 
     const states = await db
         .select()
@@ -125,7 +80,15 @@ export async function POST() {
         stateByKey.set(String(s.opportunityKey), String(s.state || 'new'));
     }
 
-    const allOpps = loadOpportunities(subs, reqs, stateByKey, donorId);
+    const allOpps: OpportunityLike[] = allRows.map((opp) => ({
+        key: opp.id,
+        title: opp.title,
+        category: opp.category,
+        location: opp.location,
+        summary: opp.summary,
+        amount: opp.targetAmount ? Number(opp.targetAmount) - Number(opp.currentAmount ?? 0) : null,
+        state: stateByKey.get(opp.id) ?? 'new',
+    }));
 
     // Load existing events to check for prior concierge processing (idempotency)
     const existingEvents = await db
@@ -168,6 +131,7 @@ export async function POST() {
 
         if (!result.matched) {
             // Auto-pass
+            await db.update(opportunities).set({ status: 'passed' }).where(eq(opportunities.id, opp.key));
             await upsertState(donorId, opp.key, 'passed', now);
 
             await db.insert(donorOpportunityEvents).values({
@@ -182,26 +146,50 @@ export async function POST() {
             stats.passed++;
             results[opp.key] = { action: 'pass', reason: result.reason };
         } else if (result.infoTier !== 'none') {
-            // Annotate with request_info event (mint token, but don't change state —
-            // matched items stay in Discover for the donor to manually shortlist)
+            // Mint more-info token on the opportunity
+            const oppRow = await db.select().from(opportunities).where(eq(opportunities.id, opp.key)).get();
+            let moreInfoToken = oppRow?.moreInfoToken ?? null;
+            if (oppRow && !moreInfoToken) {
+                moreInfoToken = uuidv4();
+                await db
+                    .update(opportunities)
+                    .set({ moreInfoToken, moreInfoRequestedAt: now, status: 'more_info_requested' })
+                    .where(eq(opportunities.id, opp.key));
+            }
 
-            // Mint more-info token for submissions
-            if (opp.key.startsWith('sub_')) {
-                const submissionId = opp.key.slice('sub_'.length);
-                const sub = await db.select().from(submissionEntries).where(eq(submissionEntries.id, submissionId)).get();
-                if (sub && !sub.moreInfoToken) {
-                    await db
-                        .update(submissionEntries)
-                        .set({ moreInfoToken: uuidv4(), moreInfoRequestedAt: now, status: 'more_info_requested' })
-                        .where(eq(submissionEntries.id, submissionId));
-                }
-            } else if (!opp.key.startsWith('charidy_')) {
-                const reqRow = await db.select().from(requests).where(eq(requests.id, opp.key)).get();
-                if (reqRow && !reqRow.moreInfoToken) {
-                    await db
-                        .update(requests)
-                        .set({ moreInfoToken: uuidv4(), moreInfoRequestedAt: now, status: 'more_info_requested' })
-                        .where(eq(requests.id, opp.key));
+            // Upsert state so the org detail API can find the donor's events
+            await upsertState(donorId, opp.key, 'shortlisted', now);
+
+            // Send request_more_info email to the org
+            if (oppRow && moreInfoToken) {
+                const orgEmailAddr = (oppRow.orgEmail || oppRow.contactEmail || '').trim();
+                if (orgEmailAddr) {
+                    try {
+                        const donor = await db.select().from(users).where(eq(users.id, donorId)).get();
+                        const inviterName = donor?.name || 'A donor';
+                        const origin = new URL(request.url).origin;
+                        const infoUrl = `${origin}/more-info/${moreInfoToken}`;
+
+                        const rendered = await renderEmailFromTemplate({
+                            key: 'request_more_info',
+                            vars: {
+                                inviter_name: inviterName,
+                                opportunity_title: oppRow.title || 'Opportunity',
+                                more_info_url: infoUrl,
+                                note: '',
+                            },
+                        });
+
+                        await sendMailgunEmail({
+                            to: orgEmailAddr,
+                            subject: rendered.subject,
+                            text: rendered.text,
+                            html: rendered.html,
+                            from: rendered.from,
+                        });
+                    } catch (emailErr) {
+                        console.error('Concierge request_info email failed for', opp.key, emailErr);
+                    }
                 }
             }
 
