@@ -380,6 +380,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Persisted org responses by appending `scheduled` events (no schema change, no workflow break)
 - [x] Fixed date/time picker icon visibility in dark modal (`color-scheme: dark`)
 - [x] Made meeting location auto-update when org changes meeting type (Zoom/Phone/In Person)
+- [x] Fixed org timeline ordering for fast back-to-back `info_received` + `scheduled` events (deterministic sort + same-timestamp tiebreak)
+- [x] Timeline now shows scheduled event logged time plus explicit "meeting at ..." datetime
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

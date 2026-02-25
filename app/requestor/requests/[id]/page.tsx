@@ -197,11 +197,13 @@ function timelineIcon(type: string) {
 }
 
 function eventTimestamp(event: EventData) {
-    const scheduledFor = event.meta?.scheduledFor as string | undefined;
-    if (event.type === 'scheduled' && scheduledFor) {
-        return String(scheduledFor).slice(0, 16).replace('T', ' ');
-    }
     return event.createdAt ? String(event.createdAt).slice(0, 19).replace('T', ' ') : '—';
+}
+
+function scheduledForTimestamp(event: EventData) {
+    const scheduledFor = event.meta?.scheduledFor as string | undefined;
+    if (!scheduledFor) return null;
+    return String(scheduledFor).slice(0, 16).replace('T', ' ');
 }
 
 function humanizeMeetingType(value: unknown) {
@@ -227,6 +229,20 @@ function defaultLocationForMeetingType(value: unknown) {
     if (raw === 'phone') return 'Phone call';
     if (raw === 'in_person' || raw === 'in-person') return 'TBD';
     return 'Zoom (link will be sent)';
+}
+
+function eventOrderWeight(type: string) {
+    const map: Record<string, number> = {
+        request_info: 10,
+        info_received: 20,
+        scheduled: 30,
+        meeting_completed: 40,
+        diligence_completed: 50,
+        funded: 60,
+        pass: 70,
+        reset: 80,
+    };
+    return map[type] ?? 999;
 }
 
 function stageIndex(stage: WorkflowStage): number {
@@ -519,10 +535,16 @@ export default function RequestDetailPage() {
 
     const workflow: WorkflowView = deriveWorkflow({ state, events });
 
-    /* Deduplicate consecutive same-type events, then reverse to chronological order (oldest first) */
+    /* Deduplicate consecutive same-type events, then sort chronologically.
+       Tie-break same-timestamp events by workflow order for deterministic UI. */
     const timelineEvents = useMemo(() => {
         const deduped = events.filter((e, idx, arr) => idx === 0 || e.type !== arr[idx - 1].type);
-        return [...deduped].reverse();
+        return [...deduped].sort((a, b) => {
+            const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            if (ta !== tb) return ta - tb;
+            return eventOrderWeight(a.type) - eventOrderWeight(b.type);
+        });
     }, [events]);
 
     /* Demo advance — clicking stepper dots */
@@ -1038,6 +1060,9 @@ export default function RequestDetailPage() {
                                             </div>
                                             <div className="text-xs text-[var(--text-tertiary)] mt-1">
                                                 {eventTimestamp(e)}
+                                                {e.type === 'scheduled' && scheduledForTimestamp(e)
+                                                    ? ` • meeting at ${scheduledForTimestamp(e)}`
+                                                    : ''}
                                             </div>
                                             {Boolean(e.meta?.note) && (
                                                 <div className="mt-2 text-sm text-[var(--text-secondary)] bg-[rgba(255,255,255,0.02)] rounded-lg px-3 py-2 border border-[var(--border-subtle)]">
