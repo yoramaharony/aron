@@ -459,9 +459,10 @@ export default function RequestDetailPage() {
 
     const workflow: WorkflowView = deriveWorkflow({ state, events });
 
-    /* Deduplicate consecutive same-type events (e.g. multiple request_info from repeated concierge runs) */
+    /* Deduplicate consecutive same-type events, then reverse to chronological order (oldest first) */
     const timelineEvents = useMemo(() => {
-        return events.filter((e, idx, arr) => idx === 0 || e.type !== arr[idx - 1].type);
+        const deduped = events.filter((e, idx, arr) => idx === 0 || e.type !== arr[idx - 1].type);
+        return [...deduped].reverse();
     }, [events]);
 
     /* Demo advance — clicking stepper dots */
