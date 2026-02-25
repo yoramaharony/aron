@@ -78,6 +78,7 @@ function computeTasks(
     hasSubmittedInfo: boolean,
     moreInfoSubmittedAt: string | null | undefined,
     scheduledEvent: EventData | undefined,
+    meetingResponse: string | null,
     meetingEvent: EventData | undefined,
     diligenceEvent: EventData | undefined,
     fundedEvent: EventData | undefined,
@@ -106,13 +107,39 @@ function computeTasks(
     }
 
     if (scheduledEvent) {
-        if (!meetingEvent) {
+        if (!meetingEvent && !meetingResponse) {
             pending.push({
                 id: 'meeting',
                 label: 'Accept or reschedule meeting',
                 description: 'A meeting has been scheduled. Please confirm or propose a new time.',
                 status: 'pending',
                 action: 'meeting-action',
+            });
+        } else if (!meetingEvent && meetingResponse) {
+            const responseCopy: Record<string, { label: string; description: string }> = {
+                accepted: {
+                    label: 'Meeting time confirmed',
+                    description: 'You confirmed the proposed meeting time.',
+                },
+                reschedule_requested: {
+                    label: 'Reschedule requested',
+                    description: 'You requested a new meeting time.',
+                },
+                proposed_new_time: {
+                    label: 'New time proposed',
+                    description: 'You proposed an alternative meeting time.',
+                },
+            };
+            const copy = responseCopy[meetingResponse] || {
+                label: 'Meeting response submitted',
+                description: 'Your scheduling response was sent.',
+            };
+            completed.push({
+                id: 'meeting-response',
+                label: copy.label,
+                description: copy.description,
+                status: 'completed',
+                completedAt: scheduledEvent.createdAt,
             });
         } else {
             completed.push({
@@ -175,6 +202,31 @@ function eventTimestamp(event: EventData) {
         return String(scheduledFor).slice(0, 16).replace('T', ' ');
     }
     return event.createdAt ? String(event.createdAt).slice(0, 19).replace('T', ' ') : '—';
+}
+
+function humanizeMeetingType(value: unknown) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return '';
+    if (raw === 'in_person' || raw === 'in-person') return 'In person';
+    if (raw === 'zoom') return 'Zoom';
+    if (raw === 'phone') return 'Phone';
+    return raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function humanizeMeetingResponse(value: unknown) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return '';
+    if (raw === 'accepted') return 'Accepted by organization';
+    if (raw === 'reschedule_requested') return 'Reschedule requested';
+    if (raw === 'proposed_new_time') return 'New time proposed';
+    return raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function defaultLocationForMeetingType(value: unknown) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (raw === 'phone') return 'Phone call';
+    if (raw === 'in_person' || raw === 'in-person') return 'TBD';
+    return 'Zoom (link will be sent)';
 }
 
 function stageIndex(stage: WorkflowStage): number {
@@ -439,6 +491,14 @@ export default function RequestDetailPage() {
     const [copiedId, setCopiedId] = useState(false);
     const [moreInfoModalOpen, setMoreInfoModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<TabKey>('overview');
+    const [meetingModalMode, setMeetingModalMode] = useState<'reschedule' | 'propose_new_time' | null>(null);
+    const [meetingDate, setMeetingDate] = useState('');
+    const [meetingTime, setMeetingTime] = useState('14:00');
+    const [meetingType, setMeetingType] = useState('zoom');
+    const [meetingLocation, setMeetingLocation] = useState('');
+    const [meetingNote, setMeetingNote] = useState('');
+    const [meetingSubmitting, setMeetingSubmitting] = useState(false);
+    const [meetingError, setMeetingError] = useState('');
 
     const load = useCallback(async () => {
         try {
@@ -502,6 +562,9 @@ export default function RequestDetailPage() {
     const diligenceEvent = events.find(e => e.type === 'diligence_completed');
     const infoRequestEvent = events.find(e => e.type === 'request_info');
     const fundedEvent = events.find(e => e.type === 'funded');
+    const meetingResponse = typeof scheduledEvent?.meta?.orgResponse === 'string'
+        ? String(scheduledEvent.meta.orgResponse)
+        : null;
 
     /* More-info state */
     const hasInfoRequest = Boolean(infoRequestEvent || request?.moreInfoToken);
@@ -514,6 +577,7 @@ export default function RequestDetailPage() {
         hasSubmittedInfo,
         request?.moreInfoSubmittedAt,
         scheduledEvent,
+        meetingResponse,
         meetingEvent,
         diligenceEvent,
         fundedEvent,
@@ -533,6 +597,42 @@ export default function RequestDetailPage() {
             navigator.clipboard.writeText(moreInfoLink);
             setLinkCopied(true);
             setTimeout(() => setLinkCopied(false), 2000);
+        }
+    };
+
+    const openMeetingModal = (mode: 'reschedule' | 'propose_new_time') => {
+        if (!scheduledEvent) return;
+        const nextType = String(scheduledEvent.meta?.meetingType || 'zoom');
+        const currentLocation = String(scheduledEvent.meta?.location || '').trim();
+        setMeetingModalMode(mode);
+        setMeetingDate(String(scheduledEvent.meta?.scheduledDate || ''));
+        setMeetingTime(String(scheduledEvent.meta?.scheduledTime || '14:00'));
+        setMeetingType(nextType);
+        setMeetingLocation(currentLocation || defaultLocationForMeetingType(nextType));
+        setMeetingNote('');
+        setMeetingError('');
+    };
+
+    const submitMeetingAction = async (
+        action: 'accept' | 'reschedule' | 'propose_new_time',
+        payload?: { scheduledDate: string; scheduledTime: string; meetingType: string; location: string; note: string },
+    ) => {
+        setMeetingSubmitting(true);
+        setMeetingError('');
+        try {
+            const res = await fetch(`/api/requestor/requests/${encodeURIComponent(id)}/meeting`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, ...(payload || {}) }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Failed to update meeting');
+            setMeetingModalMode(null);
+            await load();
+        } catch (e: unknown) {
+            setMeetingError(e instanceof Error ? e.message : 'Failed to update meeting');
+        } finally {
+            setMeetingSubmitting(false);
         }
     };
 
@@ -685,6 +785,127 @@ export default function RequestDetailPage() {
                                         load();
                                     }}
                                 />
+                            </Card>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Meeting response modal ── */}
+            <AnimatePresence>
+                {meetingModalMode && scheduledEvent && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-6"
+                        onClick={(e) => { if (e.target === e.currentTarget) setMeetingModalMode(null); }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+                            className="w-full max-w-2xl my-8"
+                        >
+                            <Card className="p-6 md:p-8 space-y-5">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-medium text-[var(--text-primary)]">
+                                        {meetingModalMode === 'reschedule' ? 'Reschedule meeting' : 'Propose a new meeting time'}
+                                    </h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setMeetingModalMode(null)}
+                                        className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                                    >
+                                        <XIcon size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="label">Date</label>
+                                        <input
+                                            type="date"
+                                            value={meetingDate}
+                                            onChange={(e) => setMeetingDate(e.target.value)}
+                                            className="input-field"
+                                            style={{ colorScheme: 'dark' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Time</label>
+                                        <input
+                                            type="time"
+                                            value={meetingTime}
+                                            onChange={(e) => setMeetingTime(e.target.value)}
+                                            className="input-field"
+                                            style={{ colorScheme: 'dark' }}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="label">Type</label>
+                                        <select
+                                            value={meetingType}
+                                            onChange={(e) => {
+                                                const nextType = e.target.value;
+                                                setMeetingType(nextType);
+                                                setMeetingLocation(defaultLocationForMeetingType(nextType));
+                                            }}
+                                            className="input-field"
+                                        >
+                                            <option value="zoom">Zoom</option>
+                                            <option value="phone">Phone</option>
+                                            <option value="in_person">In Person</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="label">Location (optional override)</label>
+                                    <input
+                                        value={meetingLocation}
+                                        onChange={(e) => setMeetingLocation(e.target.value)}
+                                        className="input-field"
+                                        placeholder="Defaults from meeting type if left blank"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="label">Note (optional)</label>
+                                    <textarea
+                                        className="input-field min-h-[90px] resize-y"
+                                        value={meetingNote}
+                                        onChange={(e) => setMeetingNote(e.target.value)}
+                                        placeholder="Share context for the concierge and donor."
+                                    />
+                                </div>
+
+                                {meetingError && <div className="text-sm text-red-300">{meetingError}</div>}
+
+                                <div className="pt-1 flex items-center justify-end gap-3">
+                                    <Button variant="outline" onClick={() => setMeetingModalMode(null)}>
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        variant="gold"
+                                        isLoading={meetingSubmitting}
+                                        onClick={() => {
+                                            if (!meetingDate || !meetingTime) {
+                                                setMeetingError('Please choose both date and time.');
+                                                return;
+                                            }
+                                            submitMeetingAction(meetingModalMode, {
+                                                scheduledDate: meetingDate,
+                                                scheduledTime: meetingTime,
+                                                meetingType,
+                                                location: meetingLocation,
+                                                note: meetingNote,
+                                            });
+                                        }}
+                                    >
+                                        {meetingModalMode === 'reschedule' ? 'Request Reschedule' : 'Propose Time'}
+                                    </Button>
+                                </div>
                             </Card>
                         </motion.div>
                     </motion.div>
@@ -923,7 +1144,7 @@ export default function RequestDetailPage() {
                                                     {Boolean(scheduledEvent.meta?.meetingType) && (
                                                         <div>
                                                             <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Type</div>
-                                                            <div className="text-[var(--text-primary)] capitalize">{String(scheduledEvent.meta?.meetingType)}</div>
+                                                            <div className="text-[var(--text-primary)]">{humanizeMeetingType(scheduledEvent.meta?.meetingType)}</div>
                                                         </div>
                                                     )}
                                                     {Boolean(scheduledEvent.meta?.location) && (
@@ -933,17 +1154,36 @@ export default function RequestDetailPage() {
                                                         </div>
                                                     )}
                                                 </div>
+                                                {Boolean(scheduledEvent.meta?.orgResponse) && (
+                                                    <div className="text-xs text-[var(--text-tertiary)]">
+                                                        Status: {humanizeMeetingResponse(scheduledEvent.meta?.orgResponse)}
+                                                    </div>
+                                                )}
                                                 <div className="flex items-center gap-3">
-                                                    <Button variant="gold" size="sm" onClick={() => alert('Meeting accepted. (Demo — in production, this would confirm with the concierge.)')}>
+                                                    <Button
+                                                        variant="gold"
+                                                        size="sm"
+                                                        isLoading={meetingSubmitting}
+                                                        onClick={() => submitMeetingAction('accept', {
+                                                            scheduledDate: String(scheduledEvent.meta?.scheduledDate || ''),
+                                                            scheduledTime: String(scheduledEvent.meta?.scheduledTime || '14:00'),
+                                                            meetingType: String(scheduledEvent.meta?.meetingType || 'zoom'),
+                                                            location: String(scheduledEvent.meta?.location || ''),
+                                                            note: '',
+                                                        })}
+                                                    >
                                                         Accept
                                                     </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => alert('Reschedule request sent. (Demo — in production, the concierge would receive this.)')}>
+                                                    <Button variant="outline" size="sm" onClick={() => openMeetingModal('reschedule')}>
                                                         Reschedule
                                                     </Button>
-                                                    <Button variant="outline" size="sm" onClick={() => alert('Alternative time proposed. (Demo — in production, you would pick a new time.)')}>
+                                                    <Button variant="outline" size="sm" onClick={() => openMeetingModal('propose_new_time')}>
                                                         Propose New Time
                                                     </Button>
                                                 </div>
+                                                {meetingError && (
+                                                    <div className="text-xs text-red-300">{meetingError}</div>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -1060,7 +1300,7 @@ export default function RequestDetailPage() {
                                 {Boolean(scheduledEvent.meta?.meetingType) && (
                                     <div>
                                         <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Type</div>
-                                        <div className="text-[var(--text-primary)] capitalize">{String(scheduledEvent.meta?.meetingType)}</div>
+                                        <div className="text-[var(--text-primary)]">{humanizeMeetingType(scheduledEvent.meta?.meetingType)}</div>
                                     </div>
                                 )}
                                 {Boolean(scheduledEvent.meta?.location) && (
@@ -1080,6 +1320,12 @@ export default function RequestDetailPage() {
                                 <div>
                                     <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Agenda</div>
                                     <p className="text-sm text-[var(--text-secondary)]">{String(scheduledEvent.meta?.agenda)}</p>
+                                </div>
+                            )}
+                            {Boolean(scheduledEvent.meta?.orgResponse) && (
+                                <div>
+                                    <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Organization Response</div>
+                                    <p className="text-sm text-[var(--text-secondary)]">{humanizeMeetingResponse(scheduledEvent.meta?.orgResponse)}</p>
                                 </div>
                             )}
                         </Card>

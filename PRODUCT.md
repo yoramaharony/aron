@@ -1,7 +1,7 @@
 # Aron Platform — Master Product Document
 
 > **Purpose:** Living reference for all system processes. Updated after every code change.
-> **Last updated:** 2026-02-23
+> **Last updated:** 2026-02-25
 
 ---
 
@@ -68,7 +68,7 @@ Chat thread between donor and the AI concierge.
 |---|---|---|
 | Create Request | `/requestor` | 4-step wizard: Basics → Financials → Evidence → Submit |
 | My Requests | `/requestor/requests` | List requests in 2 tabs with badge counts: Active, Declined. Mini stepper + status badge per card. |
-| Request Detail | `/requestor/requests/[id]` | Tabbed view: Overview, Tasks, Request Details, Documents |
+| Request Detail | `/requestor/requests/[id]` | Tabbed view: Overview, Tasks, Request Details, Documents. In Tasks, org can Accept / Reschedule / Propose New Time for scheduled meetings. |
 
 ### Admin (`role: 'admin'`)
 | Page | Route | Purpose |
@@ -190,6 +190,7 @@ Submitted → Info Requested → Meeting → Review → Decision
 6. **Auto-schedule:** Concierge immediately inserts a `scheduled` event (Zoom meeting, 3 days out, 14:00) and updates state to `'scheduled'`
 7. **Stepper advances** to "Meeting" stage (from `scheduled` event)
 8. **Donor sees:** Scheduled Meeting card with date/time/type/location/agenda + Reschedule button
+9. **Org can respond on Tasks tab:** Accept, Reschedule, or Propose New Time. Responses append a new `scheduled` event so timeline and current schedule stay consistent.
 
 **Key files:** `app/more-info/[token]/page.tsx`, `app/api/more-info/[token]/route.ts`
 
@@ -372,6 +373,14 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Concierge match chips (green "matched", gold "info requested") on list cards
 - [x] PRODUCT.md master document created and maintained
 
+### Phase D: Org scheduling response (Feb 25)
+- [x] Replaced demo alert buttons in org Tasks tab with real actions
+- [x] Added org-side meeting response API (`accept`, `reschedule`, `propose_new_time`) under requestor routes
+- [x] Reused donor scheduling UX pattern (date/time/type inputs) as org modal
+- [x] Persisted org responses by appending `scheduled` events (no schema change, no workflow break)
+- [x] Fixed date/time picker icon visibility in dark modal (`color-scheme: dark`)
+- [x] Made meeting location auto-update when org changes meeting type (Zoom/Phone/In Person)
+
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
 ---
@@ -390,6 +399,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 | Auto-schedule after info submission | Working | Concierge inserts `scheduled` event (Zoom, 3 days out) after org submits info |
 | Scheduled meeting card (donor) | Working | Shows meeting details + reschedule inline form |
 | Donor reschedule capability | Working | Creates new `scheduled` event; old schedule preserved in timeline |
+| Org meeting response (accept/reschedule/propose) | Working | Tasks tab now persists responses by adding new `scheduled` events |
 | Opportunity ID on org detail | Working | Monospace ID with copy-to-clipboard, matching donor pattern |
 | AI demo fill for forms | Working | Purple "AI Fill" button on more-info + request creation forms |
 | Demo advance (stepper dots) | Working | Simulates concierge stage progression |
@@ -419,6 +429,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 | `app/api/opportunities/[key]/actions/route.ts` | POST donor actions (pass, shortlist, request_info, funded, etc.) |
 | `app/api/opportunities/concierge-review/route.ts` | Bulk auto-review against Impact Vision |
 | `app/api/requestor/requests/[id]/route.ts` | GET org request detail (anonymized donor progress) |
+| `app/api/requestor/requests/[id]/meeting/route.ts` | POST org meeting actions (accept/reschedule/propose time) |
 | `app/api/requestor/requests/[id]/demo-advance/route.ts` | Demo-only: simulate concierge stage advancement |
 | `app/api/more-info/[token]/route.ts` | GET/POST more-info form data + auto-schedule meeting after submission |
 | `app/api/admin/demo-seed/route.ts` | Seed demo data |
