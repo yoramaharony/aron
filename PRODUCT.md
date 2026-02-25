@@ -382,6 +382,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Made meeting location auto-update when org changes meeting type (Zoom/Phone/In Person)
 - [x] Fixed org timeline ordering for fast back-to-back `info_received` + `scheduled` events (deterministic sort + same-timestamp tiebreak)
 - [x] Timeline now shows scheduled event logged time plus explicit "meeting at ..." datetime
+- [x] Donor meeting stage now has an actionable quick card ("Manage") that jumps to scheduled meeting and opens reschedule controls
+- [x] Donor reschedule date/time native picker icons now render correctly in dark mode
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

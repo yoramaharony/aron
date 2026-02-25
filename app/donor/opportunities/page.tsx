@@ -114,6 +114,7 @@ export default function DonorFeed() {
     const notesSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const detailCache = useRef<Map<string, any>>(new Map());
     const latestRequestRef = useRef<string>('');
+    const scheduledCardRef = useRef<HTMLDivElement | null>(null);
     const [passedFilter, setPassedFilter] = useState<'all' | 'concierge' | 'manual'>('all');
     const [hasVision, setHasVision] = useState(true); // optimistic default
     const [conciergeReviewing, setConciergeReviewing] = useState(false);
@@ -358,6 +359,17 @@ export default function DonorFeed() {
         }
         return base;
     }, [workflow, selectedRow, scheduledEvent]);
+
+    const openReschedulePanel = () => {
+        if (!scheduledEvent?.meta) return;
+        setRescheduleDate(String(scheduledEvent.meta?.scheduledDate || ''));
+        setRescheduleTime(String(scheduledEvent.meta?.scheduledTime || '14:00'));
+        setRescheduleType(String(scheduledEvent.meta?.meetingType || 'zoom'));
+        setRescheduleOpen(true);
+        requestAnimationFrame(() => {
+            scheduledCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    };
 
     /* Prev / Next navigation */
     const currentIndex = useMemo(() => {
@@ -640,6 +652,28 @@ export default function DonorFeed() {
                                     <span className="text-sm text-[var(--text-secondary)]">{statusMessage}</span>
                                 </div>
 
+                                {/* Meeting stage quick action (primary glance + actionable) */}
+                                {workflow.stage === 'meeting' && scheduledEvent?.meta && !hasMeetingCompleted ? (
+                                    <button
+                                        type="button"
+                                        onClick={openReschedulePanel}
+                                        className="w-full rounded-xl border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.04)] px-4 py-3 flex items-center justify-between gap-3 text-left hover:bg-[rgba(34,197,94,0.08)] transition-colors"
+                                    >
+                                        <div className="min-w-0">
+                                            <div className="text-sm text-[var(--text-primary)] font-medium">
+                                                Meeting scheduled — {String(scheduledEvent.meta?.scheduledDate || '')}
+                                                {scheduledEvent.meta?.scheduledTime ? ` ${String(scheduledEvent.meta?.scheduledTime)}` : ''}
+                                            </div>
+                                            <div className="text-xs text-[var(--text-secondary)] mt-0.5">
+                                                Click to manage meeting and reschedule if needed
+                                            </div>
+                                        </div>
+                                        <span className="text-xs px-2 py-1 rounded-full border border-[rgba(34,197,94,0.35)] text-green-400">
+                                            Manage
+                                        </span>
+                                    </button>
+                                ) : null}
+
                                 {/* Concierge auto-pass explanation */}
                                 {workflow.isPassed && selectedRow?.conciergeAction === 'pass' && (
                                     <div className="rounded-xl border border-[rgba(var(--accent-rgb),0.25)] bg-[rgba(212,175,55,0.04)] px-4 py-3 flex items-center gap-2">
@@ -871,7 +905,7 @@ export default function DonorFeed() {
 
                                 {/* Scheduled Meeting — shown when scheduled but not yet completed */}
                                 {scheduledEvent?.meta && !hasMeetingCompleted ? (
-                                    <div className="rounded-2xl border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(255,255,255,0.02)] p-6 space-y-5">
+                                    <div ref={scheduledCardRef} className="rounded-2xl border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(255,255,255,0.02)] p-6 space-y-5">
                                         <div className="flex items-center justify-between">
                                             <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2">
                                                 <Calendar size={18} className="text-[var(--color-gold)]" />Scheduled Meeting
@@ -941,6 +975,7 @@ export default function DonorFeed() {
                                                             value={rescheduleDate}
                                                             onChange={(e) => setRescheduleDate(e.target.value)}
                                                             className="w-full rounded-lg px-3 py-2 bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] outline-none focus:border-[rgba(var(--accent-rgb),0.35)]"
+                                                            style={{ colorScheme: 'dark' }}
                                                         />
                                                     </div>
                                                     <div>
@@ -950,6 +985,7 @@ export default function DonorFeed() {
                                                             value={rescheduleTime}
                                                             onChange={(e) => setRescheduleTime(e.target.value)}
                                                             className="w-full rounded-lg px-3 py-2 bg-[rgba(255,255,255,0.03)] border border-[var(--border-subtle)] text-sm text-[var(--text-primary)] outline-none focus:border-[rgba(var(--accent-rgb),0.35)]"
+                                                            style={{ colorScheme: 'dark' }}
                                                         />
                                                     </div>
                                                     <div>
