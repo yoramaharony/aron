@@ -384,6 +384,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Timeline now shows scheduled event logged time plus explicit "meeting at ..." datetime
 - [x] Donor meeting stage now has an actionable quick card ("Manage") that jumps to scheduled meeting and opens reschedule controls
 - [x] Donor reschedule date/time native picker icons now render correctly in dark mode
+- [x] Donor left-pane chips now use live workflow progress (meeting scheduled, info received, meeting done, in review, funded) instead of only initial concierge action
+- [x] Source chips remain for provenance: `submission` (donor-invited) vs `curated` (demo/Charidy imported)
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

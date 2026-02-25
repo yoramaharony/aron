@@ -26,6 +26,7 @@ type OpportunityRow = {
     state: string;
     conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
     conciergeReason?: string | null;
+    progressBadge?: 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
 };
 
 function deriveStatusMessage(flow: WorkflowView) {
@@ -90,6 +91,46 @@ function timelineIcon(type: string) {
     if (t === 'funded') return <CheckCircle2 size={15} />;
     if (t === 'pass') return <XIcon size={15} />;
     return <Clock3 size={15} />;
+}
+
+function progressBadgeChip(progressBadge?: OpportunityRow['progressBadge'] | null) {
+    if (!progressBadge) return null;
+    if (progressBadge === 'meeting_scheduled') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(16,185,129,0.35)] bg-[rgba(16,185,129,0.10)] text-emerald-300">
+                meeting scheduled
+            </span>
+        );
+    }
+    if (progressBadge === 'info_received') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(56,189,248,0.35)] bg-[rgba(56,189,248,0.10)] text-sky-300">
+                info received
+            </span>
+        );
+    }
+    if (progressBadge === 'meeting_completed') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(59,130,246,0.35)] bg-[rgba(59,130,246,0.10)] text-blue-300">
+                meeting done
+            </span>
+        );
+    }
+    if (progressBadge === 'in_review') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(139,92,246,0.35)] bg-[rgba(139,92,246,0.10)] text-violet-300">
+                in review
+            </span>
+        );
+    }
+    if (progressBadge === 'funded') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.10)] text-green-300">
+                funded
+            </span>
+        );
+    }
+    return null;
 }
 
 export default function DonorFeed() {
@@ -543,17 +584,18 @@ export default function DonorFeed() {
                                             <div className="text-xs text-[var(--text-tertiary)] truncate">{r.orgName}</div>
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
-                                            {r.conciergeAction === 'pass' && (
+                                            {progressBadgeChip(r.progressBadge)}
+                                            {!r.progressBadge && r.conciergeAction === 'pass' && (
                                                 <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
                                                     concierge pass
                                                 </span>
                                             )}
-                                            {r.conciergeAction === 'request_info' && (
+                                            {!r.progressBadge && r.conciergeAction === 'request_info' && (
                                                 <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
                                                     info requested
                                                 </span>
                                             )}
-                                            {r.conciergeAction === 'keep' && (
+                                            {!r.progressBadge && r.conciergeAction === 'keep' && (
                                                 <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.08)] text-green-400">
                                                     matched
                                                 </span>

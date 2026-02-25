@@ -18,6 +18,7 @@ type OpportunityRow = {
   state: string;
   conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
   conciergeReason?: string | null;
+  progressBadge?: 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
 };
 
 export async function GET() {
@@ -58,7 +59,13 @@ export async function GET() {
     .limit(2000);
 
   const conciergeByKey = new Map<string, { action: string; reason: string }>();
+  const eventTypesByKey = new Map<string, Set<string>>();
   for (const evt of events) {
+    const key = String(evt.opportunityKey);
+    const current = eventTypesByKey.get(key) ?? new Set<string>();
+    current.add(String(evt.type || ''));
+    eventTypesByKey.set(key, current);
+
     if (!evt.metaJson) continue;
     try {
       const meta = JSON.parse(evt.metaJson);
@@ -82,6 +89,16 @@ export async function GET() {
   for (const opp of allOpps) {
     const key = opp.id;
     const cc = conciergeByKey.get(key);
+    const state = stateByKey.get(key) ?? 'new';
+    const types = eventTypesByKey.get(key) ?? new Set<string>();
+
+    let progressBadge: OpportunityRow['progressBadge'] = null;
+    if (state === 'funded') progressBadge = 'funded';
+    else if (types.has('diligence_completed')) progressBadge = 'in_review';
+    else if (types.has('meeting_completed')) progressBadge = 'meeting_completed';
+    else if (types.has('scheduled')) progressBadge = 'meeting_scheduled';
+    else if (types.has('info_received')) progressBadge = 'info_received';
+
     rows.push({
       key,
       source: opp.source,
@@ -92,9 +109,10 @@ export async function GET() {
       summary: opp.summary,
       amount: opp.targetAmount ? Number(opp.targetAmount) - Number(opp.currentAmount ?? 0) : null,
       createdAt: toIsoTime(opp.createdAt),
-      state: stateByKey.get(key) ?? 'new',
+      state,
       conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
       conciergeReason: cc?.reason ?? null,
+      progressBadge,
     });
   }
 
