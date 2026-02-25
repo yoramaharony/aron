@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -459,6 +459,11 @@ export default function RequestDetailPage() {
 
     const workflow: WorkflowView = deriveWorkflow({ state, events });
 
+    /* Deduplicate consecutive same-type events (e.g. multiple request_info from repeated concierge runs) */
+    const timelineEvents = useMemo(() => {
+        return events.filter((e, idx, arr) => idx === 0 || e.type !== arr[idx - 1].type);
+    }, [events]);
+
     /* Demo advance — clicking stepper dots */
     const handleStepClick = async (clickedStage: WorkflowStage) => {
         if (advancing) return;
@@ -795,13 +800,13 @@ export default function RequestDetailPage() {
                             <Clock3 size={18} className="text-[var(--color-gold)]" />
                             Timeline
                         </div>
-                        {events.length === 0 ? (
+                        {timelineEvents.length === 0 ? (
                             <div className="text-sm text-[var(--text-tertiary)]">No activity yet. Click the stepper dots above to simulate concierge progress.</div>
                         ) : (
                             <div className="relative">
                                 <div className="absolute z-0 left-[22px] top-2 bottom-2 w-px bg-[var(--border-subtle)]" />
                                 <div className="relative z-10 space-y-4">
-                                    {events.map((e, i) => (
+                                    {timelineEvents.map((e, i) => (
                                         <div key={i} className="relative pl-16">
                                             <div className="absolute left-0 top-0 h-11 w-11 rounded-xl border border-[rgba(var(--accent-rgb),0.45)] bg-[linear-gradient(180deg,rgba(18,19,22,1),rgba(18,19,22,1)),linear-gradient(135deg,rgba(212,175,55,0.18),rgba(212,175,55,0.10))] text-[var(--color-gold)] flex items-center justify-center">
                                                 {timelineIcon(e.type)}

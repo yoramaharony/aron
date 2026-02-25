@@ -97,17 +97,18 @@ export async function POST(request: Request) {
         .where(eq(donorOpportunityEvents.donorId, donorId))
         .limit(2000);
 
-    const conciergeProcessedKeys = new Set<string>();
+    const alreadyActedKeys = new Set<string>();
     for (const evt of existingEvents) {
-        const meta = evt.metaJson ? JSON.parse(evt.metaJson) : null;
-        if (meta?.source === 'concierge') {
-            conciergeProcessedKeys.add(String(evt.opportunityKey));
+        // Skip any opportunity that already has a decision event (pass, request_info, concierge_review)
+        const t = String(evt.type || '');
+        if (t === 'pass' || t === 'request_info' || t === 'concierge_review') {
+            alreadyActedKeys.add(String(evt.opportunityKey));
         }
     }
 
-    // Only process opportunities that are 'new' and not already concierge-processed
+    // Only process opportunities that are 'new' and not already acted upon
     const toProcess = allOpps.filter(
-        (opp) => opp.state === 'new' && !conciergeProcessedKeys.has(opp.key),
+        (opp) => opp.state === 'new' && !alreadyActedKeys.has(opp.key),
     );
 
     if (toProcess.length === 0) {
@@ -121,7 +122,7 @@ export async function POST(request: Request) {
     // Run matching
     const matchResults = reviewOpportunities(toProcess, vision);
 
-    const stats = { total: toProcess.length, passed: 0, infoRequested: 0, keptInDiscover: 0, alreadyProcessed: conciergeProcessedKeys.size };
+    const stats = { total: toProcess.length, passed: 0, infoRequested: 0, keptInDiscover: 0, alreadyProcessed: alreadyActedKeys.size };
     const results: Record<string, { action: string; reason: string }> = {};
     const now = new Date();
 
