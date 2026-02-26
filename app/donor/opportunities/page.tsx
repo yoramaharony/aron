@@ -26,6 +26,7 @@ type OpportunityRow = {
     state: string;
     conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
     conciergeReason?: string | null;
+    conciergeScore?: number | null;
     progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'daf_in_progress' | 'daf_submitted' | 'funded' | null;
     lowAmount?: boolean;
 };
@@ -1106,20 +1107,34 @@ export default function DonorFeed() {
 
                                 {/* Concierge auto-pass explanation */}
                                 {workflow.isPassed && selectedRow?.conciergeAction === 'pass' && (
-                                    <div className="rounded-xl border border-[rgba(var(--accent-rgb),0.25)] bg-[rgba(212,175,55,0.04)] px-4 py-3 flex items-center gap-2">
-                                        <Bot size={16} className="text-[var(--color-gold)]" />
-                                        <span className="text-sm text-[var(--text-secondary)]">
-                                            Auto-passed by concierge: {selectedRow?.conciergeReason || 'Does not match your Impact Vision'}
-                                        </span>
+                                    <div className="rounded-xl border border-[rgba(var(--accent-rgb),0.25)] bg-[rgba(212,175,55,0.04)] px-4 py-3 flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <Bot size={16} className="text-[var(--color-gold)]" />
+                                            <span className="text-sm text-[var(--text-secondary)]">
+                                                Auto-passed by concierge: {selectedRow?.conciergeReason || 'Does not match your Impact Vision'}
+                                            </span>
+                                        </div>
+                                        {typeof selectedRow?.conciergeScore === 'number' ? (
+                                            <span className="shrink-0 text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.10)] text-[var(--color-gold)]">
+                                                score {selectedRow.conciergeScore}%
+                                            </span>
+                                        ) : null}
                                     </div>
                                 )}
                                 {/* Concierge match explanation */}
                                 {(selectedRow?.conciergeAction === 'keep' || selectedRow?.conciergeAction === 'request_info') && (
-                                    <div className="rounded-xl border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.04)] px-4 py-3 flex items-center gap-2">
-                                        <Bot size={16} className="text-green-400" />
-                                        <span className="text-sm text-[var(--text-secondary)]">
-                                            {selectedRow?.conciergeReason || 'Matches your Impact Vision'}
-                                        </span>
+                                    <div className="rounded-xl border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.04)] px-4 py-3 flex items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <Bot size={16} className="text-green-400" />
+                                            <span className="text-sm text-[var(--text-secondary)]">
+                                                {selectedRow?.conciergeReason || 'Matches your Impact Vision'}
+                                            </span>
+                                        </div>
+                                        {typeof selectedRow?.conciergeScore === 'number' ? (
+                                            <span className="shrink-0 text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.12)] text-green-300">
+                                                score {selectedRow.conciergeScore}%
+                                            </span>
+                                        ) : null}
                                     </div>
                                 )}
 

@@ -18,9 +18,30 @@ type OpportunityRow = {
   state: string;
   conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
   conciergeReason?: string | null;
+  conciergeScore?: number | null;
   progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'daf_in_progress' | 'daf_submitted' | 'funded' | null;
   lowAmount?: boolean;
 };
+
+function seededInt(input: string) {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function conciergeScoreForAction(opportunityKey: string, action: string | null | undefined) {
+  if (!action) return null;
+  const seed = seededInt(`${opportunityKey}:${action}`);
+  if (action === 'pass') {
+    return 20 + (seed % 30); // 20-49
+  }
+  if (action === 'request_info') {
+    return 70 + (seed % 21); // 70-90
+  }
+  return 75 + (seed % 21); // keep: 75-95
+}
 
 export async function GET() {
   const session = await getSession();
@@ -90,6 +111,8 @@ export async function GET() {
   for (const opp of allOpps) {
     const key = opp.id;
     const cc = conciergeByKey.get(key);
+    const conciergeAction = (cc?.action as OpportunityRow['conciergeAction']) ?? null;
+    const conciergeScore = conciergeScoreForAction(key, conciergeAction);
     const state = stateByKey.get(key) ?? 'new';
     const types = eventTypesByKey.get(key) ?? new Set<string>();
 
@@ -114,8 +137,9 @@ export async function GET() {
       amount: opp.targetAmount ? Number(opp.targetAmount) - Number(opp.currentAmount ?? 0) : null,
       createdAt: toIsoTime(opp.createdAt),
       state,
-      conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
+      conciergeAction,
       conciergeReason: cc?.reason ?? null,
+      conciergeScore,
       progressBadge,
       lowAmount: opp.targetAmount != null ? Number(opp.targetAmount) < 25000 : false,
     });

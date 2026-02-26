@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { opportunities, donorOpportunityState, donorOpportunityEvents, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -57,6 +57,7 @@ function generateConciergeData(stage: AdvanceStage, request: { title: string; ta
       return {
         concierge: true,
         aiGenerated: true,
+        occurredAt: now.toISOString(),
         summary: `Meeting with organization leadership was productive. They presented a clear operational plan with defined milestones. The team demonstrated strong community ties and transparent financial management. Key discussion points included funding allocation timeline, measurable outcomes, and reporting cadence.`,
         tone: 'Promising',
         confirmRequestedAmount: amount > 100000 ? 'partially' : 'yes',
@@ -148,6 +149,38 @@ export async function POST(
       state: 'shortlisted',
       updatedAt: new Date(),
     });
+  }
+
+  if (stage === 'meeting_completed') {
+    const latestScheduled = await db
+      .select()
+      .from(donorOpportunityEvents)
+      .where(
+        and(
+          eq(donorOpportunityEvents.donorId, donorId),
+          eq(donorOpportunityEvents.opportunityKey, opportunityKey),
+          eq(donorOpportunityEvents.type, 'scheduled'),
+        ),
+      )
+      .orderBy(desc(donorOpportunityEvents.createdAt))
+      .get();
+
+    let confirmed = false;
+    if (latestScheduled?.metaJson) {
+      try {
+        const meta = JSON.parse(latestScheduled.metaJson) as Record<string, unknown>;
+        confirmed = String(meta?.orgResponse || '') === 'accepted';
+      } catch {
+        confirmed = false;
+      }
+    }
+
+    if (!confirmed) {
+      return NextResponse.json(
+        { error: 'Meeting can only be completed after schedule is confirmed by the organization.' },
+        { status: 400 },
+      );
+    }
   }
 
   // Update state

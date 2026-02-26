@@ -415,6 +415,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Updated donor DAF primary-source checkbox selected state to match Figma: filled gold square with dark check mark
 - [x] Fixed donor DAF checkbox checkmark visibility bug by applying checked-state icon opacity styling at the checkbox-container level
 - [x] Updated "Configure New Funding Source" header icon to Material-style `Account Balance` glyph and increased its visual weight/size
+- [x] Org demo stepper now supports meeting-dot fast-forward: when schedule is accepted, clicking Meeting marks `meeting_completed` at current time and advances workflow into Review
+- [x] Added donor-only Concierge match scoring (deterministic demo scores) surfaced in donor opportunity messaging cards
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

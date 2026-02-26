@@ -576,9 +576,21 @@ export default function RequestDetailPage() {
         const clickedIdx = stageIndex(clickedStage);
         const currentIdx = stageIndex(workflow.stage);
 
-        if (clickedIdx <= currentIdx && !(clickedStage === 'decision' && !workflow.isCommitted && !workflow.isPassed)) return;
+        const latestScheduled = events.find((e) => e.type === 'scheduled');
+        const scheduleConfirmed = String(latestScheduled?.meta?.orgResponse || '') === 'accepted';
+        const hasMeetingCompleted = events.some((e) => e.type === 'meeting_completed');
+        const isMeetingFastForwardClick = clickedStage === 'meeting' && workflow.stage === 'meeting';
 
-        const nextAdvance = advanceStageForWorkflow(workflow.stage);
+        if (isMeetingFastForwardClick && hasMeetingCompleted) return;
+        if (isMeetingFastForwardClick && !scheduleConfirmed) {
+            setAdvanceToast('Confirm the meeting schedule first (accepted) before marking it completed.');
+            setTimeout(() => setAdvanceToast(null), 2500);
+            return;
+        }
+
+        if (!isMeetingFastForwardClick && clickedIdx <= currentIdx && !(clickedStage === 'decision' && !workflow.isCommitted && !workflow.isPassed)) return;
+
+        const nextAdvance = isMeetingFastForwardClick ? 'meeting_completed' : advanceStageForWorkflow(workflow.stage);
         if (!nextAdvance) return;
 
         setAdvancing(true);
