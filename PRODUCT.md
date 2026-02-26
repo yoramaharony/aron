@@ -406,6 +406,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Donor profile settings now use tabbed sections (Account, Security, Funding Sources) for clearer multi-subject navigation
 - [x] Donor DAF Funding Sources UI refreshed to Figma-style cards: highlighted primary source, verified badge, hoverable plus-tile CTA, expandable "Configure New Funding Source" form, and secure-connection panel
 - [x] Added left-sidebar Settings entry points for both portals (Donor → `/donor/profile`, Organization → `/requestor/profile`) for direct access beyond avatar menu
+- [x] Replaced native browser-blue primary-source checkbox in donor DAF form with custom branded dark/gold checkbox styling
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
