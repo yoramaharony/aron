@@ -18,7 +18,7 @@ type OpportunityRow = {
   state: string;
   conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
   conciergeReason?: string | null;
-  progressBadge?: 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
+  progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
   lowAmount?: boolean;
 };
 
@@ -99,6 +99,7 @@ export async function GET() {
     else if (types.has('meeting_completed')) progressBadge = 'meeting_completed';
     else if (types.has('scheduled')) progressBadge = 'meeting_scheduled';
     else if (types.has('info_received')) progressBadge = 'info_received';
+    else if (types.has('request_info')) progressBadge = 'info_requested';
 
     rows.push({
       key,

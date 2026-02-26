@@ -389,6 +389,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Fixed donor right-pane title clipping by adjusting heading top padding and line-height for large titles
 - [x] Added donor manual "Request Info" action in discover stage (for low-amount matched items where concierge info tier is `none`)
 - [x] Added donor "low amount" chip (`< $25K`) on opportunity list and discover status message to highlight manual-review items
+- [x] Donor opportunity-list chips moved below summary for clearer hierarchy (title first, then description, then tags)
+- [x] Manual donor `request_info` now reliably renders as `info requested` chip via live progress badge mapping
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

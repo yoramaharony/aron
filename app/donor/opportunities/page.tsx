@@ -26,7 +26,7 @@ type OpportunityRow = {
     state: string;
     conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
     conciergeReason?: string | null;
-    progressBadge?: 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
+    progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
     lowAmount?: boolean;
 };
 
@@ -96,6 +96,13 @@ function timelineIcon(type: string) {
 
 function progressBadgeChip(progressBadge?: OpportunityRow['progressBadge'] | null) {
     if (!progressBadge) return null;
+    if (progressBadge === 'info_requested') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.10)] text-amber-300">
+                info requested
+            </span>
+        );
+    }
     if (progressBadge === 'meeting_scheduled') {
         return (
             <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(16,185,129,0.35)] bg-[rgba(16,185,129,0.10)] text-emerald-300">
@@ -592,34 +599,34 @@ export default function DonorFeed() {
                                             <div className="text-[var(--text-primary)] font-semibold truncate">{r.title}</div>
                                             <div className="text-xs text-[var(--text-tertiary)] truncate">{r.orgName}</div>
                                         </div>
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                            {progressBadgeChip(r.progressBadge)}
-                                            {r.lowAmount && (
-                                                <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.10)] text-amber-300">
-                                                    low amount
-                                                </span>
-                                            )}
-                                            {!r.progressBadge && r.conciergeAction === 'pass' && (
-                                                <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
-                                                    concierge pass
-                                                </span>
-                                            )}
-                                            {!r.progressBadge && r.conciergeAction === 'request_info' && (
-                                                <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
-                                                    info requested
-                                                </span>
-                                            )}
-                                            {!r.progressBadge && r.conciergeAction === 'keep' && (
-                                                <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.08)] text-green-400">
-                                                    matched
-                                                </span>
-                                            )}
-                                            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
-                                                {r.source === 'submission' ? 'submission' : 'curated'}
-                                            </span>
-                                        </div>
                                     </div>
                                     <div className="text-sm text-[var(--text-secondary)] mt-2 line-clamp-2">{r.summary}</div>
+                                    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                                        {progressBadgeChip(r.progressBadge)}
+                                        {r.lowAmount && (
+                                            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.10)] text-amber-300">
+                                                low amount
+                                            </span>
+                                        )}
+                                        {!r.progressBadge && r.conciergeAction === 'pass' && (
+                                            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
+                                                concierge pass
+                                            </span>
+                                        )}
+                                        {!r.progressBadge && r.conciergeAction === 'request_info' && (
+                                            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
+                                                info requested
+                                            </span>
+                                        )}
+                                        {!r.progressBadge && r.conciergeAction === 'keep' && (
+                                            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.08)] text-green-400">
+                                                matched
+                                            </span>
+                                        )}
+                                        <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--text-tertiary)]">
+                                            {r.source === 'submission' ? 'submission' : 'curated'}
+                                        </span>
+                                    </div>
                                 </button>
                             ))
                         )}
