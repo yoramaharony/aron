@@ -303,21 +303,21 @@ export default function DonorPledges() {
             {loading ? (
                 <div className="text-secondary text-sm py-12 text-center">Loading pledges...</div>
             ) : pledges.length === 0 ? (
-                <Card className="relative overflow-hidden border border-[rgba(212,175,55,0.35)] bg-[linear-gradient(145deg,rgba(20,20,20,0.97)_0%,rgba(28,28,28,0.94)_55%,rgba(20,20,20,0.97)_100%)] shadow-[0_0_34px_rgba(212,175,55,0.18)] mb-10">
+                <Card className="relative overflow-hidden border border-[rgba(212,175,55,0.35)] bg-[linear-gradient(145deg,rgba(20,20,20,0.97)_0%,rgba(28,28,28,0.94)_55%,rgba(20,20,20,0.97)_100%)] shadow-[0_0_30px_rgba(212,175,55,0.16)] mb-8">
                     <div className="absolute inset-0 opacity-[0.14] pointer-events-none bg-[radial-gradient(circle_at_50%_22%,rgba(212,175,55,0.50)_0%,rgba(212,175,55,0.10)_27%,transparent_62%)]" />
-                    <div className="relative px-6 py-8 md:px-10 md:py-9 text-center">
-                        <div className="mx-auto h-20 w-20 rounded-3xl border border-[rgba(212,175,55,0.35)] bg-[linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] flex items-center justify-center shadow-[0_0_24px_rgba(212,175,55,0.24)]">
-                            <Heart size={30} className="text-[var(--color-gold)]" />
+                    <div className="relative px-5 py-6 md:px-8 md:py-7 text-center">
+                        <div className="mx-auto h-16 w-16 rounded-2xl border border-[rgba(212,175,55,0.35)] bg-[linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] flex items-center justify-center shadow-[0_0_18px_rgba(212,175,55,0.20)]">
+                            <Heart size={24} className="text-[var(--color-gold)]" />
                         </div>
 
-                        <h3 className="mt-5 text-3xl md:text-4xl font-medium tracking-tight text-[var(--text-primary)]">
+                        <h3 className="mt-4 text-[30px] md:text-[38px] font-medium tracking-tight text-[var(--text-primary)]">
                             Your Commitment Portfolio Awaits
                         </h3>
-                        <p className="mt-3 text-base text-[var(--text-secondary)] max-w-3xl mx-auto leading-relaxed">
+                        <p className="mt-2.5 text-[15px] text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
                             Begin your philanthropic journey by reviewing curated opportunities. Once you commit to an opportunity, your pledges and payment schedules will appear here.
                         </p>
 
-                        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-2.5">
                             {[
                                 { label: 'Commitments', icon: CheckCircle2 },
                                 { label: 'In Progress', icon: Clock3 },
@@ -325,32 +325,32 @@ export default function DonorPledges() {
                             ].map((item) => (
                                 <div
                                     key={item.label}
-                                    className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] px-5 py-5"
+                                    className="rounded-xl border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.015)] px-4 py-3.5"
                                 >
-                                    <item.icon size={16} className="mx-auto text-[var(--text-tertiary)]" />
-                                    <div className="mt-4 text-2xl leading-none text-[var(--text-secondary)]">—</div>
-                                    <div className="mt-3 text-xs uppercase tracking-widest text-[var(--text-tertiary)]">{item.label}</div>
+                                    <item.icon size={14} className="mx-auto text-[var(--text-tertiary)]" />
+                                    <div className="mt-2.5 text-lg leading-none text-[var(--text-secondary)]">—</div>
+                                    <div className="mt-2 text-[10px] uppercase tracking-widest text-[var(--text-tertiary)]">{item.label}</div>
                                 </div>
                             ))}
                         </div>
 
                         <a
                             href="/donor/opportunities"
-                            className="mt-6 inline-flex items-center justify-center gap-3 rounded-2xl px-8 py-3.5 text-lg font-medium text-[#121212] bg-[linear-gradient(145deg,#D4AF37,#E5C158)] border border-[rgba(212,175,55,0.65)] shadow-[0_0_24px_rgba(212,175,55,0.36)] hover:brightness-105 transition-all"
+                            className="mt-5 inline-flex items-center justify-center gap-3 rounded-xl px-7 py-3 text-base font-medium text-[#121212] bg-[linear-gradient(145deg,#D4AF37,#E5C158)] border border-[rgba(212,175,55,0.65)] shadow-[0_0_20px_rgba(212,175,55,0.32)] hover:brightness-105 transition-all"
                         >
-                            <Compass size={20} />
+                            <Compass size={18} />
                             Explore Opportunities
-                            <ChevronRight size={20} />
+                            <ChevronRight size={18} />
                         </a>
                     </div>
 
-                    <div className="relative border-t border-[rgba(255,255,255,0.08)] px-6 py-3.5 md:px-10 flex flex-col md:flex-row items-center justify-center gap-5 text-[var(--text-secondary)]">
+                    <div className="relative border-t border-[rgba(255,255,255,0.08)] px-5 py-3 md:px-8 flex flex-col md:flex-row items-center justify-center gap-4 text-[var(--text-secondary)] text-sm">
                         <div className="flex items-center gap-2">
-                            <Sparkles size={16} className="text-[var(--color-gold)]" />
+                            <Sparkles size={14} className="text-[var(--color-gold)]" />
                             <span>Curated for your vision</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <FileCheck2 size={16} className="text-[var(--color-gold)]" />
+                            <FileCheck2 size={14} className="text-[var(--color-gold)]" />
                             <span>Full due diligence support</span>
                         </div>
                     </div>
