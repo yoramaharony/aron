@@ -60,6 +60,18 @@ export default function DonorProfileSettingsPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (!notice) return;
+    const timeout = window.setTimeout(() => setNotice(''), 2800);
+    return () => window.clearTimeout(timeout);
+  }, [notice]);
+
+  useEffect(() => {
+    if (!error) return;
+    const timeout = window.setTimeout(() => setError(''), 4200);
+    return () => window.clearTimeout(timeout);
+  }, [error]);
+
   const saveProfile = async () => {
     setSaving(true);
     setError('');
