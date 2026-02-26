@@ -35,6 +35,7 @@ export type VisionBoard = {
 export type DemoSuggestion = {
   label: string;
   content: string;
+  route?: string;
 };
 
 function uniq(arr: string[]) {
@@ -389,7 +390,7 @@ export function demoSuggestionsForVision(vision: ImpactVision): DemoSuggestion[]
       ];
     case 'activated':
       return [
-        { label: 'Go to Opportunities', content: 'Open Opportunities next.' },
+        { label: 'Go to Opportunities', content: 'Open Opportunities next.', route: '/donor/opportunities' },
         { label: 'Set quarterly updates', content: 'quarterly' },
       ];
     default:

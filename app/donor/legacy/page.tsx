@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Send, User, Bot, ChevronRight, BarChart3, Globe, ShieldCheck, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
-type ConciergeSuggestion = { label: string; content: string };
+type ConciergeSuggestion = { label: string; content: string; route?: string };
 
 export default function ImpactVisionStudioPage() {
     const [refreshKey, setRefreshKey] = useState(0);
@@ -30,6 +31,7 @@ export default function ImpactVisionStudioPage() {
 // --- CHAT COMPONENTS ---
 
 function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
+    const router = useRouter();
     const [input, setInput] = useState('');
     const [messages, setMessages] = useState<{ role: 'donor' | 'assistant'; content: string }[]>([]);
     const [isTyping, setIsTyping] = useState(false);
@@ -237,7 +239,13 @@ function LegacyChat({ onUpdated }: { onUpdated: () => void }) {
                         {(suggestions ?? []).slice(0, 4).map((s, idx) => (
                             <button
                                 key={`${s.label}-${idx}`}
-                                onClick={() => sendMessage(s.content)}
+                                onClick={() => {
+                                    if (s.route) {
+                                        router.push(s.route);
+                                        return;
+                                    }
+                                    sendMessage(s.content);
+                                }}
                                 disabled={isTyping || resetting}
                                 className="whitespace-nowrap px-3 py-1 bg-[var(--bg-surface)] border border-[var(--border-subtle)] rounded-full text-xs text-[var(--text-secondary)] hover:bg-[var(--color-gold)] hover:text-black transition-colors disabled:opacity-60"
                                 title={s.content}

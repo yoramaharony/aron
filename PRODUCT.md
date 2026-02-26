@@ -402,6 +402,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Wired DAF completion to existing funded flow so completed DAF grants appear in `/donor/pledges`
 - [x] Reflected DAF progress in requestor request detail Tasks/Documents tabs (no admin role-switch required in demo)
 - [x] Migrated deprecated Next.js middleware convention to `proxy.ts` (same route protection behavior for `/admin`, `/donor`, `/requestor`)
+- [x] Concierge suggestion chips can now trigger route navigation (e.g. activated-state `Go to Opportunities` redirects to `/donor/opportunities` instead of sending chat text)
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
