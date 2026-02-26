@@ -327,7 +327,7 @@ export default function DonorPledges() {
                                     key={item.label}
                                     className="rounded-xl border border-[rgba(255,255,255,0.10)] bg-[rgba(255,255,255,0.015)] px-4 py-3.5"
                                 >
-                                    <item.icon size={14} className="mx-auto text-[var(--text-tertiary)]" />
+                                    <item.icon size={18} className="mx-auto text-[var(--text-tertiary)]" />
                                     <div className="mt-2.5 text-lg leading-none text-[var(--text-secondary)]">—</div>
                                     <div className="mt-2 text-[10px] uppercase tracking-widest text-[var(--text-tertiary)]">{item.label}</div>
                                 </div>

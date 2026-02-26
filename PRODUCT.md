@@ -422,6 +422,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Compacted donor pledges empty-state hero proportions (reduced vertical padding/spacing/icon footprint) so the card feels premium without taking excessive screen height
 - [x] Further tightened donor pledges empty-state density: smaller hero footprint and more refined compact inner stat cards
 - [x] Constrained donor pledges empty-state hero width (`max-w-4xl`, centered) to prevent full-row stretching and oversized visual footprint
+- [x] Increased icon size in empty-state subcards on donor pledges for improved visual legibility
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
