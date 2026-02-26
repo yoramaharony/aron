@@ -19,6 +19,7 @@ type OpportunityRow = {
   conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
   conciergeReason?: string | null;
   progressBadge?: 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
+  lowAmount?: boolean;
 };
 
 export async function GET() {
@@ -113,6 +114,7 @@ export async function GET() {
       conciergeAction: (cc?.action as OpportunityRow['conciergeAction']) ?? null,
       conciergeReason: cc?.reason ?? null,
       progressBadge,
+      lowAmount: opp.targetAmount != null ? Number(opp.targetAmount) < 25000 : false,
     });
   }
 

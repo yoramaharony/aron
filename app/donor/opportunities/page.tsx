@@ -27,6 +27,7 @@ type OpportunityRow = {
     conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
     conciergeReason?: string | null;
     progressBadge?: 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
+    lowAmount?: boolean;
 };
 
 function deriveStatusMessage(flow: WorkflowView) {
@@ -384,6 +385,9 @@ export default function DonorFeed() {
     const selectedRow = useMemo(() => rows.find((r) => r.key === selectedKey), [rows, selectedKey]);
     const statusMessage = useMemo(() => {
         const base = deriveStatusMessage(workflow);
+        if (workflow.stage === 'discover' && selectedRow?.lowAmount) {
+            return 'Low amount opportunity — manual review (request info optional)';
+        }
         // Override for concierge-reviewed items that were kept in Discover
         if (workflow.stage === 'discover' && !workflow.isPassed && selectedRow?.conciergeAction === 'keep') {
             return 'Concierge reviewed — matches your Impact Vision';
@@ -590,6 +594,11 @@ export default function DonorFeed() {
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0">
                                             {progressBadgeChip(r.progressBadge)}
+                                            {r.lowAmount && (
+                                                <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.10)] text-amber-300">
+                                                    low amount
+                                                </span>
+                                            )}
                                             {!r.progressBadge && r.conciergeAction === 'pass' && (
                                                 <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.08)] text-[var(--color-gold)]">
                                                     concierge pass
