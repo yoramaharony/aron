@@ -468,11 +468,11 @@ export default function DonorProfileSettingsPage() {
                   checked={newIsDefault}
                   onChange={(e) => setNewIsDefault(e.target.checked)}
                 />
-                <span className="h-5 w-5 rounded-md border border-[rgba(212,175,55,0.45)] bg-[rgba(212,175,55,0.04)] inline-flex items-center justify-center transition-colors peer-checked:bg-[rgba(212,175,55,1)] peer-checked:border-[rgba(212,175,55,1)]">
+                <span className="h-5 w-5 rounded-md border border-[rgba(212,175,55,0.45)] bg-[rgba(212,175,55,0.04)] inline-flex items-center justify-center transition-colors peer-checked:bg-[rgba(212,175,55,1)] peer-checked:border-[rgba(212,175,55,1)] [&_svg]:opacity-0 peer-checked:[&_svg]:opacity-100">
                   <Check
                     size={13}
                     strokeWidth={2.5}
-                    className="text-[#151515] opacity-0 transition-opacity peer-checked:opacity-100"
+                    className="text-[#151515] transition-opacity"
                   />
                 </span>
                 <span>Set as primary funding source</span>

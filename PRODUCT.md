@@ -413,6 +413,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Replaced native DAF sponsor `<select>` in donor profile with a custom dark/gold dropdown menu so opened options match Aron styling (no system gray dropdown)
 - [x] Strengthened donor DAF primary-source checkbox indicator visibility by rendering a bold branded `x` mark when selected
 - [x] Updated donor DAF primary-source checkbox selected state to match Figma: filled gold square with dark check mark
+- [x] Fixed donor DAF checkbox checkmark visibility bug by applying checked-state icon opacity styling at the checkbox-container level
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
