@@ -403,6 +403,9 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Reflected DAF progress in requestor request detail Tasks/Documents tabs (no admin role-switch required in demo)
 - [x] Migrated deprecated Next.js middleware convention to `proxy.ts` (same route protection behavior for `/admin`, `/donor`, `/requestor`)
 - [x] Concierge suggestion chips can now trigger route navigation (e.g. activated-state `Go to Opportunities` redirects to `/donor/opportunities` instead of sending chat text)
+- [x] Donor profile settings now use tabbed sections (Account, Security, Funding Sources) for clearer multi-subject navigation
+- [x] Donor DAF Funding Sources UI refreshed to Figma-style cards: highlighted primary source, verified badge, hoverable plus-tile CTA, expandable "Configure New Funding Source" form, and secure-connection panel
+- [x] Added left-sidebar Settings entry points for both portals (Donor → `/donor/profile`, Organization → `/requestor/profile`) for direct access beyond avatar menu
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

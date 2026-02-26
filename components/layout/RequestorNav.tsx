@@ -12,7 +12,7 @@ const NAV_ITEMS = [
     { label: 'My Requests', icon: List, href: '/requestor/requests' },
     { label: 'Campaigns', icon: BarChart3, href: '/requestor/campaigns' },
     { label: 'Reporting', icon: FileText, href: '/requestor/reporting' },
-    { label: 'Settings', icon: Settings, href: '/requestor/settings' },
+    { label: 'Settings', icon: Settings, href: '/requestor/profile' },
 ];
 
 export function RequestorNav() {
