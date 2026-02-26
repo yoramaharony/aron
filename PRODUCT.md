@@ -60,7 +60,7 @@ Chat thread between donor and the AI concierge.
 | Concierge Chat | `/donor/legacy` | Build Impact Vision via guided Q&A with answer buttons |
 | Impact Board | `/donor/impact` | View extracted Impact Vision summary |
 | Opportunities | `/donor/opportunities` | Browse/filter/act on opportunities (2 tabs with badge counts: Discover, Passed). Concierge-matched items (both info-requested and kept) stay in Discover with chips. |
-| Opportunity Detail | (right panel of above) | Full detail with Pass / See More / Pledge / Structure Leverage actions. Shows concierge match explanation (green) for matched items, auto-pass explanation (gold) for passed items. |
+| Opportunity Detail | (right panel of above) | Full detail with Pass / Request Info (manual, discover stage) / See More / Pledge / Structure Leverage actions. Shows concierge match explanation (green) for matched items, auto-pass explanation (gold) for passed items. |
 | Pledges | `/donor/pledges` | View committed pledges |
 
 ### Organization / Requestor (`role: 'requestor'`)
@@ -387,6 +387,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Donor left-pane chips now use live workflow progress (meeting scheduled, info received, meeting done, in review, funded) instead of only initial concierge action
 - [x] Source chips remain for provenance: `submission` (donor-invited) vs `curated` (demo/Charidy imported)
 - [x] Fixed donor right-pane title clipping by adjusting heading top padding and line-height for large titles
+- [x] Added donor manual "Request Info" action in discover stage (for low-amount matched items where concierge info tier is `none`)
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

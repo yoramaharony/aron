@@ -149,6 +149,7 @@ export default function DonorFeed() {
     const [rescheduleTime, setRescheduleTime] = useState('14:00');
     const [rescheduleType, setRescheduleType] = useState('zoom');
     const [rescheduling, setRescheduling] = useState(false);
+    const [requestingInfo, setRequestingInfo] = useState(false);
     const [notesText, setNotesText] = useState('');
     const [notesEditing, setNotesEditing] = useState(false);
     const [notesSaving, setNotesSaving] = useState(false);
@@ -400,6 +401,10 @@ export default function DonorFeed() {
         }
         return base;
     }, [workflow, selectedRow, scheduledEvent]);
+    const canManualRequestInfo = useMemo(() => {
+        if (workflow.isCommitted || workflow.isPassed) return false;
+        return workflow.stage === 'discover';
+    }, [workflow]);
 
     const openReschedulePanel = () => {
         if (!scheduledEvent?.meta) return;
@@ -761,6 +766,22 @@ export default function DonorFeed() {
                                         <Button variant="outline" onClick={() => act(detail.opportunity.key, 'pass')}>
                                             Pass
                                         </Button>
+                                        {canManualRequestInfo ? (
+                                            <Button
+                                                variant="outline"
+                                                isLoading={requestingInfo}
+                                                onClick={async () => {
+                                                    setRequestingInfo(true);
+                                                    await act(detail.opportunity.key, 'request_info', {
+                                                        sendEmail: true,
+                                                        note: 'Please share additional details, budget usage, and impact reporting for this request.',
+                                                    });
+                                                    setRequestingInfo(false);
+                                                }}
+                                            >
+                                                Request Info
+                                            </Button>
+                                        ) : null}
                                         <Button
                                             variant={seeMoreOpen ? 'outline' : 'gold'}
                                             onClick={() => setSeeMoreOpen((v) => !v)}
