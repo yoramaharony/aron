@@ -600,8 +600,7 @@ export default function DonorFeed() {
                                             <div className="text-xs text-[var(--text-tertiary)] truncate">{r.orgName}</div>
                                         </div>
                                     </div>
-                                    <div className="text-sm text-[var(--text-secondary)] mt-2 line-clamp-2">{r.summary}</div>
-                                    <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
                                         {progressBadgeChip(r.progressBadge)}
                                         {r.lowAmount && (
                                             <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(251,191,36,0.35)] bg-[rgba(251,191,36,0.10)] text-amber-300">
@@ -627,6 +626,7 @@ export default function DonorFeed() {
                                             {r.source === 'submission' ? 'submission' : 'curated'}
                                         </span>
                                     </div>
+                                    <div className="text-sm text-[var(--text-secondary)] mt-2 line-clamp-2">{r.summary}</div>
                                 </button>
                             ))
                         )}
