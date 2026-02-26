@@ -419,6 +419,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Added donor-only Concierge match scoring (deterministic demo scores) surfaced in donor opportunity messaging cards
 - [x] Requestor timeline now collapses duplicate `scheduled` events for the same meeting slot (concierge proposal + org acceptance) into one visible "Meeting scheduled" entry
 - [x] Redesigned donor pledges empty state to match Figma direction: premium hero card, icon tile, 3 summary stat tiles, prominent Explore Opportunities CTA, and trust/support footer strip
+- [x] Compacted donor pledges empty-state hero proportions (reduced vertical padding/spacing/icon footprint) so the card feels premium without taking excessive screen height
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
