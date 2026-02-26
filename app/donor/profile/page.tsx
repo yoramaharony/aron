@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Building2, CheckCircle2, Plus, Shield, Star, Trash2, WalletCards, X } from 'lucide-react';
+import { CheckCircle2, Landmark, Plus, Shield, Star, Trash2, WalletCards, X } from 'lucide-react';
 
 type ProfileTabKey = 'account' | 'security' | 'funding';
 type FundingSource = {
@@ -288,8 +288,11 @@ export default function DonorProfileSettingsPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex items-start gap-4">
-                    <div className="h-14 w-14 rounded-xl border border-[rgba(212,175,55,0.28)] bg-[rgba(212,175,55,0.08)] flex items-center justify-center shadow-[0_0_18px_rgba(212,175,55,0.2)]">
-                      <Building2 size={20} className="text-[var(--color-gold)]" />
+                    <div className="relative h-14 w-14 rounded-xl p-[1px] bg-[linear-gradient(145deg,rgba(212,175,55,0.55),rgba(212,175,55,0.15))] shadow-[0_0_22px_rgba(212,175,55,0.22)]">
+                      <div className="h-full w-full rounded-[11px] border border-[rgba(255,255,255,0.06)] bg-[linear-gradient(145deg,rgba(26,26,26,0.98),rgba(42,42,42,0.92))] flex items-center justify-center">
+                        <Landmark size={18} strokeWidth={1.7} className="text-[var(--color-gold)]" />
+                      </div>
+                      <div className="pointer-events-none absolute inset-[4px] rounded-[8px] border border-[rgba(255,255,255,0.07)]" />
                     </div>
                     <div className="pt-0.5">
                       <div className="flex items-center gap-2 flex-wrap">
