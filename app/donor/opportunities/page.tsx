@@ -128,6 +128,49 @@ function timelineIcon(type: string) {
     return <Clock3 size={15} />;
 }
 
+function sourceLabel(source: OpportunityRow['source']) {
+    if (source === 'charidy') return 'Charidy (curated)';
+    if (source === 'submission') return 'Submission (invited)';
+    return 'Direct request';
+}
+
+function ScoreRing({ score }: { score: number }) {
+    const clamped = Math.max(0, Math.min(100, Math.round(score)));
+    const radius = 29;
+    const stroke = 5;
+    const circumference = 2 * Math.PI * radius;
+    const dashOffset = circumference - (clamped / 100) * circumference;
+
+    return (
+        <div className="relative h-[78px] w-[78px] shrink-0">
+            <svg className="h-full w-full -rotate-90" viewBox="0 0 78 78" aria-hidden="true">
+                <circle
+                    cx="39"
+                    cy="39"
+                    r={radius}
+                    fill="none"
+                    stroke="rgba(212,175,55,0.16)"
+                    strokeWidth={stroke}
+                />
+                <circle
+                    cx="39"
+                    cy="39"
+                    r={radius}
+                    fill="none"
+                    stroke="rgba(212,175,55,0.95)"
+                    strokeWidth={stroke}
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={dashOffset}
+                />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center text-[37px] leading-none font-light text-[var(--color-gold)]">
+                {clamped}
+            </div>
+        </div>
+    );
+}
+
 function progressBadgeChip(progressBadge?: OpportunityRow['progressBadge'] | null) {
     if (!progressBadge) return null;
     if (progressBadge === 'info_requested') {
@@ -1025,15 +1068,26 @@ export default function DonorFeed() {
                                 className="space-y-5"
                             >
                             <div className="space-y-5">
-                                {/* Title + org + summary */}
-                                <div className="min-w-0">
-                                    <h2 className="pt-1 text-4xl leading-[1.15] font-light text-[var(--text-primary)]">
-                                        {detail.opportunity.title}
-                                    </h2>
-                                    <div className="text-2xl font-light text-[var(--color-gold)] mt-1">{detail.opportunity.orgName}</div>
+                                {/* Title + score ring + summary */}
+                                <div className="min-w-0 space-y-3">
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <h2 className="pt-1 text-4xl leading-[1.12] font-light text-[var(--text-primary)]">
+                                                {detail.opportunity.title}
+                                            </h2>
+                                            <div className="mt-1.5 text-[30px] leading-none font-light text-[var(--color-gold)]">
+                                                {sourceLabel(selectedRow?.source || 'request')}
+                                            </div>
+                                            <div className="text-sm text-[var(--text-tertiary)] mt-1.5">{detail.opportunity.orgName}</div>
+                                        </div>
+                                        {typeof selectedRow?.conciergeScore === 'number' ? (
+                                            <ScoreRing score={selectedRow.conciergeScore} />
+                                        ) : null}
+                                    </div>
+
                                     <button
                                         type="button"
-                                        className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] tracking-wide text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors group"
+                                        className="inline-flex items-center gap-1.5 text-[11px] tracking-wide text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] transition-colors group"
                                         title="Copy opportunity ID"
                                         onClick={() => {
                                             navigator.clipboard.writeText(detail.opportunity.key).catch(() => {});
@@ -1048,7 +1102,7 @@ export default function DonorFeed() {
                                             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 group-hover:opacity-100"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                                         )}
                                     </button>
-                                    <p className="text-sm text-[var(--text-secondary)] mt-3">{detail.opportunity.summary}</p>
+                                    <p className="text-sm text-[var(--text-secondary)]">{detail.opportunity.summary}</p>
                                 </div>
 
                                 {/* Prev / Next navigation */}
