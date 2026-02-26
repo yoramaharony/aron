@@ -401,6 +401,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Added DAF lifecycle APIs and timeline events (`daf_packet_generated`, `daf_submitted`, `daf_received`)
 - [x] Wired DAF completion to existing funded flow so completed DAF grants appear in `/donor/pledges`
 - [x] Reflected DAF progress in requestor request detail Tasks/Documents tabs (no admin role-switch required in demo)
+- [x] Migrated deprecated Next.js middleware convention to `proxy.ts` (same route protection behavior for `/admin`, `/donor`, `/requestor`)
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

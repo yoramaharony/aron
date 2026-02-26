@@ -168,7 +168,7 @@ function computeTasks(
                 label: 'Meeting completed',
                 description: 'The meeting was held.',
                 status: 'completed',
-                completedAt: meetingEvent.createdAt,
+                completedAt: meetingEvent?.createdAt ?? scheduledEvent.createdAt,
             });
         }
     }

@@ -6,7 +6,7 @@ const SECRET_KEY = new TextEncoder().encode(
     process.env.JWT_SECRET || 'super-secret-key-change-me'
 );
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const session = request.cookies.get('session')?.value;
 
     // Protect Admin Routes
@@ -21,7 +21,7 @@ export async function middleware(request: NextRequest) {
                 if (payload.role === 'requestor') return NextResponse.redirect(new URL('/requestor', request.url));
                 return NextResponse.redirect(new URL('/auth/login?role=admin', request.url));
             }
-        } catch (e) {
+        } catch {
             return NextResponse.redirect(new URL('/auth/login?role=admin', request.url));
         }
     }
@@ -37,7 +37,7 @@ export async function middleware(request: NextRequest) {
                 // Redirect requestors trying to access donor pages
                 return NextResponse.redirect(new URL('/requestor', request.url));
             }
-        } catch (e) {
+        } catch {
             return NextResponse.redirect(new URL('/auth/login', request.url));
         }
     }
@@ -53,7 +53,7 @@ export async function middleware(request: NextRequest) {
                 // Redirect donors trying to access requestor pages
                 return NextResponse.redirect(new URL('/donor', request.url));
             }
-        } catch (e) {
+        } catch {
             return NextResponse.redirect(new URL('/auth/login', request.url));
         }
     }
@@ -64,3 +64,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
     matcher: ['/admin/:path*', '/donor/:path*', '/requestor/:path*'],
 };
+
