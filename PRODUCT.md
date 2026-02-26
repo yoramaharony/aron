@@ -418,6 +418,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Org demo stepper now supports meeting-dot fast-forward: when schedule is accepted, clicking Meeting marks `meeting_completed` at current time and advances workflow into Review
 - [x] Added donor-only Concierge match scoring (deterministic demo scores) surfaced in donor opportunity messaging cards
 - [x] Requestor timeline now collapses duplicate `scheduled` events for the same meeting slot (concierge proposal + org acceptance) into one visible "Meeting scheduled" entry
+- [x] Redesigned donor pledges empty state to match Figma direction: premium hero card, icon tile, 3 summary stat tiles, prominent Explore Opportunities CTA, and trust/support footer strip
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
