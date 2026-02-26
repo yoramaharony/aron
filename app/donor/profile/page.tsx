@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Check, CheckCircle2, ChevronDown, Landmark, Plus, Shield, Star, Trash2, WalletCards, X } from 'lucide-react';
+import { Check, CheckCircle2, ChevronDown, Landmark, Plus, Shield, Star, Trash2, WalletCards } from 'lucide-react';
 
 type ProfileTabKey = 'account' | 'security' | 'funding';
 type FundingSource = {
@@ -469,7 +469,12 @@ export default function DonorProfileSettingsPage() {
                   onChange={(e) => setNewIsDefault(e.target.checked)}
                 />
                 <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.24)] bg-[rgba(255,255,255,0.04)] inline-flex items-center justify-center transition-colors peer-checked:border-[rgba(212,175,55,0.55)] peer-checked:bg-[rgba(212,175,55,0.20)]">
-                  <X size={13} className="text-[var(--color-gold)] opacity-0 transition-opacity peer-checked:opacity-100" />
+                  <span
+                    aria-hidden="true"
+                    className="text-[13px] font-semibold leading-none text-[var(--color-gold)] opacity-0 transition-opacity peer-checked:opacity-100"
+                  >
+                    x
+                  </span>
                 </span>
                 <span>Set as primary funding source</span>
               </label>
