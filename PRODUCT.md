@@ -386,6 +386,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Donor reschedule date/time native picker icons now render correctly in dark mode
 - [x] Donor left-pane chips now use live workflow progress (meeting scheduled, info received, meeting done, in review, funded) instead of only initial concierge action
 - [x] Source chips remain for provenance: `submission` (donor-invited) vs `curated` (demo/Charidy imported)
+- [x] Fixed donor right-pane title clipping by adjusting heading top padding and line-height for large titles
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

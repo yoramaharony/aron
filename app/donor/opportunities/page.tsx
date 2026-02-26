@@ -638,7 +638,7 @@ export default function DonorFeed() {
                             <div className="space-y-5">
                                 {/* Title + org + summary */}
                                 <div className="min-w-0">
-                                    <h2 className="text-4xl leading-tight font-light text-[var(--text-primary)]">
+                                    <h2 className="pt-1 text-4xl leading-[1.15] font-light text-[var(--text-primary)]">
                                         {detail.opportunity.title}
                                     </h2>
                                     <div className="text-2xl font-light text-[var(--color-gold)] mt-1">{detail.opportunity.orgName}</div>
