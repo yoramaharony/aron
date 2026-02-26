@@ -776,7 +776,7 @@ export default function DonorFeed() {
                                     </div>
                                 </div>
 
-                                {/* Three action buttons: Pass | See More | Pledge */}
+                                {/* Primary actions + details toggle */}
                                 {!workflow.isCommitted && !workflow.isPassed ? (
                                     <div className="flex flex-wrap items-center gap-3">
                                         <Button variant="outline" onClick={() => act(detail.opportunity.key, 'pass')}>
@@ -798,12 +798,6 @@ export default function DonorFeed() {
                                                 Request Info
                                             </Button>
                                         ) : null}
-                                        <Button
-                                            variant={seeMoreOpen ? 'outline' : 'gold'}
-                                            onClick={() => setSeeMoreOpen((v) => !v)}
-                                        >
-                                            {seeMoreOpen ? 'Show Less' : 'See More'}
-                                        </Button>
                                         <Button
                                             variant="gold"
                                             onClick={async () => {
@@ -828,6 +822,14 @@ export default function DonorFeed() {
                                             }}
                                         >
                                             <Zap size={15} /> Structure Leverage
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            className="ml-auto border border-[var(--border-subtle)]"
+                                            leftIcon={seeMoreOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                                            onClick={() => setSeeMoreOpen((v) => !v)}
+                                        >
+                                            {seeMoreOpen ? 'Hide Details' : 'Show Details'}
                                         </Button>
                                     </div>
                                 ) : null}
