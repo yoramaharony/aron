@@ -303,7 +303,7 @@ export default function DonorPledges() {
             {loading ? (
                 <div className="text-secondary text-sm py-12 text-center">Loading pledges...</div>
             ) : pledges.length === 0 ? (
-                <Card className="relative overflow-hidden border border-[rgba(212,175,55,0.35)] bg-[linear-gradient(145deg,rgba(20,20,20,0.97)_0%,rgba(28,28,28,0.94)_55%,rgba(20,20,20,0.97)_100%)] shadow-[0_0_30px_rgba(212,175,55,0.16)] mb-8">
+                <Card className="relative overflow-hidden border border-[rgba(212,175,55,0.35)] bg-[linear-gradient(145deg,rgba(20,20,20,0.97)_0%,rgba(28,28,28,0.94)_55%,rgba(20,20,20,0.97)_100%)] shadow-[0_0_30px_rgba(212,175,55,0.16)] mb-8 mx-auto w-full max-w-4xl">
                     <div className="absolute inset-0 opacity-[0.14] pointer-events-none bg-[radial-gradient(circle_at_50%_22%,rgba(212,175,55,0.50)_0%,rgba(212,175,55,0.10)_27%,transparent_62%)]" />
                     <div className="relative px-5 py-6 md:px-8 md:py-7 text-center">
                         <div className="mx-auto h-16 w-16 rounded-2xl border border-[rgba(212,175,55,0.35)] bg-[linear-gradient(145deg,rgba(255,255,255,0.05),rgba(255,255,255,0.01))] flex items-center justify-center shadow-[0_0_18px_rgba(212,175,55,0.20)]">
