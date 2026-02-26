@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Check, CheckCircle2, ChevronDown, Landmark, Plus, Shield, Star, Trash2, WalletCards } from 'lucide-react';
+import { Check, CheckCircle2, ChevronDown, Landmark, Plus, Shield, Star, Trash2 } from 'lucide-react';
 
 type ProfileTabKey = 'account' | 'security' | 'funding';
 type FundingSource = {
@@ -12,6 +12,14 @@ type FundingSource = {
   accountNickname: string;
   isDefault: boolean;
 };
+
+function AccountBalanceIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+      <path d="M4 10v7h3v-7H4zm6 0v7h3v-7h-3zm-8 9v2h20v-2H2zm14-9v7h3v-7h-3zM2 7h20v2H2V7zm10-5L2 6h20L12 2z" />
+    </svg>
+  );
+}
 
 export default function DonorProfileSettingsPage() {
   const [activeTab, setActiveTab] = useState<ProfileTabKey>('funding');
@@ -397,7 +405,7 @@ export default function DonorProfileSettingsPage() {
           ) : (
             <div className="rounded-2xl border border-[rgba(212,175,55,0.45)] p-6 bg-[linear-gradient(90deg,rgba(255,255,255,0.03)_0%,rgba(255,255,255,0.00)_35%,rgba(255,255,255,0.03)_100%)] shadow-[0_0_24px_rgba(212,175,55,0.18)]">
               <div className="flex items-center gap-2 mb-5">
-                <WalletCards size={16} className="text-[var(--color-gold)]" />
+                <AccountBalanceIcon className="h-[19px] w-[19px] text-[var(--color-gold)]" />
                 <h3 className="text-[32px]/none font-medium text-[var(--text-primary)]">Configure New Funding Source</h3>
               </div>
 

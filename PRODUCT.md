@@ -414,6 +414,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Strengthened donor DAF primary-source checkbox indicator visibility by rendering a bold branded `x` mark when selected
 - [x] Updated donor DAF primary-source checkbox selected state to match Figma: filled gold square with dark check mark
 - [x] Fixed donor DAF checkbox checkmark visibility bug by applying checked-state icon opacity styling at the checkbox-container level
+- [x] Updated "Configure New Funding Source" header icon to Material-style `Account Balance` glyph and increased its visual weight/size
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
