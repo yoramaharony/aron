@@ -561,7 +561,41 @@ export default function RequestDetailPage() {
     /* Deduplicate consecutive same-type events, then sort chronologically.
        Tie-break same-timestamp events by workflow order for deterministic UI. */
     const timelineEvents = useMemo(() => {
-        const deduped = events.filter((e, idx, arr) => idx === 0 || e.type !== arr[idx - 1].type);
+        // Collapse duplicate scheduled entries for the same meeting slot
+        // (e.g. concierge proposes + org accepts same timestamp).
+        const scheduledBySlot = new Map<string, EventData>();
+        const others: EventData[] = [];
+        for (const event of events) {
+            if (event.type !== 'scheduled') {
+                others.push(event);
+                continue;
+            }
+            const scheduledFor = String(event.meta?.scheduledFor || '').trim();
+            const fallbackKey = `${String(event.meta?.scheduledDate || '').trim()}T${String(event.meta?.scheduledTime || '').trim()}`;
+            const slotKey = scheduledFor || (fallbackKey !== 'T' ? fallbackKey : `created:${event.createdAt || ''}`);
+
+            const prev = scheduledBySlot.get(slotKey);
+            if (!prev) {
+                scheduledBySlot.set(slotKey, event);
+                continue;
+            }
+
+            const prevAccepted = String(prev.meta?.orgResponse || '') === 'accepted';
+            const nextAccepted = String(event.meta?.orgResponse || '') === 'accepted';
+            if (!prevAccepted && nextAccepted) {
+                scheduledBySlot.set(slotKey, event);
+                continue;
+            }
+
+            const prevTs = prev.createdAt ? new Date(prev.createdAt).getTime() : 0;
+            const nextTs = event.createdAt ? new Date(event.createdAt).getTime() : 0;
+            if (nextTs >= prevTs) {
+                scheduledBySlot.set(slotKey, event);
+            }
+        }
+
+        const merged = [...others, ...scheduledBySlot.values()];
+        const deduped = merged.filter((e, idx, arr) => idx === 0 || e.type !== arr[idx - 1].type);
         return [...deduped].sort((a, b) => {
             const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
             const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;

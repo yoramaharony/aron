@@ -417,6 +417,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Updated "Configure New Funding Source" header icon to Material-style `Account Balance` glyph and increased its visual weight/size
 - [x] Org demo stepper now supports meeting-dot fast-forward: when schedule is accepted, clicking Meeting marks `meeting_completed` at current time and advances workflow into Review
 - [x] Added donor-only Concierge match scoring (deterministic demo scores) surfaced in donor opportunity messaging cards
+- [x] Requestor timeline now collapses duplicate `scheduled` events for the same meeting slot (concierge proposal + org acceptance) into one visible "Meeting scheduled" entry
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
