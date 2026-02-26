@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { CheckCircle2, Landmark, Plus, Shield, Star, Trash2, WalletCards, X } from 'lucide-react';
+import { Check, CheckCircle2, ChevronDown, Landmark, Plus, Shield, Star, Trash2, WalletCards, X } from 'lucide-react';
 
 type ProfileTabKey = 'account' | 'security' | 'funding';
 type FundingSource = {
@@ -31,6 +31,8 @@ export default function DonorProfileSettingsPage() {
   const [fundingSources, setFundingSources] = useState<FundingSource[]>([]);
   const [fundingSaving, setFundingSaving] = useState(false);
   const [showAddFundingForm, setShowAddFundingForm] = useState(false);
+  const [sponsorDropdownOpen, setSponsorDropdownOpen] = useState(false);
+  const sponsorDropdownRef = useRef<HTMLDivElement | null>(null);
   const [newSponsorName, setNewSponsorName] = useState('');
   const [newAccountNickname, setNewAccountNickname] = useState('');
   const [newIsDefault, setNewIsDefault] = useState(false);
@@ -71,6 +73,26 @@ export default function DonorProfileSettingsPage() {
     const timeout = window.setTimeout(() => setError(''), 4200);
     return () => window.clearTimeout(timeout);
   }, [error]);
+
+  useEffect(() => {
+    if (!sponsorDropdownOpen) return;
+    const onMouseDown = (event: MouseEvent) => {
+      const container = sponsorDropdownRef.current;
+      if (!container) return;
+      if (event.target instanceof Node && !container.contains(event.target)) {
+        setSponsorDropdownOpen(false);
+      }
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setSponsorDropdownOpen(false);
+    };
+    window.addEventListener('mousedown', onMouseDown);
+    window.addEventListener('keydown', onEscape);
+    return () => {
+      window.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('keydown', onEscape);
+    };
+  }, [sponsorDropdownOpen]);
 
   const saveProfile = async () => {
     setSaving(true);
@@ -156,6 +178,7 @@ export default function DonorProfileSettingsPage() {
       setNewAccountNickname('');
       setNewIsDefault(false);
       setShowAddFundingForm(false);
+      setSponsorDropdownOpen(false);
     } catch (e: any) {
       setError(String(e?.message || 'Failed to add funding source'));
     } finally {
@@ -381,17 +404,51 @@ export default function DonorProfileSettingsPage() {
               <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="label">DAF Sponsor</label>
-                  <select
-                    className="input-field"
-                    style={{ colorScheme: 'dark' }}
-                    value={newSponsorName}
-                    onChange={(e) => setNewSponsorName(e.target.value)}
-                  >
-                    <option value="">Select sponsor</option>
-                    {sponsors.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
+                  <div className="relative" ref={sponsorDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setSponsorDropdownOpen((v) => !v)}
+                      className="input-field w-full text-left flex items-center justify-between gap-3"
+                      aria-haspopup="listbox"
+                      aria-expanded={sponsorDropdownOpen}
+                    >
+                      <span className={newSponsorName ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}>
+                        {newSponsorName || 'Select sponsor'}
+                      </span>
+                      <ChevronDown
+                        size={16}
+                        className={`text-[var(--text-tertiary)] transition-transform ${sponsorDropdownOpen ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+
+                    {sponsorDropdownOpen ? (
+                      <div className="absolute z-40 mt-2 w-full max-h-72 overflow-y-auto rounded-xl border border-[rgba(212,175,55,0.35)] bg-[linear-gradient(180deg,rgba(26,26,26,0.98)_0%,rgba(18,18,18,0.98)_100%)] shadow-[0_18px_42px_-24px_rgba(0,0,0,0.9),0_0_22px_rgba(212,175,55,0.14)]">
+                        {sponsors.map((sponsor) => {
+                          const selected = sponsor === newSponsorName;
+                          return (
+                            <button
+                              key={sponsor}
+                              type="button"
+                              role="option"
+                              aria-selected={selected}
+                              onClick={() => {
+                                setNewSponsorName(sponsor);
+                                setSponsorDropdownOpen(false);
+                              }}
+                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors flex items-center justify-between gap-3 ${
+                                selected
+                                  ? 'bg-[rgba(212,175,55,0.14)] text-[var(--color-gold)]'
+                                  : 'text-[var(--text-secondary)] hover:bg-[rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]'
+                              }`}
+                            >
+                              <span>{sponsor}</span>
+                              {selected ? <Check size={14} className="text-[var(--color-gold)]" /> : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
                 <div>
                   <label className="label">Account nickname (optional)</label>
@@ -433,6 +490,7 @@ export default function DonorProfileSettingsPage() {
                     setNewSponsorName('');
                     setNewAccountNickname('');
                     setNewIsDefault(false);
+                    setSponsorDropdownOpen(false);
                   }}
                   disabled={fundingSaving}
                   className="h-11 rounded-xl border border-[rgba(255,255,255,0.12)] px-5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[rgba(255,255,255,0.3)] transition-colors"

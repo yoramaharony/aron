@@ -410,6 +410,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Updated donor DAF primary-source checkbox indicator to use an `x` mark with the same branded dark/gold styling
 - [x] Refined donor funding-source bank icon tile to a Figma-like treatment (Landmark glyph, thin layered borders, subtle gold glow)
 - [x] Donor profile feedback messages (success/error) now auto-dismiss after a short timeout to avoid stale notices across tab switches
+- [x] Replaced native DAF sponsor `<select>` in donor profile with a custom dark/gold dropdown menu so opened options match Aron styling (no system gray dropdown)
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
