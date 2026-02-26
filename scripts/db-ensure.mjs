@@ -240,6 +240,57 @@ async function main() {
     `CREATE INDEX IF NOT EXISTS donor_profiles_share_token_idx ON donor_profiles(share_token);`,
 
     `
+    CREATE TABLE IF NOT EXISTS donor_funding_sources (
+      id TEXT PRIMARY KEY NOT NULL,
+      donor_id TEXT NOT NULL REFERENCES users(id),
+      type TEXT NOT NULL DEFAULT 'daf',
+      sponsor_name TEXT NOT NULL,
+      account_nickname TEXT,
+      is_default INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP),
+      updated_at INTEGER
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS donor_funding_sources_donor_idx ON donor_funding_sources(donor_id);`,
+    `CREATE INDEX IF NOT EXISTS donor_funding_sources_default_idx ON donor_funding_sources(donor_id, is_default);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS daf_grants (
+      id TEXT PRIMARY KEY NOT NULL,
+      opportunity_key TEXT NOT NULL,
+      donor_id TEXT NOT NULL REFERENCES users(id),
+      funding_source_id TEXT REFERENCES donor_funding_sources(id),
+      sponsor_name TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      designation TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',
+      sponsor_reference TEXT,
+      donor_note TEXT,
+      submitted_at INTEGER,
+      received_at INTEGER,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP),
+      updated_at INTEGER
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS daf_grants_donor_idx ON daf_grants(donor_id);`,
+    `CREATE INDEX IF NOT EXISTS daf_grants_key_idx ON daf_grants(opportunity_key);`,
+    `CREATE INDEX IF NOT EXISTS daf_grants_status_idx ON daf_grants(status);`,
+
+    `
+    CREATE TABLE IF NOT EXISTS daf_grant_documents (
+      id TEXT PRIMARY KEY NOT NULL,
+      daf_grant_id TEXT NOT NULL REFERENCES daf_grants(id),
+      type TEXT NOT NULL,
+      file_url TEXT NOT NULL,
+      file_name TEXT NOT NULL,
+      uploaded_by_role TEXT NOT NULL,
+      created_at INTEGER DEFAULT (CURRENT_TIMESTAMP)
+    );
+    `,
+    `CREATE INDEX IF NOT EXISTS daf_grant_documents_grant_idx ON daf_grant_documents(daf_grant_id);`,
+    `CREATE INDEX IF NOT EXISTS daf_grant_documents_type_idx ON daf_grant_documents(type);`,
+
+    `
     CREATE TABLE IF NOT EXISTS concierge_messages (
       id TEXT PRIMARY KEY NOT NULL,
       donor_id TEXT NOT NULL REFERENCES users(id),

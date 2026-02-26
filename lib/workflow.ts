@@ -55,6 +55,9 @@ export function humanizeEventType(type: string): string {
         meeting_completed: 'Meeting completed',
         diligence_completed: 'Due diligence completed',
         funded: 'Committed',
+        daf_packet_generated: 'DAF packet generated',
+        daf_submitted: 'DAF submission confirmed',
+        daf_received: 'DAF funds received',
         reset: 'Reset',
         concierge_review: 'Reviewed by concierge',
     };
@@ -73,6 +76,9 @@ export function humanizeEventTypeOrg(type: string): string {
         meeting_completed: 'Meeting completed',
         diligence_completed: 'Due diligence completed',
         funded: 'Funding approved',
+        daf_packet_generated: 'DAF packet generated',
+        daf_submitted: 'DAF submitted confirmation',
+        daf_received: 'DAF funds received',
         reset: 'Status reset',
         concierge_review: 'Auto-reviewed by donor concierge',
     };

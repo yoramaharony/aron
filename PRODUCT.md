@@ -62,6 +62,7 @@ Chat thread between donor and the AI concierge.
 | Opportunities | `/donor/opportunities` | Browse/filter/act on opportunities (2 tabs with badge counts: Discover, Passed). Concierge-matched items (both info-requested and kept) stay in Discover with chips. |
 | Opportunity Detail | (right panel of above) | Full detail with Pass / Request Info (manual, discover stage) / See More / Pledge / Structure Leverage actions. Shows concierge match explanation (green) for matched items, auto-pass explanation (gold) for passed items. |
 | Pledges | `/donor/pledges` | View committed pledges |
+| Profile Settings | `/donor/profile` | Manage donor account + DAF sponsor funding preferences (default sponsor, nickname) |
 
 ### Organization / Requestor (`role: 'requestor'`)
 | Page | Route | Purpose |
@@ -393,6 +394,13 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Manual donor `request_info` now reliably renders as `info requested` chip via live progress badge mapping
 - [x] Refined donor list hierarchy: chips now sit between org name and summary (above description) for better scanability
 - [x] Donor action row refined: fold/unfold moved to right-edge "Show/Hide Details" toggle with chevron icon (separated from primary decisions)
+- [x] Added DAF structured data model: `donor_funding_sources`, `daf_grants`, `daf_grant_documents`
+- [x] Added donor DAF profile settings (`/donor/profile`) with full sponsor preference management
+- [x] Replaced direct pledge funding with funding-method modal and DAF packet generation flow
+- [x] Added donor-side DAF lifecycle card with packet download, submission, and demo-only AI simulate actions
+- [x] Added DAF lifecycle APIs and timeline events (`daf_packet_generated`, `daf_submitted`, `daf_received`)
+- [x] Wired DAF completion to existing funded flow so completed DAF grants appear in `/donor/pledges`
+- [x] Reflected DAF progress in requestor request detail Tasks/Documents tabs (no admin role-switch required in demo)
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 
@@ -420,6 +428,10 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 | Donor prev/next navigation | Working | Cached + prefetched for instant transitions |
 | Opportunity detail default expanded | Working | "See More" open by default |
 | Email on manual donor request_info | Working | Sends if meta.sendEmail=true |
+| DAF sponsor settings (donor profile) | Working | Full CRUD for preferred DAF sponsors, default + nickname |
+| DAF packet generation (donor) | Working | Creates structured DAF grant record + packet artifact + timeline event |
+| DAF simulated submission/receipt | Working | Demo-only AI simulate buttons update lifecycle and artifacts without admin switching |
+| DAF → funded pledge handoff | Working | `daf_received` finalizes funded state/event, item appears in donor pledges list |
 | Multiple donors per opportunity | Limited | Org sees first donor's progress only |
 | Org name on portal submissions | Gap | `orgName` not set on portal-submitted requests |
 
@@ -431,6 +443,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 |---|---|
 | `db/schema.ts` | All Drizzle table definitions |
 | `lib/workflow.ts` | `deriveWorkflow()`, stage labels, event humanization |
+| `lib/daf-sponsors.ts` | Canonical DAF sponsor list for settings/modals |
 | `lib/vision-extract.ts` | `extractVision()`, `demoSuggestionsForVision()`, answer buttons |
 | `lib/concierge-match.ts` | `matchOpportunity()`, `reviewOpportunities()`, info tier logic |
 | `lib/email-templates.ts` | Email template rendering |
@@ -441,12 +454,18 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 | `app/api/opportunities/[key]/route.ts` | GET (donor detail) + PATCH (notes) |
 | `app/api/opportunities/[key]/actions/route.ts` | POST donor actions (pass, shortlist, request_info, funded, etc.) |
 | `app/api/opportunities/concierge-review/route.ts` | Bulk auto-review against Impact Vision |
+| `app/api/daf/funding-sources/route.ts` | GET/POST/PATCH/DELETE donor DAF sponsor preferences |
+| `app/api/daf/grants/route.ts` | Create/list DAF grant recommendations + packet generation |
+| `app/api/daf/grants/[id]/submit/route.ts` | Mark DAF submission confirmed (+ optional confirmation document) |
+| `app/api/daf/grants/[id]/receive/route.ts` | Mark DAF received and finalize funded state/event |
+| `app/api/daf/grants/[id]/packet/route.ts` | Download generated DAF grant packet |
 | `app/api/requestor/requests/[id]/route.ts` | GET org request detail (anonymized donor progress) |
 | `app/api/requestor/requests/[id]/meeting/route.ts` | POST org meeting actions (accept/reschedule/propose time) |
 | `app/api/requestor/requests/[id]/demo-advance/route.ts` | Demo-only: simulate concierge stage advancement |
 | `app/api/more-info/[token]/route.ts` | GET/POST more-info form data + auto-schedule meeting after submission |
 | `app/api/admin/demo-seed/route.ts` | Seed demo data |
 | `app/donor/opportunities/page.tsx` | Donor feed (Discover/Passed + detail panel) |
+| `app/donor/profile/page.tsx` | Donor account + DAF funding preferences UI |
 | `app/requestor/requests/page.tsx` | Org request list (Active/Declined tabs with badge counts) |
 | `app/requestor/requests/[id]/page.tsx` | Org request detail (tabbed) |
 | `app/requestor/page.tsx` | Org create request wizard |

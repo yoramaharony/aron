@@ -61,6 +61,27 @@ interface EventData {
     createdAt: string | null;
 }
 
+interface DafDoc {
+    id: string;
+    type: string;
+    fileUrl: string;
+    fileName: string;
+    uploadedByRole: string;
+    createdAt: string | null;
+}
+
+interface DafGrantData {
+    id: string;
+    donorId: string;
+    sponsorName: string;
+    amount: number;
+    designation: string;
+    status: string;
+    submittedAt: string | null;
+    receivedAt: string | null;
+    documents: DafDoc[];
+}
+
 type TabKey = 'overview' | 'tasks' | 'details' | 'documents';
 
 /* ─── Task model ─── */
@@ -499,6 +520,7 @@ export default function RequestDetailPage() {
     const [request, setRequest] = useState<RequestData | null>(null);
     const [state, setState] = useState<string>('new');
     const [events, setEvents] = useState<EventData[]>([]);
+    const [dafGrants, setDafGrants] = useState<DafGrantData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [advancing, setAdvancing] = useState(false);
@@ -524,6 +546,7 @@ export default function RequestDetailPage() {
             setRequest(data.request);
             setState(data.state);
             setEvents(data.events ?? []);
+            setDafGrants(Array.isArray(data.daf) ? data.daf : []);
         } catch (e: unknown) {
             setError(e instanceof Error ? e.message : 'Failed to load');
         } finally {
@@ -604,7 +627,51 @@ export default function RequestDetailPage() {
         diligenceEvent,
         fundedEvent,
     );
-    const pendingCount = pendingTasks.length;
+    const latestDaf = dafGrants[0] ?? null;
+    const pendingTasksMerged = useMemo(() => {
+        const base = [...pendingTasks];
+        if (!latestDaf) return base;
+        if (latestDaf.status === 'packet_generated') {
+            base.push({
+                id: 'daf-awaiting-submission',
+                label: 'DAF packet generated',
+                description: `Awaiting donor submission confirmation via ${latestDaf.sponsorName}.`,
+                status: 'pending',
+            });
+        } else if (latestDaf.status === 'submitted') {
+            base.push({
+                id: 'daf-awaiting-receipt',
+                label: 'Awaiting DAF funds receipt',
+                description: 'Donor marked submission. Confirm when funds are received.',
+                status: 'pending',
+            });
+        }
+        return base;
+    }, [pendingTasks, latestDaf]);
+    const completedTasksMerged = useMemo(() => {
+        const base = [...completedTasks];
+        if (!latestDaf) return base;
+        if (latestDaf.status === 'submitted' || latestDaf.status === 'received') {
+            base.push({
+                id: 'daf-submitted',
+                label: 'DAF submission confirmed',
+                description: `${latestDaf.sponsorName} recommendation submitted.`,
+                status: 'completed',
+                completedAt: latestDaf.submittedAt,
+            });
+        }
+        if (latestDaf.status === 'received') {
+            base.push({
+                id: 'daf-received',
+                label: 'DAF funds received',
+                description: 'Funding receipt confirmed.',
+                status: 'completed',
+                completedAt: latestDaf.receivedAt,
+            });
+        }
+        return base;
+    }, [completedTasks, latestDaf]);
+    const pendingCountMerged = pendingTasksMerged.length;
 
     const handleTaskAction = (task: TaskItem) => {
         if (task.action === 'open-more-info') {
@@ -713,7 +780,7 @@ export default function RequestDetailPage() {
             <div className="flex gap-8 border-b border-[var(--border-subtle)]">
                 {([
                     { key: 'overview' as TabKey, label: 'Overview' },
-                    { key: 'tasks' as TabKey, label: 'Tasks', badge: pendingCount },
+                    { key: 'tasks' as TabKey, label: 'Tasks', badge: pendingCountMerged },
                     { key: 'details' as TabKey, label: 'Request Details' },
                     { key: 'documents' as TabKey, label: 'Documents' },
                 ]).map((tab) => (
@@ -996,43 +1063,43 @@ export default function RequestDetailPage() {
                     </Card>
 
                     {/* What to do next */}
-                    {pendingTasks.length > 0 && (
+                    {pendingTasksMerged.length > 0 && (
                         <Card className="p-6 space-y-4 border-[rgba(212,175,55,0.25)]">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-lg font-medium text-[var(--text-primary)]">What to do next</h2>
                                 <span className="text-xs text-[var(--text-tertiary)]">
-                                    {pendingCount} task{pendingCount !== 1 ? 's' : ''} remaining
+                                    {pendingCountMerged} task{pendingCountMerged !== 1 ? 's' : ''} remaining
                                 </span>
                             </div>
 
                             <button
                                 type="button"
-                                onClick={() => handleTaskAction(pendingTasks[0])}
+                                onClick={() => handleTaskAction(pendingTasksMerged[0])}
                                 className="w-full flex items-center justify-between p-4 rounded-xl bg-[rgba(212,175,55,0.06)] border border-[rgba(212,175,55,0.2)] hover:bg-[rgba(212,175,55,0.10)] transition-colors text-left"
                             >
                                 <div className="flex items-center gap-3 min-w-0">
                                     <div className="h-10 w-10 rounded-xl bg-[rgba(212,175,55,0.12)] flex items-center justify-center text-[var(--color-gold)]">
-                                        {taskIcon(pendingTasks[0])}
+                                        {taskIcon(pendingTasksMerged[0])}
                                     </div>
                                     <div className="min-w-0">
                                         <div className="text-sm font-medium text-[var(--text-primary)]">
-                                            {pendingTasks[0].label}
+                                            {pendingTasksMerged[0].label}
                                         </div>
                                         <div className="text-xs text-[var(--text-tertiary)] mt-0.5">
-                                            {pendingTasks[0].description}
+                                            {pendingTasksMerged[0].description}
                                         </div>
                                     </div>
                                 </div>
                                 <ChevronRight size={18} className="text-[var(--text-tertiary)] shrink-0 ml-3" />
                             </button>
 
-                            {pendingCount > 1 && (
+                            {pendingCountMerged > 1 && (
                                 <button
                                     type="button"
                                     onClick={() => setActiveTab('tasks')}
                                     className="text-sm text-[var(--color-gold)] hover:underline"
                                 >
-                                    View all {pendingCount} tasks
+                                    View all {pendingCountMerged} tasks
                                 </button>
                             )}
                         </Card>
@@ -1084,16 +1151,16 @@ export default function RequestDetailPage() {
             {activeTab === 'tasks' && (
                 <>
                     {/* Tasks to complete */}
-                    {pendingTasks.length > 0 && (
+                    {pendingTasksMerged.length > 0 && (
                         <Card className="p-6 space-y-4">
                             <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center justify-center min-w-[28px] h-[28px] px-1.5 rounded-lg text-sm font-bold bg-[rgba(234,179,8,0.12)] text-amber-400">
-                                    {pendingCount}
+                                    {pendingCountMerged}
                                 </span>
                                 <h2 className="text-lg font-medium text-[var(--text-primary)]">Tasks to complete</h2>
                             </div>
                             <div className="divide-y divide-[var(--border-subtle)]">
-                                {pendingTasks.map((task) => (
+                                {pendingTasksMerged.map((task) => (
                                     <div key={task.id}>
                                         <button
                                             type="button"
@@ -1218,16 +1285,16 @@ export default function RequestDetailPage() {
                     )}
 
                     {/* Tasks completed */}
-                    {completedTasks.length > 0 && (
+                    {completedTasksMerged.length > 0 && (
                         <Card className="p-6 space-y-4">
                             <div className="flex items-center gap-2">
                                 <span className="inline-flex items-center justify-center min-w-[28px] h-[28px] px-1.5 rounded-lg text-sm font-bold bg-[rgba(34,197,94,0.12)] text-emerald-400">
-                                    {completedTasks.length}
+                                    {completedTasksMerged.length}
                                 </span>
                                 <h2 className="text-lg font-medium text-[var(--text-primary)]">Tasks completed</h2>
                             </div>
                             <div className="divide-y divide-[var(--border-subtle)]">
-                                {completedTasks.map((task) => (
+                                {completedTasksMerged.map((task) => (
                                     <div
                                         key={task.id}
                                         className="flex items-center gap-3 py-4"
@@ -1249,7 +1316,7 @@ export default function RequestDetailPage() {
                     )}
 
                     {/* Empty state */}
-                    {pendingTasks.length === 0 && completedTasks.length === 0 && (
+                    {pendingTasksMerged.length === 0 && completedTasksMerged.length === 0 && (
                         <Card className="p-6 text-center">
                             <div className="text-[var(--text-tertiary)] text-sm py-8">
                                 No tasks yet. Tasks will appear as your request progresses through the review process.
@@ -1573,6 +1640,35 @@ export default function RequestDetailPage() {
                                         <Paperclip size={13} />
                                         {f.name || `Document ${i + 1}`}
                                     </a>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {dafGrants.length > 0 && (
+                        <div>
+                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1.5">Funding & Confirmations (DAF)</div>
+                            <div className="space-y-2">
+                                {dafGrants.map((grant) => (
+                                    <div key={grant.id} className="rounded-lg border border-[var(--border-subtle)] p-3">
+                                        <div className="text-xs text-[var(--text-tertiary)] mb-1">
+                                            {grant.sponsorName} • ${Number(grant.amount || 0).toLocaleString()} • {grant.status.replace(/_/g, ' ')}
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            {grant.documents.map((doc) => (
+                                                <a
+                                                    key={doc.id}
+                                                    href={doc.fileUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="flex items-center gap-2 text-sm text-[var(--color-gold)] hover:underline"
+                                                >
+                                                    <Paperclip size={13} />
+                                                    {doc.fileName}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
                         </div>

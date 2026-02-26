@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { opportunities, donorOpportunityState, donorOpportunityEvents } from '@/db/schema';
+import { opportunities, donorOpportunityState, donorOpportunityEvents, dafGrants, dafGrantDocuments } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, desc, eq } from 'drizzle-orm';
 import { toIsoTime } from '@/lib/time';
@@ -37,6 +37,17 @@ export async function GET(
   const donorId = donorState?.donorId ?? null;
 
   let events: { type: string; meta: Record<string, unknown> | null; createdAt: string | null }[] = [];
+  let daf: Array<{
+    id: string;
+    donorId: string;
+    sponsorName: string;
+    amount: number;
+    designation: string;
+    status: string;
+    submittedAt: string | null;
+    receivedAt: string | null;
+    documents: Array<{ id: string; type: string; fileUrl: string; fileName: string; uploadedByRole: string; createdAt: string | null }>;
+  }> = [];
 
   if (donorId) {
     const eventRows = await db
@@ -56,6 +67,40 @@ export async function GET(
       createdAt: toIsoTime(e.createdAt),
     }));
   }
+
+  const dafRows = await db
+    .select()
+    .from(dafGrants)
+    .where(eq(dafGrants.opportunityKey, opportunityKey))
+    .orderBy(desc(dafGrants.createdAt));
+
+  daf = await Promise.all(
+    dafRows.map(async (g) => {
+      const docs = await db
+        .select()
+        .from(dafGrantDocuments)
+        .where(eq(dafGrantDocuments.dafGrantId, g.id))
+        .orderBy(desc(dafGrantDocuments.createdAt));
+      return {
+        id: g.id,
+        donorId: g.donorId,
+        sponsorName: g.sponsorName,
+        amount: Number(g.amount || 0),
+        designation: g.designation,
+        status: g.status,
+        submittedAt: toIsoTime(g.submittedAt),
+        receivedAt: toIsoTime(g.receivedAt),
+        documents: docs.map((d) => ({
+          id: d.id,
+          type: d.type,
+          fileUrl: d.fileUrl,
+          fileName: d.fileName,
+          uploadedByRole: d.uploadedByRole,
+          createdAt: toIsoTime(d.createdAt),
+        })),
+      };
+    }),
+  );
 
   const evidence = row.evidenceJson ? JSON.parse(row.evidenceJson) : null;
   return NextResponse.json({
@@ -77,5 +122,6 @@ export async function GET(
     },
     state: donorState?.state ?? 'new',
     events,
+    daf,
   });
 }

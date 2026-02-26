@@ -169,6 +169,47 @@ export const donorProfiles = sqliteTable('donor_profiles', {
     createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
+// Donor funding source preferences (MVP: DAF sponsor preference, no external account connection)
+export const donorFundingSources = sqliteTable('donor_funding_sources', {
+    id: text('id').primaryKey(), // UUID
+    donorId: text('donor_id').notNull().references(() => users.id),
+    type: text('type').notNull().default('daf'), // 'daf' (future: wire/check/foundation)
+    sponsorName: text('sponsor_name').notNull(),
+    accountNickname: text('account_nickname'),
+    isDefault: integer('is_default').notNull().default(0), // 1/0
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }),
+});
+
+// One DAF recommendation lifecycle record per donor/opportunity recommendation
+export const dafGrants = sqliteTable('daf_grants', {
+    id: text('id').primaryKey(), // UUID
+    opportunityKey: text('opportunity_key').notNull(), // references opportunities.id
+    donorId: text('donor_id').notNull().references(() => users.id),
+    fundingSourceId: text('funding_source_id').references(() => donorFundingSources.id),
+    sponsorName: text('sponsor_name').notNull(),
+    amount: integer('amount').notNull(),
+    designation: text('designation').notNull(),
+    status: text('status').notNull().default('draft'), // draft | packet_generated | submitted | received | cancelled
+    sponsorReference: text('sponsor_reference'),
+    donorNote: text('donor_note'),
+    submittedAt: integer('submitted_at', { mode: 'timestamp' }),
+    receivedAt: integer('received_at', { mode: 'timestamp' }),
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+    updatedAt: integer('updated_at', { mode: 'timestamp' }),
+});
+
+// Artifacts related to DAF grants (packet, confirmation, receipt)
+export const dafGrantDocuments = sqliteTable('daf_grant_documents', {
+    id: text('id').primaryKey(), // UUID
+    dafGrantId: text('daf_grant_id').notNull().references(() => dafGrants.id),
+    type: text('type').notNull(), // packet | sponsor_confirmation | receipt | other
+    fileUrl: text('file_url').notNull(),
+    fileName: text('file_name').notNull(),
+    uploadedByRole: text('uploaded_by_role').notNull(), // donor | requestor | admin | system
+    createdAt: integer('created_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+});
+
 // Concierge conversation thread (per donor)
 export const conciergeMessages = sqliteTable('concierge_messages', {
     id: text('id').primaryKey(), // UUID

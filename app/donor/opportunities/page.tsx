@@ -26,8 +26,38 @@ type OpportunityRow = {
     state: string;
     conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
     conciergeReason?: string | null;
-    progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'funded' | null;
+    progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'daf_in_progress' | 'daf_submitted' | 'funded' | null;
     lowAmount?: boolean;
+};
+
+type DonorFundingSource = {
+    id: string;
+    sponsorName: string;
+    accountNickname: string;
+    isDefault: boolean;
+};
+
+type DafGrantDoc = {
+    id: string;
+    type: string;
+    fileUrl: string;
+    fileName: string;
+    uploadedByRole: string;
+    createdAt: string | null;
+};
+
+type DafGrant = {
+    id: string;
+    sponsorName: string;
+    amount: number;
+    designation: string;
+    status: string;
+    sponsorReference: string;
+    donorNote: string;
+    submittedAt: string | null;
+    receivedAt: string | null;
+    createdAt: string | null;
+    documents: DafGrantDoc[];
 };
 
 function deriveStatusMessage(flow: WorkflowView) {
@@ -88,6 +118,9 @@ function timelineIcon(type: string) {
     if (t === 'scheduled') return <Clock3 size={15} />;
     if (t === 'meeting_completed') return <CheckCircle2 size={15} />;
     if (t === 'diligence_completed') return <CheckCircle2 size={15} />;
+    if (t === 'daf_packet_generated') return <FileText size={15} />;
+    if (t === 'daf_submitted') return <CheckCircle2 size={15} />;
+    if (t === 'daf_received') return <CheckCircle2 size={15} />;
     if (t === 'leverage_created') return <CheckCircle2 size={15} />;
     if (t === 'funded') return <CheckCircle2 size={15} />;
     if (t === 'pass') return <XIcon size={15} />;
@@ -131,6 +164,20 @@ function progressBadgeChip(progressBadge?: OpportunityRow['progressBadge'] | nul
             </span>
         );
     }
+    if (progressBadge === 'daf_in_progress') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(56,189,248,0.35)] bg-[rgba(56,189,248,0.10)] text-sky-300">
+                daf packet
+            </span>
+        );
+    }
+    if (progressBadge === 'daf_submitted') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(6,182,212,0.35)] bg-[rgba(6,182,212,0.10)] text-cyan-300">
+                daf submitted
+            </span>
+        );
+    }
     if (progressBadge === 'funded') {
         return (
             <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(34,197,94,0.35)] bg-[rgba(34,197,94,0.10)] text-green-300">
@@ -142,6 +189,7 @@ function progressBadgeChip(progressBadge?: OpportunityRow['progressBadge'] | nul
 }
 
 export default function DonorFeed() {
+    const demoAssistEnabled = process.env.NODE_ENV !== 'production';
     const [activeTab, setActiveTab] = useState<'discover' | 'passed'>('discover');
     const [rows, setRows] = useState<OpportunityRow[]>([]);
     const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -158,6 +206,22 @@ export default function DonorFeed() {
     const [rescheduleType, setRescheduleType] = useState('zoom');
     const [rescheduling, setRescheduling] = useState(false);
     const [requestingInfo, setRequestingInfo] = useState(false);
+    const [fundingModalOpen, setFundingModalOpen] = useState(false);
+    const [fundingMethod, setFundingMethod] = useState<'daf' | 'other'>('daf');
+    const [fundingSources, setFundingSources] = useState<DonorFundingSource[]>([]);
+    const [dafSponsorsCatalog, setDafSponsorsCatalog] = useState<string[]>([]);
+    const [dafGrants, setDafGrants] = useState<DafGrant[]>([]);
+    const [dafSponsorName, setDafSponsorName] = useState('');
+    const [dafFundingSourceId, setDafFundingSourceId] = useState('');
+    const [dafAmount, setDafAmount] = useState('');
+    const [dafDesignation, setDafDesignation] = useState('');
+    const [dafNote, setDafNote] = useState('');
+    const [creatingDaf, setCreatingDaf] = useState(false);
+    const [dafSubmitting, setDafSubmitting] = useState(false);
+    const [dafReceiving, setDafReceiving] = useState(false);
+    const [dafUploadingGrantId, setDafUploadingGrantId] = useState('');
+    const [dafUploadTargetGrantId, setDafUploadTargetGrantId] = useState('');
+    const [dafError, setDafError] = useState('');
     const [notesText, setNotesText] = useState('');
     const [notesEditing, setNotesEditing] = useState(false);
     const [notesSaving, setNotesSaving] = useState(false);
@@ -165,6 +229,7 @@ export default function DonorFeed() {
     const detailCache = useRef<Map<string, any>>(new Map());
     const latestRequestRef = useRef<string>('');
     const scheduledCardRef = useRef<HTMLDivElement | null>(null);
+    const dafUploadInputRef = useRef<HTMLInputElement | null>(null);
     const [passedFilter, setPassedFilter] = useState<'all' | 'concierge' | 'manual'>('all');
     const [hasVision, setHasVision] = useState(true); // optimistic default
     const [conciergeReviewing, setConciergeReviewing] = useState(false);
@@ -207,8 +272,41 @@ export default function DonorFeed() {
         }
     };
 
+    const refreshFundingSources = async () => {
+        try {
+            const res = await fetch('/api/daf/funding-sources');
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return;
+            setDafSponsorsCatalog(Array.isArray(data?.sponsors) ? data.sponsors : []);
+            const src = Array.isArray(data?.fundingSources) ? data.fundingSources : [];
+            const normalized = src.map((x: any) => ({
+                id: String(x.id),
+                sponsorName: String(x.sponsorName || ''),
+                accountNickname: String(x.accountNickname || ''),
+                isDefault: Boolean(x.isDefault),
+            })) as DonorFundingSource[];
+            setFundingSources(normalized);
+            const preferred = normalized.find((x) => x.isDefault) || normalized[0];
+            if (preferred) {
+                setDafSponsorName(preferred.sponsorName);
+                setDafFundingSourceId(preferred.id);
+            }
+        } catch { /* silent */ }
+    };
+
+    const refreshDafGrants = async (opportunityKey: string) => {
+        try {
+            const res = await fetch(`/api/daf/grants?opportunityKey=${encodeURIComponent(opportunityKey)}`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return;
+            const grants = Array.isArray(data?.grants) ? data.grants : [];
+            setDafGrants(grants as DafGrant[]);
+        } catch { /* silent */ }
+    };
+
     useEffect(() => {
         (async () => {
+            await refreshFundingSources();
             const data = await refresh();
             if (!data) return;
             // Auto-trigger concierge review for new opportunities
@@ -254,6 +352,7 @@ export default function DonorFeed() {
             setDetail(cached);
             setNotesText(cached?.notes || '');
             setDetailLoading(false);
+            refreshDafGrants(key).catch(() => {});
         } else {
             setDetailLoading(true);
         }
@@ -267,6 +366,7 @@ export default function DonorFeed() {
                 setDetail(data);
                 setNotesText(data?.notes || '');
                 setDetailLoading(false);
+                refreshDafGrants(key).catch(() => {});
             }
         } catch {
             if (latestRequestRef.current === key && !cached) {
@@ -395,6 +495,12 @@ export default function DonorFeed() {
         if (workflow.stage === 'discover' && selectedRow?.lowAmount) {
             return 'Low amount opportunity — manual review (request info optional)';
         }
+        if (workflow.stage === 'discover' && selectedRow?.progressBadge === 'daf_in_progress') {
+            return 'DAF packet generated — awaiting sponsor submission confirmation';
+        }
+        if (workflow.stage === 'discover' && selectedRow?.progressBadge === 'daf_submitted') {
+            return 'DAF submitted — awaiting funds receipt confirmation';
+        }
         // Override for concierge-reviewed items that were kept in Discover
         if (workflow.stage === 'discover' && !workflow.isPassed && selectedRow?.conciergeAction === 'keep') {
             return 'Concierge reviewed — matches your Impact Vision';
@@ -416,6 +522,7 @@ export default function DonorFeed() {
         if (workflow.isCommitted || workflow.isPassed) return false;
         return workflow.stage === 'discover';
     }, [workflow]);
+    const latestDafGrant = useMemo(() => dafGrants[0] ?? null, [dafGrants]);
 
     const openReschedulePanel = () => {
         if (!scheduledEvent?.meta) return;
@@ -426,6 +533,134 @@ export default function DonorFeed() {
         requestAnimationFrame(() => {
             scheduledCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
+    };
+
+    const openFundingModal = () => {
+        if (!detail?.opportunity?.key) return;
+        const amount = Number(detail.opportunity.targetAmount || 0);
+        setFundingMethod('daf');
+        setDafError('');
+        setDafAmount(amount > 0 ? String(amount) : '');
+        setDafDesignation(`Aron Opportunity — ${detail.opportunity.title} (Request ${detail.opportunity.key})`);
+        const preferred = fundingSources.find((x) => x.isDefault) || fundingSources[0];
+        if (preferred) {
+            setDafSponsorName(preferred.sponsorName);
+            setDafFundingSourceId(preferred.id);
+        }
+        setFundingModalOpen(true);
+    };
+
+    const createDafGrant = async () => {
+        if (!detail?.opportunity?.key) return;
+        const amount = Number(dafAmount || 0);
+        if (!dafSponsorName || !dafDesignation || !Number.isFinite(amount) || amount <= 0) {
+            setDafError('Please provide sponsor, amount, and designation.');
+            return;
+        }
+        setCreatingDaf(true);
+        setDafError('');
+        try {
+            const res = await fetch('/api/daf/grants', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    opportunityKey: detail.opportunity.key,
+                    sponsorName: dafSponsorName,
+                    fundingSourceId: dafFundingSourceId || undefined,
+                    amount,
+                    designation: dafDesignation,
+                    donorNote: dafNote,
+                }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Failed to generate DAF packet');
+            setFundingModalOpen(false);
+            await refreshDafGrants(detail.opportunity.key);
+            await loadDetail(detail.opportunity.key);
+        } catch (e: any) {
+            setDafError(e?.message || 'Failed to generate DAF packet');
+        } finally {
+            setCreatingDaf(false);
+        }
+    };
+
+    const markDafSubmitted = async (grantId: string, aiSimulated = false) => {
+        setDafSubmitting(true);
+        setDafError('');
+        try {
+            const res = await fetch(`/api/daf/grants/${encodeURIComponent(grantId)}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ aiSimulated }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Failed to update DAF status');
+            if (detail?.opportunity?.key) {
+                await refreshDafGrants(detail.opportunity.key);
+                await loadDetail(detail.opportunity.key);
+            }
+        } catch (e: any) {
+            setDafError(e?.message || 'Failed to update DAF status');
+        } finally {
+            setDafSubmitting(false);
+        }
+    };
+
+    const uploadDafConfirmation = async (grantId: string, files: FileList | File[]) => {
+        const picked = Array.from(files || []);
+        if (!picked.length) return;
+        setDafUploadingGrantId(grantId);
+        setDafError('');
+        try {
+            const fd = new FormData();
+            picked.forEach((f) => fd.append('files', f));
+            fd.append('folder', 'daf');
+            const uploadRes = await fetch('/api/uploads', { method: 'POST', body: fd });
+            const uploadData = await uploadRes.json().catch(() => ({}));
+            if (!uploadRes.ok) throw new Error(uploadData?.error || 'Upload failed');
+            const file = uploadData?.file || (Array.isArray(uploadData?.files) ? uploadData.files[0] : null);
+            if (!file?.url || !file?.name) throw new Error('Upload failed');
+
+            const submitRes = await fetch(`/api/daf/grants/${encodeURIComponent(grantId)}/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fileUrl: file.url, fileName: file.name }),
+            });
+            const submitData = await submitRes.json().catch(() => ({}));
+            if (!submitRes.ok) throw new Error(submitData?.error || 'Failed to confirm submission');
+
+            if (detail?.opportunity?.key) {
+                await refreshDafGrants(detail.opportunity.key);
+                await loadDetail(detail.opportunity.key);
+            }
+        } catch (e: any) {
+            setDafError(e?.message || 'Failed to upload confirmation');
+        } finally {
+            setDafUploadingGrantId('');
+        }
+    };
+
+    const markDafReceived = async (grantId: string, aiSimulated = false) => {
+        setDafReceiving(true);
+        setDafError('');
+        try {
+            const res = await fetch(`/api/daf/grants/${encodeURIComponent(grantId)}/receive`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ aiSimulated }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Failed to mark DAF received');
+            if (detail?.opportunity?.key) {
+                await refresh();
+                await refreshDafGrants(detail.opportunity.key);
+                await loadDetail(detail.opportunity.key);
+            }
+        } catch (e: any) {
+            setDafError(e?.message || 'Failed to mark DAF received');
+        } finally {
+            setDafReceiving(false);
+        }
     };
 
     /* Prev / Next navigation */
@@ -514,6 +749,138 @@ export default function DonorFeed() {
                         </span>
                     </motion.div>
                 )}
+            </AnimatePresence>
+
+            {/* Funding Method Modal */}
+            <AnimatePresence>
+                {fundingModalOpen && detail?.opportunity ? (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-6"
+                        onClick={(e) => { if (e.target === e.currentTarget) setFundingModalOpen(false); }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+                            className="w-full max-w-3xl my-8"
+                        >
+                            <Card className="p-6 md:p-8 space-y-5">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-medium text-[var(--text-primary)]">Choose funding method</h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFundingModalOpen(false)}
+                                        className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                                    >
+                                        <XIcon size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    <Button
+                                        variant={fundingMethod === 'daf' ? 'gold' : 'outline'}
+                                        onClick={() => setFundingMethod('daf')}
+                                    >
+                                        Fund via DAF
+                                    </Button>
+                                    <Button
+                                        variant={fundingMethod === 'other' ? 'gold' : 'outline'}
+                                        onClick={() => setFundingMethod('other')}
+                                    >
+                                        Other Method
+                                    </Button>
+                                </div>
+
+                                {fundingMethod === 'daf' ? (
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="label">DAF sponsor</label>
+                                                <select
+                                                    className="input-field"
+                                                    value={dafSponsorName}
+                                                    onChange={(e) => {
+                                                        setDafSponsorName(e.target.value);
+                                                        const source = fundingSources.find((x) => x.sponsorName === e.target.value);
+                                                        setDafFundingSourceId(source?.id || '');
+                                                    }}
+                                                >
+                                                    <option value="">Select sponsor</option>
+                                                    {dafSponsorsCatalog.map((s) => (
+                                                        <option key={s} value={s}>{s}</option>
+                                                    ))}
+                                                </select>
+                                                {fundingSources.length === 0 ? (
+                                                    <div className="text-xs text-[var(--text-tertiary)] mt-1">
+                                                        Add sponsors in your profile settings first.
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                            <div>
+                                                <label className="label">Amount</label>
+                                                <input
+                                                    className="input-field"
+                                                    type="number"
+                                                    value={dafAmount}
+                                                    onChange={(e) => setDafAmount(e.target.value)}
+                                                    min={1}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="label">Designation</label>
+                                            <input
+                                                className="input-field"
+                                                value={dafDesignation}
+                                                onChange={(e) => setDafDesignation(e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="label">Donor note (private, optional)</label>
+                                            <textarea
+                                                className="input-field min-h-[90px] resize-y"
+                                                value={dafNote}
+                                                onChange={(e) => setDafNote(e.target.value)}
+                                                placeholder="Internal note for your DAF recommendation."
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-[var(--text-secondary)]">
+                                        Use this option for non-DAF funding. Aron will mark this opportunity as funded immediately.
+                                    </div>
+                                )}
+
+                                {dafError ? <div className="text-sm text-red-300">{dafError}</div> : null}
+
+                                <div className="pt-1 flex items-center justify-end gap-3">
+                                    <Button variant="outline" onClick={() => setFundingModalOpen(false)}>
+                                        Cancel
+                                    </Button>
+                                    {fundingMethod === 'daf' ? (
+                                        <Button variant="gold" isLoading={creatingDaf} onClick={createDafGrant}>
+                                            Generate DAF Grant Packet
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="gold"
+                                            onClick={async () => {
+                                                await act(detail.opportunity.key, 'funded');
+                                                setFundingModalOpen(false);
+                                                router.push('/donor/pledges');
+                                            }}
+                                        >
+                                            Confirm Funding
+                                        </Button>
+                                    )}
+                                </div>
+                            </Card>
+                        </motion.div>
+                    </motion.div>
+                ) : null}
             </AnimatePresence>
 
             {/* TABS */}
@@ -800,10 +1167,7 @@ export default function DonorFeed() {
                                         ) : null}
                                         <Button
                                             variant="gold"
-                                            onClick={async () => {
-                                                await act(detail.opportunity.key, 'funded');
-                                                router.push('/donor/pledges');
-                                            }}
+                                            onClick={openFundingModal}
                                         >
                                             Pledge
                                         </Button>
@@ -831,6 +1195,95 @@ export default function DonorFeed() {
                                         >
                                             {seeMoreOpen ? 'Hide Details' : 'Show Details'}
                                         </Button>
+                                    </div>
+                                ) : null}
+
+                                {latestDafGrant ? (
+                                    <div className="rounded-2xl border border-[rgba(56,189,248,0.28)] bg-[rgba(255,255,255,0.02)] p-6 space-y-4">
+                                        <div className="flex items-center justify-between gap-3">
+                                            <div className="text-xl font-light text-[var(--text-primary)] inline-flex items-center gap-2">
+                                                <FileText size={18} className="text-sky-300" />DAF Grant in Progress
+                                            </div>
+                                            <span className="text-[10px] px-2 py-1 rounded-full border border-[rgba(56,189,248,0.35)] bg-[rgba(56,189,248,0.12)] text-sky-300 uppercase tracking-widest font-bold">
+                                                {String(latestDafGrant.status || '').replace(/_/g, ' ')}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                            <div>
+                                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Sponsor</div>
+                                                <div className="text-[var(--text-primary)]">{latestDafGrant.sponsorName}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Amount</div>
+                                                <div className="text-[var(--text-primary)]">${Number(latestDafGrant.amount || 0).toLocaleString()}</div>
+                                            </div>
+                                            <div>
+                                                <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-1">Submitted</div>
+                                                <div className="text-[var(--text-primary)]">{latestDafGrant.submittedAt ? String(latestDafGrant.submittedAt).slice(0, 10) : '—'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            <a
+                                                href={`/api/daf/grants/${encodeURIComponent(latestDafGrant.id)}/packet`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="btn btn-outline btn-sm"
+                                            >
+                                                Download Packet
+                                            </a>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                isLoading={dafSubmitting}
+                                                onClick={() => markDafSubmitted(latestDafGrant.id, false)}
+                                            >
+                                                Mark Submitted
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                isLoading={dafUploadingGrantId === latestDafGrant.id}
+                                                onClick={() => {
+                                                    setDafUploadTargetGrantId(latestDafGrant.id);
+                                                    dafUploadInputRef.current?.click();
+                                                }}
+                                            >
+                                                Upload Confirmation
+                                            </Button>
+                                            {demoAssistEnabled ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    isLoading={dafSubmitting}
+                                                    onClick={() => markDafSubmitted(latestDafGrant.id, true)}
+                                                >
+                                                    AI Simulate Submission
+                                                </Button>
+                                            ) : null}
+                                            {demoAssistEnabled ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    isLoading={dafReceiving}
+                                                    onClick={() => markDafReceived(latestDafGrant.id, true)}
+                                                >
+                                                    AI Simulate Funds Received
+                                                </Button>
+                                            ) : null}
+                                        </div>
+                                        <input
+                                            ref={dafUploadInputRef}
+                                            type="file"
+                                            accept=".pdf,.png,.jpg,.jpeg,.webp"
+                                            className="sr-only"
+                                            onChange={async (e) => {
+                                                const picked = Array.from(e.currentTarget.files ?? []);
+                                                e.currentTarget.value = '';
+                                                if (!dafUploadTargetGrantId || picked.length === 0) return;
+                                                await uploadDafConfirmation(dafUploadTargetGrantId, picked);
+                                                setDafUploadTargetGrantId('');
+                                            }}
+                                        />
                                     </div>
                                 ) : null}
 
