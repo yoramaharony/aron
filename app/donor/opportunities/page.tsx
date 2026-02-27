@@ -1315,6 +1315,14 @@ export default function DonorFeed() {
                                             >
                                                 Download Packet
                                             </a>
+                                            <a
+                                                href={`/api/daf/grants/${encodeURIComponent(latestDafGrant.id)}/packet?preview=1`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="btn btn-outline btn-sm"
+                                            >
+                                                Preview Packet
+                                            </a>
                                             <Button
                                                 variant="outline"
                                                 size="sm"
@@ -1391,10 +1399,22 @@ export default function DonorFeed() {
                                         <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6">
                                             <div className="text-2xl font-light text-[var(--text-primary)] inline-flex items-center gap-2 mb-3"><DollarSign size={18} className="text-[var(--color-gold)]" />Financials</div>
                                             <div className="space-y-3 text-sm">
-                                                <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3"><span className="text-[var(--text-tertiary)] uppercase text-xs tracking-widest">Total budget</span><span className="text-[var(--text-primary)]">{detail.opportunity.details?.budget || (summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '—')}</span></div>
-                                                <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3"><span className="text-[var(--text-tertiary)] uppercase text-xs tracking-widest">Funding gap</span><span className="text-[var(--text-primary)]">{summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '—'}</span></div>
-                                                <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3"><span className="text-[var(--text-tertiary)] uppercase text-xs tracking-widest">Timeline</span><span className="text-[var(--text-primary)]">{detail.opportunity.details?.timeline || summary.urgency}</span></div>
-                                                <div className="flex items-center justify-between"><span className="text-[var(--text-tertiary)] uppercase text-xs tracking-widest">Allocation</span><span className="text-[var(--text-primary)]">{detail.opportunity.details?.program || '—'}</span></div>
+                                                <div className="grid grid-cols-[140px_1fr] gap-4 border-b border-[var(--border-subtle)] pb-3">
+                                                    <span className="text-[var(--text-tertiary)] uppercase text-xs tracking-widest">Total budget</span>
+                                                    <span className="text-[var(--text-primary)] text-right">{detail.opportunity.details?.budget || (summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '—')}</span>
+                                                </div>
+                                                <div className="grid grid-cols-[140px_1fr] gap-4 border-b border-[var(--border-subtle)] pb-3">
+                                                    <span className="text-[var(--text-tertiary)] uppercase text-xs tracking-widest">Funding gap</span>
+                                                    <span className="text-[var(--text-primary)] text-right">{summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '—'}</span>
+                                                </div>
+                                                <div className="grid grid-cols-[140px_1fr] gap-4 border-b border-[var(--border-subtle)] pb-3">
+                                                    <span className="text-[var(--text-tertiary)] uppercase text-xs tracking-widest">Timeline</span>
+                                                    <span className="text-[var(--text-primary)] leading-relaxed">{detail.opportunity.details?.timeline || summary.urgency}</span>
+                                                </div>
+                                                <div className="grid grid-cols-[140px_1fr] gap-4">
+                                                    <span className="text-[var(--text-tertiary)] uppercase text-xs tracking-widest">Allocation</span>
+                                                    <span className="text-[var(--text-primary)] leading-relaxed">{detail.opportunity.details?.program || '—'}</span>
+                                                </div>
                                             </div>
                                         </div>
 
