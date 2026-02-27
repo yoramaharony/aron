@@ -426,6 +426,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Refined donor opportunities right-pane top hierarchy with Figma-inspired layout: source label prominence, circular concierge score ring near title, and dual score surfacing (ring + match card badge)
 - [x] Restoring an auto-passed opportunity now immediately re-triggers concierge review (reset-aware), enabling automatic reclassification (e.g., `request_info`) without manual page hacks
 - [x] Fixed org-email fallback for request_info notifications: new requestor-created opportunities now persist org/contact email from creator account, and email sends fall back to `createdBy` user email when row fields are empty
+- [x] Concierge restore replay now honors donor intent: manually restored (`source=donor_restore`) opportunities force `request_info` instead of being auto-passed again
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

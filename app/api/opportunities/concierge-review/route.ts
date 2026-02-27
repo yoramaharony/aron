@@ -97,15 +97,24 @@ export async function POST(request: Request) {
         .where(eq(donorOpportunityEvents.donorId, donorId))
         .limit(2000);
 
-    const latestDecisionByKey = new Map<string, { type: string; at: number }>();
+    const latestDecisionByKey = new Map<string, { type: string; at: number; source: string | null }>();
     for (const evt of existingEvents) {
         const t = String(evt.type || '');
         if (t !== 'pass' && t !== 'request_info' && t !== 'concierge_review' && t !== 'reset') continue;
         const key = String(evt.opportunityKey);
         const at = evt.createdAt ? new Date(evt.createdAt as any).getTime() : 0;
+        let source: string | null = null;
+        if (evt.metaJson) {
+            try {
+                const meta = JSON.parse(evt.metaJson) as Record<string, unknown>;
+                source = typeof meta?.source === 'string' ? meta.source : null;
+            } catch {
+                source = null;
+            }
+        }
         const prev = latestDecisionByKey.get(key);
         if (!prev || at >= prev.at) {
-            latestDecisionByKey.set(key, { type: t, at });
+            latestDecisionByKey.set(key, { type: t, at, source });
         }
     }
 
@@ -136,8 +145,11 @@ export async function POST(request: Request) {
     for (const opp of toProcess) {
         const result = matchResults.get(opp.key);
         if (!result) continue;
+        const latestDecision = latestDecisionByKey.get(opp.key);
+        const forceRequestInfo =
+            latestDecision?.type === 'reset' && latestDecision?.source === 'donor_restore';
 
-        if (!result.matched) {
+        if (!result.matched && !forceRequestInfo) {
             // Auto-pass
             await db.update(opportunities).set({ status: 'passed' }).where(eq(opportunities.id, opp.key));
             await upsertState(donorId, opp.key, 'passed', now);
@@ -153,7 +165,7 @@ export async function POST(request: Request) {
 
             stats.passed++;
             results[opp.key] = { action: 'pass', reason: result.reason };
-        } else if (result.infoTier !== 'none') {
+        } else if (forceRequestInfo || result.infoTier !== 'none') {
             // Mint more-info token on the opportunity
             const oppRow = await db.select().from(opportunities).where(eq(opportunities.id, opp.key)).get();
             let moreInfoToken = oppRow?.moreInfoToken ?? null;
@@ -210,12 +222,24 @@ export async function POST(request: Request) {
                 donorId,
                 opportunityKey: opp.key,
                 type: 'request_info',
-                metaJson: JSON.stringify({ source: 'concierge', infoTier: result.infoTier, reason: result.reason }),
+                metaJson: JSON.stringify({
+                    source: 'concierge',
+                    infoTier: forceRequestInfo ? 'basic' : result.infoTier,
+                    reason: forceRequestInfo
+                        ? 'Manually restored by donor — requesting additional information for concierge review'
+                        : result.reason,
+                    restoredByDonor: forceRequestInfo || undefined,
+                }),
                 createdAt: now,
             });
 
             stats.infoRequested++;
-            results[opp.key] = { action: 'request_info', reason: result.reason };
+            results[opp.key] = {
+                action: 'request_info',
+                reason: forceRequestInfo
+                    ? 'Manually restored by donor — requesting additional information for concierge review'
+                    : result.reason,
+            };
         } else {
             // Matched, no info needed — just annotate
             await db.insert(donorOpportunityEvents).values({
