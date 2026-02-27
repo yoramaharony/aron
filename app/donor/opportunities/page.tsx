@@ -467,6 +467,10 @@ export default function DonorFeed() {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data?.error || 'Failed');
+            if (action === 'reset') {
+                // Restored opportunities should be re-processed by concierge immediately.
+                await fetch('/api/opportunities/concierge-review', { method: 'POST' }).catch(() => {});
+            }
             const updated = (await refresh()) ?? rows;
 
             if (selectedKey === key) {

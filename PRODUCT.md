@@ -424,6 +424,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Constrained donor pledges empty-state hero width (`max-w-4xl`, centered) to prevent full-row stretching and oversized visual footprint
 - [x] Increased icon size in empty-state subcards on donor pledges for improved visual legibility
 - [x] Refined donor opportunities right-pane top hierarchy with Figma-inspired layout: source label prominence, circular concierge score ring near title, and dual score surfacing (ring + match card badge)
+- [x] Restoring an auto-passed opportunity now immediately re-triggers concierge review (reset-aware), enabling automatic reclassification (e.g., `request_info`) without manual page hacks
+- [x] Fixed org-email fallback for request_info notifications: new requestor-created opportunities now persist org/contact email from creator account, and email sends fall back to `createdBy` user email when row fields are empty
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

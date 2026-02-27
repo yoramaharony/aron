@@ -90,25 +90,32 @@ export async function POST(request: Request) {
         state: stateByKey.get(opp.id) ?? 'new',
     }));
 
-    // Load existing events to check for prior concierge processing (idempotency)
+    // Load existing events to check prior concierge processing (with reset-aware replay)
     const existingEvents = await db
         .select()
         .from(donorOpportunityEvents)
         .where(eq(donorOpportunityEvents.donorId, donorId))
         .limit(2000);
 
-    const alreadyActedKeys = new Set<string>();
+    const latestDecisionByKey = new Map<string, { type: string; at: number }>();
     for (const evt of existingEvents) {
-        // Skip any opportunity that already has a decision event (pass, request_info, concierge_review)
         const t = String(evt.type || '');
-        if (t === 'pass' || t === 'request_info' || t === 'concierge_review') {
-            alreadyActedKeys.add(String(evt.opportunityKey));
+        if (t !== 'pass' && t !== 'request_info' && t !== 'concierge_review' && t !== 'reset') continue;
+        const key = String(evt.opportunityKey);
+        const at = evt.createdAt ? new Date(evt.createdAt as any).getTime() : 0;
+        const prev = latestDecisionByKey.get(key);
+        if (!prev || at >= prev.at) {
+            latestDecisionByKey.set(key, { type: t, at });
         }
     }
 
-    // Only process opportunities that are 'new' and not already acted upon
+    // Process opportunities that are new and either never reviewed or explicitly reset.
     const toProcess = allOpps.filter(
-        (opp) => opp.state === 'new' && !alreadyActedKeys.has(opp.key),
+        (opp) => {
+            if (opp.state !== 'new') return false;
+            const latest = latestDecisionByKey.get(opp.key);
+            return !latest || latest.type === 'reset';
+        },
     );
 
     if (toProcess.length === 0) {
@@ -122,7 +129,7 @@ export async function POST(request: Request) {
     // Run matching
     const matchResults = reviewOpportunities(toProcess, vision);
 
-    const stats = { total: toProcess.length, passed: 0, infoRequested: 0, keptInDiscover: 0, alreadyProcessed: alreadyActedKeys.size };
+    const stats = { total: toProcess.length, passed: 0, infoRequested: 0, keptInDiscover: 0, alreadyProcessed: latestDecisionByKey.size };
     const results: Record<string, { action: string; reason: string }> = {};
     const now = new Date();
 
@@ -163,7 +170,11 @@ export async function POST(request: Request) {
 
             // Send request_more_info email to the org
             if (oppRow && moreInfoToken) {
-                const orgEmailAddr = (oppRow.orgEmail || oppRow.contactEmail || '').trim();
+                let orgEmailAddr = (oppRow.orgEmail || oppRow.contactEmail || '').trim();
+                if (!orgEmailAddr && oppRow.createdBy) {
+                    const orgOwner = await db.select().from(users).where(eq(users.id, oppRow.createdBy)).get();
+                    orgEmailAddr = String(orgOwner?.email || '').trim();
+                }
                 if (orgEmailAddr) {
                     try {
                         const donor = await db.select().from(users).where(eq(users.id, donorId)).get();

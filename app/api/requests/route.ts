@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorOpportunityEvents, donorOpportunityState, donorProfiles, opportunities } from '@/db/schema';
+import { donorOpportunityEvents, donorOpportunityState, donorProfiles, opportunities, users } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq, desc, isNotNull } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -37,6 +37,9 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
         const { title, category, location, summary, targetAmount, coverUrl, evidence } = body;
+        const requestor = await db.select().from(users).where(eq(users.id, session.userId)).get();
+        const requestorEmail = String(requestor?.email || '').trim() || null;
+        const requestorName = String(requestor?.name || '').trim() || null;
 
         const evidenceJson =
             evidence && typeof evidence === 'object'
@@ -56,6 +59,9 @@ export async function POST(request: Request) {
             targetAmount,
             createdBy: session.userId,
             source: 'portal',
+            orgName: requestorName,
+            orgEmail: requestorEmail,
+            contactEmail: requestorEmail,
             coverUrl: typeof coverUrl === 'string' && coverUrl.trim() ? coverUrl.trim() : null,
             evidenceJson,
             status: 'pending',

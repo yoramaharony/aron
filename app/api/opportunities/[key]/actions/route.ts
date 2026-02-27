@@ -95,7 +95,11 @@ export async function POST(request: NextRequest, context: { params: Promise<{ ke
       const note = typeof (meta as any)?.note === 'string' ? String((meta as any).note).trim() : '';
 
       if (sendEmail) {
-        const to = (opp.orgEmail || opp.contactEmail || '').trim();
+        let to = (opp.orgEmail || opp.contactEmail || '').trim();
+        if (!to && opp.createdBy) {
+          const orgOwner = await db.select().from(users).where(eq(users.id, opp.createdBy)).get();
+          to = String(orgOwner?.email || '').trim();
+        }
         if (!to) {
           return NextResponse.json(
             { error: 'No organization email on file for this opportunity (orgEmail/contactEmail is missing).' },
