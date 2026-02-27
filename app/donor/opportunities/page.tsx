@@ -470,6 +470,8 @@ export default function DonorFeed() {
             if (action === 'reset') {
                 // Restored opportunities should be re-processed by concierge immediately.
                 await fetch('/api/opportunities/concierge-review', { method: 'POST' }).catch(() => {});
+                // Restored opportunities should return to Discover context.
+                setActiveTab('discover');
             }
             const updated = (await refresh()) ?? rows;
 
@@ -571,6 +573,11 @@ export default function DonorFeed() {
         return workflow.stage === 'discover';
     }, [workflow]);
     const latestDafGrant = useMemo(() => dafGrants[0] ?? null, [dafGrants]);
+    const isDafInFlight = useMemo(() => {
+        if (!latestDafGrant) return false;
+        const status = String(latestDafGrant.status || '').toLowerCase();
+        return status !== 'received' && status !== 'cancelled';
+    }, [latestDafGrant]);
 
     const openReschedulePanel = () => {
         if (!scheduledEvent?.meta) return;
@@ -1133,13 +1140,15 @@ export default function DonorFeed() {
                                 </div>
 
                                 {/* Status message */}
-                                <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] px-4 py-3 flex items-center gap-2">
-                                    {workflow.isCommitted ? <CheckCircle2 size={16} className="text-[var(--color-gold)]" />
-                                        : workflow.isPassed ? <XIcon size={16} className="text-red-400" />
-                                            : (selectedRow?.conciergeAction === 'keep' || selectedRow?.conciergeAction === 'request_info') ? <Bot size={16} className="text-green-400" />
-                                                : <AlertCircle size={16} className="text-[var(--color-gold)]" />}
-                                    <span className="text-sm text-[var(--text-secondary)]">{statusMessage}</span>
-                                </div>
+                                {!isDafInFlight ? (
+                                    <div className="rounded-xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] px-4 py-3 flex items-center gap-2">
+                                        {workflow.isCommitted ? <CheckCircle2 size={16} className="text-[var(--color-gold)]" />
+                                            : workflow.isPassed ? <XIcon size={16} className="text-red-400" />
+                                                : (selectedRow?.conciergeAction === 'keep' || selectedRow?.conciergeAction === 'request_info') ? <Bot size={16} className="text-green-400" />
+                                                    : <AlertCircle size={16} className="text-[var(--color-gold)]" />}
+                                        <span className="text-sm text-[var(--text-secondary)]">{statusMessage}</span>
+                                    </div>
+                                ) : null}
 
                                 {/* Meeting stage quick action (primary glance + actionable) */}
                                 {workflow.stage === 'meeting' && scheduledEvent?.meta && !hasMeetingCompleted ? (
@@ -1164,7 +1173,7 @@ export default function DonorFeed() {
                                 ) : null}
 
                                 {/* Concierge auto-pass explanation */}
-                                {workflow.isPassed && selectedRow?.conciergeAction === 'pass' && (
+                                {!isDafInFlight && workflow.isPassed && selectedRow?.conciergeAction === 'pass' && (
                                     <div className="rounded-xl border border-[rgba(var(--accent-rgb),0.25)] bg-[rgba(212,175,55,0.04)] px-4 py-3 flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2 min-w-0">
                                             <Bot size={16} className="text-[var(--color-gold)]" />
@@ -1180,7 +1189,7 @@ export default function DonorFeed() {
                                     </div>
                                 )}
                                 {/* Concierge match explanation */}
-                                {(selectedRow?.conciergeAction === 'keep' || selectedRow?.conciergeAction === 'request_info') && (
+                                {!isDafInFlight && (selectedRow?.conciergeAction === 'keep' || selectedRow?.conciergeAction === 'request_info') && (
                                     <div className="rounded-xl border border-[rgba(34,197,94,0.25)] bg-[rgba(34,197,94,0.04)] px-4 py-3 flex items-center justify-between gap-3">
                                         <div className="flex items-center gap-2 min-w-0">
                                             <Bot size={16} className="text-green-400" />
@@ -1196,28 +1205,30 @@ export default function DonorFeed() {
                                     </div>
                                 )}
 
-                                {/* Summary grid — always visible */}
-                                <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Cause</div>
-                                        <div className="text-[var(--text-primary)] inline-flex items-center gap-2"><Heart size={14} className="text-[var(--color-gold)]" />{summary.cause}</div>
+                                {/* Summary grid */}
+                                {!isDafInFlight ? (
+                                    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Cause</div>
+                                            <div className="text-[var(--text-primary)] inline-flex items-center gap-2"><Heart size={14} className="text-[var(--color-gold)]" />{summary.cause}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Amount</div>
+                                            <div className="text-[var(--color-gold)] inline-flex items-center gap-2"><DollarSign size={14} />{summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '—'}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Geography</div>
+                                            <div className="text-[var(--text-primary)] inline-flex items-center gap-2"><MapPin size={14} className="text-[var(--color-gold)]" />{summary.geo}</div>
+                                        </div>
+                                        <div>
+                                            <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Urgency</div>
+                                            <div className="text-[var(--text-primary)] inline-flex items-center gap-2"><Clock3 size={14} className="text-[var(--color-gold)]" />{summary.urgency}</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Amount</div>
-                                        <div className="text-[var(--color-gold)] inline-flex items-center gap-2"><DollarSign size={14} />{summary.amount ? `$${Number(summary.amount).toLocaleString()}` : '—'}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Geography</div>
-                                        <div className="text-[var(--text-primary)] inline-flex items-center gap-2"><MapPin size={14} className="text-[var(--color-gold)]" />{summary.geo}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">Urgency</div>
-                                        <div className="text-[var(--text-primary)] inline-flex items-center gap-2"><Clock3 size={14} className="text-[var(--color-gold)]" />{summary.urgency}</div>
-                                    </div>
-                                </div>
+                                ) : null}
 
                                 {/* Primary actions + details toggle */}
-                                {!workflow.isCommitted && !workflow.isPassed ? (
+                                {!isDafInFlight && !workflow.isCommitted && !workflow.isPassed ? (
                                     <div className="flex flex-wrap items-center gap-3">
                                         <Button variant="outline" onClick={() => act(detail.opportunity.key, 'pass')}>
                                             Pass

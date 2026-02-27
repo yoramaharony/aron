@@ -427,6 +427,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Restoring an auto-passed opportunity now immediately re-triggers concierge review (reset-aware), enabling automatic reclassification (e.g., `request_info`) without manual page hacks
 - [x] Fixed org-email fallback for request_info notifications: new requestor-created opportunities now persist org/contact email from creator account, and email sends fall back to `createdBy` user email when row fields are empty
 - [x] Concierge restore replay now honors donor intent: manually restored (`source=donor_restore`) opportunities force `request_info` instead of being auto-passed again
+- [x] Donor opportunity detail now enters DAF-focused mode while a grant is in flight: hides concierge/status strips, summary grid, and generic action row, and left-list progress chips prioritize DAF states (`daf_packet_generated`/`daf_submitted`) over stale review badges
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 

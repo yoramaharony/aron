@@ -68,9 +68,14 @@ export async function GET() {
     .where(eq(donorOpportunityState.donorId, session.userId))
     .limit(500);
 
-  const stateByKey = new Map<string, string>();
+  const stateByKey = new Map<string, { state: string; updatedAtMs: number }>();
   for (const s of states) {
-    stateByKey.set(String(s.opportunityKey), String(s.state || 'new'));
+    const key = String(s.opportunityKey);
+    const updatedAtMs = s.updatedAt ? new Date(s.updatedAt as any).getTime() : 0;
+    const prev = stateByKey.get(key);
+    if (!prev || updatedAtMs >= prev.updatedAtMs) {
+      stateByKey.set(key, { state: String(s.state || 'new'), updatedAtMs });
+    }
   }
 
   // Load concierge events for annotation
@@ -113,14 +118,14 @@ export async function GET() {
     const cc = conciergeByKey.get(key);
     const conciergeAction = (cc?.action as OpportunityRow['conciergeAction']) ?? null;
     const conciergeScore = conciergeScoreForAction(key, conciergeAction);
-    const state = stateByKey.get(key) ?? 'new';
+    const state = stateByKey.get(key)?.state ?? 'new';
     const types = eventTypesByKey.get(key) ?? new Set<string>();
 
     let progressBadge: OpportunityRow['progressBadge'] = null;
     if (state === 'funded') progressBadge = 'funded';
-    else if (types.has('diligence_completed')) progressBadge = 'in_review';
     else if (types.has('daf_submitted')) progressBadge = 'daf_submitted';
     else if (types.has('daf_packet_generated')) progressBadge = 'daf_in_progress';
+    else if (types.has('diligence_completed')) progressBadge = 'in_review';
     else if (types.has('meeting_completed')) progressBadge = 'meeting_completed';
     else if (types.has('scheduled')) progressBadge = 'meeting_scheduled';
     else if (types.has('info_received')) progressBadge = 'info_received';
