@@ -253,7 +253,6 @@ export default function DonorFeed() {
     const [fundingModalOpen, setFundingModalOpen] = useState(false);
     const [fundingMethod, setFundingMethod] = useState<'daf' | 'other'>('daf');
     const [fundingSources, setFundingSources] = useState<DonorFundingSource[]>([]);
-    const [dafSponsorsCatalog, setDafSponsorsCatalog] = useState<string[]>([]);
     const [dafGrants, setDafGrants] = useState<DafGrant[]>([]);
     const [dafSponsorName, setDafSponsorName] = useState('');
     const [dafFundingSourceId, setDafFundingSourceId] = useState('');
@@ -321,7 +320,6 @@ export default function DonorFeed() {
             const res = await fetch('/api/daf/funding-sources');
             const data = await res.json().catch(() => ({}));
             if (!res.ok) return;
-            setDafSponsorsCatalog(Array.isArray(data?.sponsors) ? data.sponsors : []);
             const src = Array.isArray(data?.fundingSources) ? data.fundingSources : [];
             const normalized = src.map((x: any) => ({
                 id: String(x.id),
@@ -856,23 +854,56 @@ export default function DonorFeed() {
                                                 <label className="label">DAF sponsor</label>
                                                 <select
                                                     className="input-field"
-                                                    value={dafSponsorName}
+                                                    value={dafFundingSourceId}
                                                     onChange={(e) => {
-                                                        setDafSponsorName(e.target.value);
-                                                        const source = fundingSources.find((x) => x.sponsorName === e.target.value);
-                                                        setDafFundingSourceId(source?.id || '');
+                                                        const nextId = e.target.value;
+                                                        setDafFundingSourceId(nextId);
+                                                        const source = fundingSources.find((x) => x.id === nextId);
+                                                        setDafSponsorName(source?.sponsorName || '');
                                                     }}
+                                                    disabled={fundingSources.length === 0}
                                                 >
-                                                    <option value="">Select sponsor</option>
-                                                    {dafSponsorsCatalog.map((s) => (
-                                                        <option key={s} value={s}>{s}</option>
+                                                    {fundingSources.length === 0 ? (
+                                                        <option value="">No DAF account configured</option>
+                                                    ) : null}
+                                                    {fundingSources.map((source) => (
+                                                        <option key={source.id} value={source.id}>
+                                                            {source.accountNickname
+                                                                ? `${source.sponsorName} (${source.accountNickname})`
+                                                                : source.sponsorName}
+                                                            {source.isDefault ? ' — Primary' : ''}
+                                                        </option>
                                                     ))}
                                                 </select>
                                                 {fundingSources.length === 0 ? (
-                                                    <div className="text-xs text-[var(--text-tertiary)] mt-1">
-                                                        Add sponsors in your profile settings first.
+                                                    <div className="mt-1.5 text-xs text-[var(--text-tertiary)]">
+                                                        Add your DAF account in{' '}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setFundingModalOpen(false);
+                                                                router.push('/donor/profile');
+                                                            }}
+                                                            className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors"
+                                                        >
+                                                            Settings → Funding Sources
+                                                        </button>.
                                                     </div>
-                                                ) : null}
+                                                ) : (
+                                                    <div className="mt-1.5 text-xs text-[var(--text-tertiary)]">
+                                                        Need a different sponsor? Update accounts in{' '}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setFundingModalOpen(false);
+                                                                router.push('/donor/profile');
+                                                            }}
+                                                            className="text-[var(--color-gold)] underline underline-offset-2 hover:text-[var(--text-primary)] transition-colors"
+                                                        >
+                                                            Settings → Funding Sources
+                                                        </button>.
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <label className="label">Amount</label>
@@ -916,7 +947,12 @@ export default function DonorFeed() {
                                         Cancel
                                     </Button>
                                     {fundingMethod === 'daf' ? (
-                                        <Button variant="gold" isLoading={creatingDaf} onClick={createDafGrant}>
+                                        <Button
+                                            variant="gold"
+                                            isLoading={creatingDaf}
+                                            onClick={createDafGrant}
+                                            disabled={fundingSources.length === 0}
+                                        >
                                             Generate DAF Grant Packet
                                         </Button>
                                     ) : (

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { donorFundingSources } from '@/db/schema';
+import { dafGrants, donorFundingSources } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
@@ -122,9 +122,29 @@ export async function DELETE(request: NextRequest) {
   const id = request.nextUrl.searchParams.get('id')?.trim() || '';
   if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
-  await db
-    .delete(donorFundingSources)
-    .where(and(eq(donorFundingSources.id, id), eq(donorFundingSources.donorId, session.userId)));
+  const source = await db
+    .select()
+    .from(donorFundingSources)
+    .where(and(eq(donorFundingSources.id, id), eq(donorFundingSources.donorId, session.userId)))
+    .get();
+  if (!source) return NextResponse.json({ error: 'Funding source not found' }, { status: 404 });
+
+  try {
+    // Keep historical grants intact by unlinking this source reference first.
+    await db
+      .update(dafGrants)
+      .set({ fundingSourceId: null, updatedAt: new Date() })
+      .where(and(eq(dafGrants.fundingSourceId, id), eq(dafGrants.donorId, session.userId)));
+
+    await db
+      .delete(donorFundingSources)
+      .where(and(eq(donorFundingSources.id, id), eq(donorFundingSources.donorId, session.userId)));
+  } catch {
+    return NextResponse.json(
+      { error: 'Unable to remove funding source right now. Please try again.' },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ success: true });
 }
