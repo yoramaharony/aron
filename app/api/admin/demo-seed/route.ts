@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import {
   conciergeMessages,
+  dafGrantDocuments,
+  dafGrants,
   donorOpportunityEvents,
   donorOpportunityState,
   donorProfiles,
@@ -209,6 +211,9 @@ async function resetDemoData(opts: { donorId?: string | null; orgId?: string | n
   const orgId = opts.orgId ?? null;
 
   if (donorId) {
+    // Clear DAF artifacts tied to this donor first to avoid dangling history on re-seed.
+    await db.run(sql`DELETE FROM daf_grant_documents WHERE daf_grant_id IN (SELECT id FROM daf_grants WHERE donor_id = ${donorId})`).catch(() => {});
+    await db.delete(dafGrants).where(eq(dafGrants.donorId, donorId));
     await db.delete(leverageOffers).where(eq(leverageOffers.donorId, donorId));
     await db.delete(donorOpportunityEvents).where(eq(donorOpportunityEvents.donorId, donorId));
     await db.delete(donorOpportunityState).where(eq(donorOpportunityState.donorId, donorId));
@@ -222,6 +227,11 @@ async function resetDemoData(opts: { donorId?: string | null; orgId?: string | n
   }
 
   if (orgId) {
+    // Remove donor state/events + DAF artifacts linked to this org's opportunities before deleting rows.
+    await db.run(sql`DELETE FROM donor_opportunity_events WHERE opportunity_key IN (SELECT id FROM opportunities WHERE created_by = ${orgId})`).catch(() => {});
+    await db.run(sql`DELETE FROM donor_opportunity_state WHERE opportunity_key IN (SELECT id FROM opportunities WHERE created_by = ${orgId})`).catch(() => {});
+    await db.run(sql`DELETE FROM daf_grant_documents WHERE daf_grant_id IN (SELECT id FROM daf_grants WHERE opportunity_key IN (SELECT id FROM opportunities WHERE created_by = ${orgId}))`).catch(() => {});
+    await db.run(sql`DELETE FROM daf_grants WHERE opportunity_key IN (SELECT id FROM opportunities WHERE created_by = ${orgId})`).catch(() => {});
     await db.delete(opportunities).where(eq(opportunities.createdBy, orgId));
     await db.run(sql`DELETE FROM requests WHERE created_by = ${orgId}`).catch(() => {});
   }
@@ -233,9 +243,19 @@ async function resetDemoData(opts: { donorId?: string | null; orgId?: string | n
     .limit(50);
 
   for (const org of demoOrgs) {
+    await db.run(sql`DELETE FROM donor_opportunity_events WHERE opportunity_key IN (SELECT id FROM opportunities WHERE created_by = ${org.id})`).catch(() => {});
+    await db.run(sql`DELETE FROM donor_opportunity_state WHERE opportunity_key IN (SELECT id FROM opportunities WHERE created_by = ${org.id})`).catch(() => {});
+    await db.run(sql`DELETE FROM daf_grant_documents WHERE daf_grant_id IN (SELECT id FROM daf_grants WHERE opportunity_key IN (SELECT id FROM opportunities WHERE created_by = ${org.id}))`).catch(() => {});
+    await db.run(sql`DELETE FROM daf_grants WHERE opportunity_key IN (SELECT id FROM opportunities WHERE created_by = ${org.id})`).catch(() => {});
     await db.delete(opportunities).where(eq(opportunities.createdBy, org.id));
     await db.run(sql`DELETE FROM requests WHERE created_by = ${org.id}`).catch(() => {});
   }
+
+  // Curated opportunities use stable keys (charidy_*) so clear any historical workflow and DAF rows keyed to them.
+  await db.run(sql`DELETE FROM donor_opportunity_events WHERE opportunity_key LIKE 'charidy_%'`).catch(() => {});
+  await db.run(sql`DELETE FROM donor_opportunity_state WHERE opportunity_key LIKE 'charidy_%'`).catch(() => {});
+  await db.run(sql`DELETE FROM daf_grant_documents WHERE daf_grant_id IN (SELECT id FROM daf_grants WHERE opportunity_key LIKE 'charidy_%')`).catch(() => {});
+  await db.run(sql`DELETE FROM daf_grants WHERE opportunity_key LIKE 'charidy_%'`).catch(() => {});
 
   // Delete curated seed opportunities
   await db.delete(opportunities).where(eq(opportunities.source, 'curated'));

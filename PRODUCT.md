@@ -434,6 +434,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Donor funding modal copy updated to `Choose fund path` with `Direct Fund` naming to align terminology
 - [x] Added 2-second simulated charity data pull banner on donor opportunities load to mimic external Charity-source enrichment
 - [x] Donor pledges now include Quarterly/Annual reporting toggle with cadence-aware KPI cards (active commitments, paid amount, fulfilled total)
+- [x] Demo seed reset now clears stale donor workflow + DAF artifacts (`donor_opportunity_events`, `donor_opportunity_state`, `daf_grants`, `daf_grant_documents`) for demo-org opportunities and stable `charidy_*` keys, preventing future-stage carryover between test runs
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`
