@@ -153,6 +153,7 @@ function PaymentsModal({ pledge, onClose }: { pledge: Pledge; onClose: () => voi
 // ---- Main Page ----
 
 export default function DonorPledges() {
+    const [reportCadence, setReportCadence] = useState<'quarterly' | 'annual'>('quarterly');
     const [pledges, setPledges] = useState<Pledge[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedPledge, setSelectedPledge] = useState<Pledge | null>(null);
@@ -185,6 +186,39 @@ export default function DonorPledges() {
             ),
         [pledges],
     );
+
+    const reportMetrics = useMemo(() => {
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        const parsePastFulfilledDate = (value: string) => {
+            const match = value.match(/\(([^)]+)\)/);
+            if (!match?.[1]) return null;
+            const dt = new Date(match[1]);
+            return Number.isNaN(dt.getTime()) ? null : dt;
+        };
+        const isInCadence = (dt: Date | null) => {
+            if (!dt) return false;
+            if (reportCadence === 'annual') return dt.getFullYear() === currentYear;
+            return dt.getFullYear() === currentYear && Math.floor(dt.getMonth() / 3) === currentQuarter;
+        };
+
+        const activeInRange = pledges.filter((p) => isInCadence(p.commitmentDate ? new Date(p.commitmentDate) : null));
+        const pastInRange = PAST_FULFILLMENT.filter((p) => isInCadence(parsePastFulfilledDate(p.fulfilledDate)));
+
+        const activeCommitted = activeInRange.reduce((sum, p) => sum + Number(p.totalPledge || 0), 0);
+        const activePaid = activeInRange.reduce((sum, p) => sum + Number(p.paidToDate || 0), 0);
+        const fulfilledTotal = pastInRange.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+
+        return {
+            label: reportCadence === 'annual' ? 'Annual' : 'Quarterly',
+            activeCount: activeInRange.length,
+            fulfilledCount: pastInRange.length,
+            activeCommitted,
+            activePaid,
+            fulfilledTotal,
+        };
+    }, [pledges, reportCadence]);
 
     const progressPct = (p: Pledge) =>
         p.totalPledge > 0 ? Math.round((p.paidToDate / p.totalPledge) * 100) : 0;
@@ -239,9 +273,45 @@ export default function DonorPledges() {
                     <h1 className="text-3xl font-semibold text-[var(--text-primary)]">My Pledges</h1>
                     <p className="text-secondary">Track your commitments and payment schedules</p>
                 </div>
-                <Button variant="outline" size="sm" leftIcon={<Download size={16} />} onClick={handleExportReport}>
-                    Export Report
-                </Button>
+                <div className="flex items-center gap-3">
+                    <div className="inline-flex rounded-lg border border-[var(--border-subtle)] overflow-hidden">
+                        <button
+                            type="button"
+                            onClick={() => setReportCadence('quarterly')}
+                            className={`px-3 py-1.5 text-xs font-medium transition-colors ${reportCadence === 'quarterly' ? 'bg-[rgba(212,175,55,0.18)] text-[var(--color-gold)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+                        >
+                            Quarterly
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setReportCadence('annual')}
+                            className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-[var(--border-subtle)] ${reportCadence === 'annual' ? 'bg-[rgba(212,175,55,0.18)] text-[var(--color-gold)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'}`}
+                        >
+                            Annual
+                        </button>
+                    </div>
+                    <Button variant="outline" size="sm" leftIcon={<Download size={16} />} onClick={handleExportReport}>
+                        Export Report
+                    </Button>
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <Card className="p-4">
+                    <div className="text-[10px] uppercase tracking-widest text-[var(--text-tertiary)]">{reportMetrics.label} Active Commitments</div>
+                    <div className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">{reportMetrics.activeCount}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mt-1">${reportMetrics.activeCommitted.toLocaleString()} committed</div>
+                </Card>
+                <Card className="p-4">
+                    <div className="text-[10px] uppercase tracking-widest text-[var(--text-tertiary)]">{reportMetrics.label} Paid</div>
+                    <div className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">${reportMetrics.activePaid.toLocaleString()}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mt-1">Across active commitments</div>
+                </Card>
+                <Card className="p-4">
+                    <div className="text-[10px] uppercase tracking-widest text-[var(--text-tertiary)]">{reportMetrics.label} Fulfilled</div>
+                    <div className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">{reportMetrics.fulfilledCount}</div>
+                    <div className="text-xs text-[var(--text-secondary)] mt-1">${reportMetrics.fulfilledTotal.toLocaleString()} historically fulfilled</div>
+                </Card>
             </div>
 
             {/* CONDITIONAL OFFERS (LEVERAGE) */}

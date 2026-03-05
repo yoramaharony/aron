@@ -430,8 +430,13 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Donor opportunity detail now enters DAF-focused mode while a grant is in flight: hides concierge/status strips, summary grid, and generic action row, and left-list progress chips prioritize DAF states (`daf_packet_generated`/`daf_submitted`) over stale review badges
 - [x] DAF pledge modal now lists only donor-configured funding sources (not global sponsor catalog) and links directly to `Settings → Funding Sources` for account changes
 - [x] Funding source deletion now safely unlinks historical `daf_grants.funding_source_id` references before delete, preventing FK-related "Failed to remove funding source" errors
+- [x] Donor opportunity action hierarchy now defaults to challenge funding path: primary CTA is `Fund (Challenge)` and direct funding is explicit secondary (`Direct Fund`)
+- [x] Donor funding modal copy updated to `Choose fund path` with `Direct Fund` naming to align terminology
+- [x] Added 2-second simulated charity data pull banner on donor opportunities load to mimic external Charity-source enrichment
+- [x] Donor pledges now include Quarterly/Annual reporting toggle with cadence-aware KPI cards (active commitments, paid amount, fulfilled total)
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
+**Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`
 
 ---
 

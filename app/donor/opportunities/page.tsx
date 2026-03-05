@@ -277,6 +277,7 @@ export default function DonorFeed() {
     const [hasVision, setHasVision] = useState(true); // optimistic default
     const [conciergeReviewing, setConciergeReviewing] = useState(false);
     const [conciergeStats, setConciergeStats] = useState<{ passed: number; infoRequested: number; keptInDiscover: number } | null>(null);
+    const [charitySyncing, setCharitySyncing] = useState(false);
 
     const router = useRouter();
     const { lastOpportunityUpdate, openLeverageDrawer } = useLeverage();
@@ -348,8 +349,12 @@ export default function DonorFeed() {
 
     useEffect(() => {
         (async () => {
+            setCharitySyncing(true);
+            const charityDelay = new Promise((r) => setTimeout(r, 2000));
             await refreshFundingSources();
             const data = await refresh();
+            await charityDelay;
+            setCharitySyncing(false);
             if (!data) return;
             // Auto-trigger concierge review for new opportunities
             setConciergeReviewing(true);
@@ -769,6 +774,21 @@ export default function DonorFeed() {
                 </div>
             )}
 
+            {/* Simulated charity data pull */}
+            {charitySyncing && (
+                <motion.div
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-xl border border-[rgba(56,189,248,0.35)] bg-[rgba(56,189,248,0.08)] px-5 py-4 flex items-center gap-3"
+                >
+                    <Loader2 size={18} className="animate-spin text-sky-300" />
+                    <div>
+                        <div className="text-sm font-medium text-[var(--text-primary)]">Pulling data from Charity source...</div>
+                        <div className="text-xs text-[var(--text-secondary)] mt-0.5">Refreshing curated opportunities and funding context</div>
+                    </div>
+                </motion.div>
+            )}
+
             {/* Concierge reviewing animation */}
             {conciergeReviewing && (
                 <motion.div
@@ -822,7 +842,7 @@ export default function DonorFeed() {
                         >
                             <Card className="p-6 md:p-8 space-y-5">
                                 <div className="flex items-center justify-between">
-                                    <h2 className="text-xl font-medium text-[var(--text-primary)]">Choose funding method</h2>
+                                    <h2 className="text-xl font-medium text-[var(--text-primary)]">Choose fund path</h2>
                                     <button
                                         type="button"
                                         onClick={() => setFundingModalOpen(false)}
@@ -843,7 +863,7 @@ export default function DonorFeed() {
                                         variant={fundingMethod === 'other' ? 'gold' : 'outline'}
                                         onClick={() => setFundingMethod('other')}
                                     >
-                                        Other Method
+                                        Direct Fund
                                     </Button>
                                 </div>
 
@@ -936,7 +956,7 @@ export default function DonorFeed() {
                                     </div>
                                 ) : (
                                     <div className="text-sm text-[var(--text-secondary)]">
-                                        Use this option for non-DAF funding. Aron will mark this opportunity as funded immediately.
+                                        Use this option for direct (non-DAF) funding. Aron will mark this opportunity as funded immediately.
                                     </div>
                                 )}
 
@@ -1287,12 +1307,6 @@ export default function DonorFeed() {
                                         ) : null}
                                         <Button
                                             variant="gold"
-                                            onClick={openFundingModal}
-                                        >
-                                            Pledge
-                                        </Button>
-                                        <Button
-                                            variant="outline"
                                             onClick={() => {
                                                 openLeverageDrawer({
                                                     id: detail.opportunity.key,
@@ -1305,7 +1319,13 @@ export default function DonorFeed() {
                                                 } as any);
                                             }}
                                         >
-                                            <Zap size={15} /> Structure Leverage
+                                            <Zap size={15} /> Fund (Challenge)
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={openFundingModal}
+                                        >
+                                            Direct Fund
                                         </Button>
                                         <Button
                                             variant="ghost"
