@@ -438,6 +438,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Challenge funding now surfaces as a first-class pending state on donor opportunities (`challenge pending` chip + status card), and repeat challenge creation is blocked with a disabled `Challenge Pending` CTA until lifecycle advances
 - [x] Org request detail now receives leverage-offer context even when donor state rows are missing, and Tasks tab shows challenge-fund pending lifecycle to make donor-created challenge offers visible to organizations
 - [x] Challenge creation flow hardened to always persist against a normalized opportunity key (`id || key`) and donor detail now hydrates pending challenge state directly from `/api/opportunities/[key]` leverage payloads, avoiding missed UI state when secondary refreshes lag
+- [x] Fixed `/api/leverage-offers` timestamp serialization to use `toIsoTime` (instead of raw `new Date(...).toISOString()`), preventing `RangeError: Invalid time value` for legacy/demo timestamp formats and restoring challenge-state fetch reliability
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`

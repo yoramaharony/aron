@@ -4,6 +4,7 @@ import { donorOpportunityEvents, leverageOffers } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { desc, eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
+import { toIsoTime } from '@/lib/time';
 
 function forbidden() {
   return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -37,8 +38,8 @@ export async function GET(request: Request) {
       deadline: o.deadline,
       terms: o.termsJson ? JSON.parse(o.termsJson) : null,
       status: o.status,
-      createdAt: o.createdAt ? new Date(o.createdAt).toISOString() : null,
-      updatedAt: o.updatedAt ? new Date(o.updatedAt).toISOString() : null,
+      createdAt: toIsoTime(o.createdAt),
+      updatedAt: toIsoTime(o.updatedAt),
     })),
   });
 }
