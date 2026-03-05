@@ -439,6 +439,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Org request detail now receives leverage-offer context even when donor state rows are missing, and Tasks tab shows challenge-fund pending lifecycle to make donor-created challenge offers visible to organizations
 - [x] Challenge creation flow hardened to always persist against a normalized opportunity key (`id || key`) and donor detail now hydrates pending challenge state directly from `/api/opportunities/[key]` leverage payloads, avoiding missed UI state when secondary refreshes lag
 - [x] Fixed `/api/leverage-offers` timestamp serialization to use `toIsoTime` (instead of raw `new Date(...).toISOString()`), preventing `RangeError: Invalid time value` for legacy/demo timestamp formats and restoring challenge-state fetch reliability
+- [x] Added org-side challenge action flow: new `POST /api/requestor/requests/[id]/challenge` route supports `accept`, `decline`, `launch_campaign`, and `mark_goal_reached`, persisting leverage status transitions and donor event logs
+- [x] Requestor Tasks now has actionable challenge modal with summary, accept/decline controls, "Jump to campaign execution" link, a demo Charity sync panel, and hidden "Jump to next phase" control for rapid walkthroughs
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`

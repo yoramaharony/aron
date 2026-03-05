@@ -100,7 +100,7 @@ interface TaskItem {
     label: string;
     description: string;
     status: 'pending' | 'completed';
-    action?: 'open-more-info' | 'meeting-action';
+    action?: 'open-more-info' | 'meeting-action' | 'challenge-action';
     completedAt?: string | null;
 }
 
@@ -256,6 +256,23 @@ function humanizeMeetingResponse(value: unknown) {
     return raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function humanizeLeverageStatus(value: unknown) {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return '';
+    const map: Record<string, string> = {
+        created: 'Pending organization response',
+        sent: 'Pending organization response',
+        accepted: 'Accepted by organization',
+        in_campaign: 'Campaign live on Charity',
+        goal_reached: 'Goal reached - ready for donor funding',
+        released: 'Completed',
+        canceled: 'Declined or canceled',
+        cancelled: 'Declined or canceled',
+        expired: 'Expired',
+    };
+    return map[raw] || raw.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function defaultLocationForMeetingType(value: unknown) {
     const raw = String(value || '').trim().toLowerCase();
     if (raw === 'phone') return 'Phone call';
@@ -295,6 +312,7 @@ function advanceStageForWorkflow(stage: WorkflowStage): string | null {
 function taskIcon(task: TaskItem) {
     if (task.id === 'more-info') return <MessageSquare size={16} className="text-amber-400" />;
     if (task.id === 'meeting') return <Calendar size={16} className="text-amber-400" />;
+    if (task.id === 'challenge-pending') return <Sparkles size={16} className="text-amber-400" />;
     return <Clock3 size={16} className="text-amber-400" />;
 }
 
@@ -549,6 +567,10 @@ export default function RequestDetailPage() {
     const [meetingNote, setMeetingNote] = useState('');
     const [meetingSubmitting, setMeetingSubmitting] = useState(false);
     const [meetingError, setMeetingError] = useState('');
+    const [challengeModalOpen, setChallengeModalOpen] = useState(false);
+    const [challengeSubmitting, setChallengeSubmitting] = useState(false);
+    const [challengeError, setChallengeError] = useState('');
+    const [challengeSyncing, setChallengeSyncing] = useState(false);
 
     const load = useCallback(async () => {
         try {
@@ -688,7 +710,7 @@ export default function RequestDetailPage() {
     );
     const latestDaf = dafGrants[0] ?? null;
     const latestLeverage = leverageOffers[0] ?? null;
-    const leveragePendingStatuses = new Set(['created', 'sent', 'accepted', 'in_campaign', 'goal_reached']);
+    const leveragePendingStatuses = new Set(['created', 'sent', 'accepted', 'in_campaign']);
     const pendingTasksMerged = useMemo(() => {
         const base = [...pendingTasks];
         if (latestLeverage && leveragePendingStatuses.has(String(latestLeverage.status || '').toLowerCase())) {
@@ -697,6 +719,7 @@ export default function RequestDetailPage() {
                 label: 'Challenge fund pending',
                 description: `Donor created a challenge offer ($${latestLeverage.anchorAmount.toLocaleString()} anchor, goal $${latestLeverage.challengeGoal.toLocaleString()}).`,
                 status: 'pending',
+                action: 'challenge-action',
             });
         }
         if (!latestDaf) return base;
@@ -719,7 +742,7 @@ export default function RequestDetailPage() {
     }, [pendingTasks, latestDaf, latestLeverage]);
     const completedTasksMerged = useMemo(() => {
         const base = [...completedTasks];
-        if (latestLeverage && ['released', 'expired', 'canceled', 'cancelled'].includes(String(latestLeverage.status || '').toLowerCase())) {
+        if (latestLeverage && ['goal_reached', 'released', 'expired', 'canceled', 'cancelled'].includes(String(latestLeverage.status || '').toLowerCase())) {
             base.push({
                 id: 'challenge-closed',
                 label: 'Challenge fund lifecycle updated',
@@ -756,6 +779,9 @@ export default function RequestDetailPage() {
             setMoreInfoModalOpen(true);
         } else if (task.action === 'meeting-action') {
             setActiveTab('tasks');
+        } else if (task.action === 'challenge-action') {
+            setChallengeError('');
+            setChallengeModalOpen(true);
         }
     };
 
@@ -801,6 +827,39 @@ export default function RequestDetailPage() {
         } finally {
             setMeetingSubmitting(false);
         }
+    };
+
+    const submitChallengeAction = async (
+        action: 'accept' | 'decline' | 'launch_campaign' | 'mark_goal_reached',
+    ) => {
+        setChallengeSubmitting(true);
+        setChallengeError('');
+        try {
+            const res = await fetch(`/api/requestor/requests/${encodeURIComponent(id)}/challenge`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data?.error || 'Failed to update challenge');
+            await load();
+            if (action === 'decline' || action === 'mark_goal_reached') {
+                setChallengeModalOpen(false);
+            }
+        } catch (e: unknown) {
+            setChallengeError(e instanceof Error ? e.message : 'Failed to update challenge');
+        } finally {
+            setChallengeSubmitting(false);
+        }
+    };
+
+    const runCharitySync = async () => {
+        if (challengeSubmitting || challengeSyncing) return;
+        setChallengeSyncing(true);
+        setChallengeError('');
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        await submitChallengeAction('launch_campaign');
+        setChallengeSyncing(false);
     };
 
     /* Documents check */
@@ -1073,6 +1132,110 @@ export default function RequestDetailPage() {
                                         {meetingModalMode === 'reschedule' ? 'Request Reschedule' : 'Propose Time'}
                                     </Button>
                                 </div>
+                            </Card>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Challenge action modal ── */}
+            <AnimatePresence>
+                {challengeModalOpen && latestLeverage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 backdrop-blur-sm p-6"
+                        onClick={(e) => { if (e.target === e.currentTarget) setChallengeModalOpen(false); }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 20, scale: 0.97 }}
+                            className="w-full max-w-2xl my-8"
+                        >
+                            <Card className="p-6 md:p-8 space-y-5">
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-xl font-medium text-[var(--text-primary)]">Challenge Fund Action</h2>
+                                    <button
+                                        type="button"
+                                        onClick={() => setChallengeModalOpen(false)}
+                                        className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                                    >
+                                        <XIcon size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="rounded-lg border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-4 text-sm space-y-2">
+                                    <div className="text-[var(--text-secondary)]">
+                                        Donor anchor: <span className="text-[var(--text-primary)] font-medium">${latestLeverage.anchorAmount.toLocaleString()}</span>
+                                    </div>
+                                    <div className="text-[var(--text-secondary)]">
+                                        Campaign goal: <span className="text-[var(--text-primary)] font-medium">${latestLeverage.challengeGoal.toLocaleString()}</span>
+                                    </div>
+                                    <div className="text-[var(--text-secondary)]">
+                                        Deadline: <span className="text-[var(--text-primary)] font-medium">{latestLeverage.deadline || 'TBD'}</span>
+                                    </div>
+                                    <div className="text-[var(--text-secondary)]">
+                                        Status: <span className="text-[var(--color-gold)]">{humanizeLeverageStatus(latestLeverage.status)}</span>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <Button
+                                        variant="gold"
+                                        size="sm"
+                                        isLoading={challengeSubmitting && !challengeSyncing}
+                                        onClick={() => submitChallengeAction('accept')}
+                                        disabled={challengeSyncing || ['accepted', 'in_campaign', 'goal_reached', 'released'].includes(String(latestLeverage.status || '').toLowerCase())}
+                                    >
+                                        Accept Challenge
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        isLoading={challengeSubmitting && challengeSyncing}
+                                        onClick={runCharitySync}
+                                        disabled={!['accepted', 'in_campaign'].includes(String(latestLeverage.status || '').toLowerCase()) || challengeSubmitting || challengeSyncing}
+                                    >
+                                        {challengeSyncing ? 'Syncing Charity (2s)...' : 'Open Charity Campaign Setup'}
+                                    </Button>
+                                    <a
+                                        href="https://charitywater.org"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
+                                    >
+                                        <ExternalLink size={12} />
+                                        Jump to campaign execution
+                                    </a>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => submitChallengeAction('decline')}
+                                        disabled={challengeSubmitting || challengeSyncing || ['goal_reached', 'released', 'canceled', 'cancelled', 'expired'].includes(String(latestLeverage.status || '').toLowerCase())}
+                                    >
+                                        Decline
+                                    </Button>
+                                </div>
+
+                                <div className="rounded-lg border border-[rgba(212,175,55,0.2)] bg-[rgba(212,175,55,0.06)] p-3">
+                                    <div className="text-xs uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Charity Sync Panel (Demo)</div>
+                                    <div className="text-sm text-[var(--text-secondary)]">
+                                        Stages: campaign created {'->'} in campaign {'->'} goal reached.
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => submitChallengeAction('mark_goal_reached')}
+                                    className="text-[11px] text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
+                                    disabled={challengeSubmitting || challengeSyncing}
+                                >
+                                    Jump to next phase (demo): mark as goal reached
+                                </button>
+
+                                {challengeError && <div className="text-sm text-red-300">{challengeError}</div>}
                             </Card>
                         </motion.div>
                     </motion.div>
