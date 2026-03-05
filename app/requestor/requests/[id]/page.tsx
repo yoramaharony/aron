@@ -82,6 +82,16 @@ interface DafGrantData {
     documents: DafDoc[];
 }
 
+interface LeverageOfferData {
+    id: string;
+    donorId: string;
+    anchorAmount: number;
+    challengeGoal: number;
+    deadline: string;
+    status: string;
+    createdAt: string | null;
+}
+
 type TabKey = 'overview' | 'tasks' | 'details' | 'documents';
 
 /* ─── Task model ─── */
@@ -212,6 +222,7 @@ function timelineIcon(type: string) {
     if (type === 'scheduled') return <Calendar size={15} />;
     if (type === 'meeting_completed') return <CheckCircle2 size={15} />;
     if (type === 'diligence_completed') return <FileCheck2 size={15} />;
+    if (type === 'leverage_created') return <Sparkles size={15} />;
     if (type === 'funded') return <CheckCircle2 size={15} />;
     if (type === 'pass') return <XIcon size={15} />;
     return <Clock3 size={15} />;
@@ -521,6 +532,7 @@ export default function RequestDetailPage() {
     const [state, setState] = useState<string>('new');
     const [events, setEvents] = useState<EventData[]>([]);
     const [dafGrants, setDafGrants] = useState<DafGrantData[]>([]);
+    const [leverageOffers, setLeverageOffers] = useState<LeverageOfferData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [advancing, setAdvancing] = useState(false);
@@ -547,6 +559,7 @@ export default function RequestDetailPage() {
             setState(data.state);
             setEvents(data.events ?? []);
             setDafGrants(Array.isArray(data.daf) ? data.daf : []);
+            setLeverageOffers(Array.isArray(data.leverage) ? data.leverage : []);
         } catch (e: unknown) {
             setError(e instanceof Error ? e.message : 'Failed to load');
         } finally {
@@ -674,8 +687,18 @@ export default function RequestDetailPage() {
         fundedEvent,
     );
     const latestDaf = dafGrants[0] ?? null;
+    const latestLeverage = leverageOffers[0] ?? null;
+    const leveragePendingStatuses = new Set(['created', 'sent', 'accepted', 'in_campaign', 'goal_reached']);
     const pendingTasksMerged = useMemo(() => {
         const base = [...pendingTasks];
+        if (latestLeverage && leveragePendingStatuses.has(String(latestLeverage.status || '').toLowerCase())) {
+            base.push({
+                id: 'challenge-pending',
+                label: 'Challenge fund pending',
+                description: `Donor created a challenge offer ($${latestLeverage.anchorAmount.toLocaleString()} anchor, goal $${latestLeverage.challengeGoal.toLocaleString()}).`,
+                status: 'pending',
+            });
+        }
         if (!latestDaf) return base;
         if (latestDaf.status === 'packet_generated') {
             base.push({
@@ -693,9 +716,18 @@ export default function RequestDetailPage() {
             });
         }
         return base;
-    }, [pendingTasks, latestDaf]);
+    }, [pendingTasks, latestDaf, latestLeverage]);
     const completedTasksMerged = useMemo(() => {
         const base = [...completedTasks];
+        if (latestLeverage && ['released', 'expired', 'canceled', 'cancelled'].includes(String(latestLeverage.status || '').toLowerCase())) {
+            base.push({
+                id: 'challenge-closed',
+                label: 'Challenge fund lifecycle updated',
+                description: `Challenge is now ${String(latestLeverage.status || '').replace(/_/g, ' ')}.`,
+                status: 'completed',
+                completedAt: latestLeverage.createdAt,
+            });
+        }
         if (!latestDaf) return base;
         if (latestDaf.status === 'submitted' || latestDaf.status === 'received') {
             base.push({
@@ -716,7 +748,7 @@ export default function RequestDetailPage() {
             });
         }
         return base;
-    }, [completedTasks, latestDaf]);
+    }, [completedTasks, latestDaf, latestLeverage]);
     const pendingCountMerged = pendingTasksMerged.length;
 
     const handleTaskAction = (task: TaskItem) => {

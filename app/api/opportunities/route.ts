@@ -19,7 +19,7 @@ type OpportunityRow = {
   conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
   conciergeReason?: string | null;
   conciergeScore?: number | null;
-  progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'daf_in_progress' | 'daf_submitted' | 'funded' | null;
+  progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'challenge_pending' | 'daf_in_progress' | 'daf_submitted' | 'funded' | null;
   lowAmount?: boolean;
 };
 
@@ -125,6 +125,7 @@ export async function GET() {
     if (state === 'funded') progressBadge = 'funded';
     else if (types.has('daf_submitted')) progressBadge = 'daf_submitted';
     else if (types.has('daf_packet_generated')) progressBadge = 'daf_in_progress';
+    else if (types.has('leverage_created')) progressBadge = 'challenge_pending';
     else if (types.has('diligence_completed')) progressBadge = 'in_review';
     else if (types.has('meeting_completed')) progressBadge = 'meeting_completed';
     else if (types.has('scheduled')) progressBadge = 'meeting_scheduled';

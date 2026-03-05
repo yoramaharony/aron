@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/db';
-import { opportunities, donorOpportunityState, donorOpportunityEvents, dafGrants, dafGrantDocuments } from '@/db/schema';
+import { opportunities, donorOpportunityState, donorOpportunityEvents, dafGrants, dafGrantDocuments, leverageOffers } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { and, desc, eq } from 'drizzle-orm';
 import { toIsoTime } from '@/lib/time';
@@ -34,7 +34,12 @@ export async function GET(
     .limit(1);
 
   const donorState = stateRows[0] ?? null;
-  const donorId = donorState?.donorId ?? null;
+  const leverageRows = await db
+    .select()
+    .from(leverageOffers)
+    .where(eq(leverageOffers.opportunityKey, opportunityKey))
+    .orderBy(desc(leverageOffers.createdAt));
+  const donorId = donorState?.donorId ?? leverageRows[0]?.donorId ?? null;
 
   let events: { type: string; meta: Record<string, unknown> | null; createdAt: string | null }[] = [];
   let daf: Array<{
@@ -47,6 +52,15 @@ export async function GET(
     submittedAt: string | null;
     receivedAt: string | null;
     documents: Array<{ id: string; type: string; fileUrl: string; fileName: string; uploadedByRole: string; createdAt: string | null }>;
+  }> = [];
+  let leverage: Array<{
+    id: string;
+    donorId: string;
+    anchorAmount: number;
+    challengeGoal: number;
+    deadline: string;
+    status: string;
+    createdAt: string | null;
   }> = [];
 
   if (donorId) {
@@ -102,6 +116,16 @@ export async function GET(
     }),
   );
 
+  leverage = leverageRows.map((l) => ({
+    id: l.id,
+    donorId: l.donorId,
+    anchorAmount: Number(l.anchorAmount || 0),
+    challengeGoal: Number(l.challengeGoal || 0),
+    deadline: l.deadline,
+    status: l.status,
+    createdAt: toIsoTime(l.createdAt),
+  }));
+
   const evidence = row.evidenceJson ? JSON.parse(row.evidenceJson) : null;
   return NextResponse.json({
     request: {
@@ -123,5 +147,6 @@ export async function GET(
     state: donorState?.state ?? 'new',
     events,
     daf,
+    leverage,
   });
 }

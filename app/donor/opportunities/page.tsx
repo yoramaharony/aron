@@ -27,7 +27,7 @@ type OpportunityRow = {
     conciergeAction?: 'pass' | 'request_info' | 'keep' | null;
     conciergeReason?: string | null;
     conciergeScore?: number | null;
-    progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'daf_in_progress' | 'daf_submitted' | 'funded' | null;
+    progressBadge?: 'info_requested' | 'meeting_scheduled' | 'info_received' | 'meeting_completed' | 'in_review' | 'challenge_pending' | 'daf_in_progress' | 'daf_submitted' | 'funded' | null;
     lowAmount?: boolean;
 };
 
@@ -59,6 +59,16 @@ type DafGrant = {
     receivedAt: string | null;
     createdAt: string | null;
     documents: DafGrantDoc[];
+};
+
+type LeverageOfferLite = {
+    id: string;
+    opportunityKey: string;
+    anchorAmount: number;
+    challengeGoal: number;
+    deadline: string;
+    status: string;
+    createdAt: string | null;
 };
 
 function deriveStatusMessage(flow: WorkflowView) {
@@ -208,6 +218,13 @@ function progressBadgeChip(progressBadge?: OpportunityRow['progressBadge'] | nul
             </span>
         );
     }
+    if (progressBadge === 'challenge_pending') {
+        return (
+            <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(212,175,55,0.35)] bg-[rgba(212,175,55,0.10)] text-[var(--color-gold)]">
+                challenge pending
+            </span>
+        );
+    }
     if (progressBadge === 'daf_in_progress') {
         return (
             <span className="text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(56,189,248,0.35)] bg-[rgba(56,189,248,0.10)] text-sky-300">
@@ -254,6 +271,7 @@ export default function DonorFeed() {
     const [fundingMethod, setFundingMethod] = useState<'daf' | 'other'>('daf');
     const [fundingSources, setFundingSources] = useState<DonorFundingSource[]>([]);
     const [dafGrants, setDafGrants] = useState<DafGrant[]>([]);
+    const [leverageOffers, setLeverageOffers] = useState<LeverageOfferLite[]>([]);
     const [dafSponsorName, setDafSponsorName] = useState('');
     const [dafFundingSourceId, setDafFundingSourceId] = useState('');
     const [dafAmount, setDafAmount] = useState('');
@@ -347,6 +365,16 @@ export default function DonorFeed() {
         } catch { /* silent */ }
     };
 
+    const refreshLeverageOffers = async (opportunityKey: string) => {
+        try {
+            const res = await fetch(`/api/leverage-offers?opportunityKey=${encodeURIComponent(opportunityKey)}`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) return;
+            const offers = Array.isArray(data?.offers) ? data.offers : [];
+            setLeverageOffers(offers as LeverageOfferLite[]);
+        } catch { /* silent */ }
+    };
+
     useEffect(() => {
         (async () => {
             setCharitySyncing(true);
@@ -400,6 +428,7 @@ export default function DonorFeed() {
             setNotesText(cached?.notes || '');
             setDetailLoading(false);
             refreshDafGrants(key).catch(() => {});
+            refreshLeverageOffers(key).catch(() => {});
         } else {
             setDetailLoading(true);
         }
@@ -414,6 +443,7 @@ export default function DonorFeed() {
                 setNotesText(data?.notes || '');
                 setDetailLoading(false);
                 refreshDafGrants(key).catch(() => {});
+                refreshLeverageOffers(key).catch(() => {});
             }
         } catch {
             if (latestRequestRef.current === key && !cached) {
@@ -453,6 +483,7 @@ export default function DonorFeed() {
         if (!lastOpportunityUpdate?.key) return;
         if (!selectedKey) return;
         if (String(lastOpportunityUpdate.key) !== String(selectedKey)) return;
+        refresh().catch(() => {});
         loadDetail(selectedKey).catch(() => {});
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lastOpportunityUpdate?.at]);
@@ -554,6 +585,9 @@ export default function DonorFeed() {
         if (workflow.stage === 'discover' && selectedRow?.progressBadge === 'daf_submitted') {
             return 'DAF submitted — awaiting funds receipt confirmation';
         }
+        if (workflow.stage === 'discover' && selectedRow?.progressBadge === 'challenge_pending') {
+            return 'Challenge fund pending — awaiting concierge and organization progression';
+        }
         // Override for concierge-reviewed items that were kept in Discover
         if (workflow.stage === 'discover' && !workflow.isPassed && selectedRow?.conciergeAction === 'keep') {
             return 'Concierge reviewed — matches your Impact Vision';
@@ -576,6 +610,12 @@ export default function DonorFeed() {
         return workflow.stage === 'discover';
     }, [workflow]);
     const latestDafGrant = useMemo(() => dafGrants[0] ?? null, [dafGrants]);
+    const latestLeverageOffer = useMemo(() => leverageOffers[0] ?? null, [leverageOffers]);
+    const hasActiveChallenge = useMemo(() => {
+        if (!latestLeverageOffer) return false;
+        const terminal = new Set(['released', 'expired', 'canceled', 'cancelled']);
+        return !terminal.has(String(latestLeverageOffer.status || '').toLowerCase());
+    }, [latestLeverageOffer]);
     const isDafInFlight = useMemo(() => {
         if (!latestDafGrant) return false;
         const status = String(latestDafGrant.status || '').toLowerCase();
@@ -1261,6 +1301,22 @@ export default function DonorFeed() {
                                     </div>
                                 )}
 
+                                {!isDafInFlight && hasActiveChallenge && latestLeverageOffer ? (
+                                    <div className="rounded-xl border border-[rgba(var(--accent-rgb),0.32)] bg-[rgba(212,175,55,0.08)] px-4 py-3 flex items-center justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <div className="text-sm text-[var(--text-primary)] font-medium">
+                                                Challenge fund pending
+                                            </div>
+                                            <div className="text-xs text-[var(--text-secondary)] mt-0.5">
+                                                Anchor ${Number(latestLeverageOffer.anchorAmount || 0).toLocaleString()} · goal ${Number(latestLeverageOffer.challengeGoal || 0).toLocaleString()} · deadline {latestLeverageOffer.deadline || '—'}
+                                            </div>
+                                        </div>
+                                        <span className="shrink-0 text-[10px] px-2 py-1 rounded-full uppercase tracking-widest font-bold border border-[rgba(var(--accent-rgb),0.35)] bg-[rgba(212,175,55,0.10)] text-[var(--color-gold)]">
+                                            {String(latestLeverageOffer.status || 'created').replace(/_/g, ' ')}
+                                        </span>
+                                    </div>
+                                ) : null}
+
                                 {/* Summary grid */}
                                 {!isDafInFlight ? (
                                     <div className="rounded-2xl border border-[var(--border-subtle)] bg-[rgba(255,255,255,0.02)] p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1307,7 +1363,9 @@ export default function DonorFeed() {
                                         ) : null}
                                         <Button
                                             variant="gold"
+                                            disabled={hasActiveChallenge}
                                             onClick={() => {
+                                                if (hasActiveChallenge) return;
                                                 openLeverageDrawer({
                                                     id: detail.opportunity.key,
                                                     title: detail.opportunity.title,
@@ -1319,7 +1377,7 @@ export default function DonorFeed() {
                                                 } as any);
                                             }}
                                         >
-                                            <Zap size={15} /> Fund (Challenge)
+                                            <Zap size={15} /> {hasActiveChallenge ? 'Challenge Pending' : 'Fund (Challenge)'}
                                         </Button>
                                         <Button
                                             variant="outline"

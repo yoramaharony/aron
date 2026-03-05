@@ -435,6 +435,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Added 2-second simulated charity data pull banner on donor opportunities load to mimic external Charity-source enrichment
 - [x] Donor pledges now include Quarterly/Annual reporting toggle with cadence-aware KPI cards (active commitments, paid amount, fulfilled total)
 - [x] Demo seed reset now clears stale donor workflow + DAF artifacts (`donor_opportunity_events`, `donor_opportunity_state`, `daf_grants`, `daf_grant_documents`) for demo-org opportunities and stable `charidy_*` keys, preventing future-stage carryover between test runs
+- [x] Challenge funding now surfaces as a first-class pending state on donor opportunities (`challenge pending` chip + status card), and repeat challenge creation is blocked with a disabled `Challenge Pending` CTA until lifecycle advances
+- [x] Org request detail now receives leverage-offer context even when donor state rows are missing, and Tasks tab shows challenge-fund pending lifecycle to make donor-created challenge offers visible to organizations
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`
