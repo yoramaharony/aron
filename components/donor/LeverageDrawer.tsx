@@ -80,9 +80,15 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     const handleCreate = async () => {
         setSubmitting(true);
         setSubmitErr(null);
+        const opportunityKey = String(opportunity.id || opportunity.key || '').trim();
+        if (!opportunityKey) {
+            setSubmitErr('Missing opportunity key. Please close and reopen this challenge flow.');
+            setSubmitting(false);
+            return;
+        }
         const offer: LeverageOffer = {
             id: `offer_${Date.now()}`,
-            opportunityId: opportunity.id,
+            opportunityId: opportunityKey,
             opportunityTitle: opportunity.title,
             opportunityOrg: opportunity.orgName,
             askAmount: opportunity.fundingGap,
@@ -108,7 +114,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    opportunityKey: opportunity.id,
+                    opportunityKey,
                     anchorAmount: offer.anchorAmount,
                     matchMode,
                     challengeGoal: offer.challengeGoal,

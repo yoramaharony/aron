@@ -437,6 +437,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Demo seed reset now clears stale donor workflow + DAF artifacts (`donor_opportunity_events`, `donor_opportunity_state`, `daf_grants`, `daf_grant_documents`) for demo-org opportunities and stable `charidy_*` keys, preventing future-stage carryover between test runs
 - [x] Challenge funding now surfaces as a first-class pending state on donor opportunities (`challenge pending` chip + status card), and repeat challenge creation is blocked with a disabled `Challenge Pending` CTA until lifecycle advances
 - [x] Org request detail now receives leverage-offer context even when donor state rows are missing, and Tasks tab shows challenge-fund pending lifecycle to make donor-created challenge offers visible to organizations
+- [x] Challenge creation flow hardened to always persist against a normalized opportunity key (`id || key`) and donor detail now hydrates pending challenge state directly from `/api/opportunities/[key]` leverage payloads, avoiding missed UI state when secondary refreshes lag
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`

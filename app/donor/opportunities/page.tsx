@@ -426,6 +426,8 @@ export default function DonorFeed() {
         if (cached) {
             setDetail(cached);
             setNotesText(cached?.notes || '');
+            const cachedOffers = Array.isArray(cached?.leverageOffers) ? cached.leverageOffers : [];
+            setLeverageOffers(cachedOffers as LeverageOfferLite[]);
             setDetailLoading(false);
             refreshDafGrants(key).catch(() => {});
             refreshLeverageOffers(key).catch(() => {});
@@ -441,6 +443,8 @@ export default function DonorFeed() {
             if (latestRequestRef.current === key) {
                 setDetail(data);
                 setNotesText(data?.notes || '');
+                const detailOffers = Array.isArray(data?.leverageOffers) ? data.leverageOffers : [];
+                setLeverageOffers(detailOffers as LeverageOfferLite[]);
                 setDetailLoading(false);
                 refreshDafGrants(key).catch(() => {});
                 refreshLeverageOffers(key).catch(() => {});
