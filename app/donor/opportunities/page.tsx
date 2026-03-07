@@ -147,7 +147,7 @@ function sourceLabel(source: OpportunityRow['source']) {
 function ScoreRing({ score }: { score: number }) {
     const clamped = Math.max(0, Math.min(100, Math.round(score)));
     const radius = 29;
-    const stroke = 5;
+    const stroke = 3.5;
     const circumference = 2 * Math.PI * radius;
     const dashOffset = circumference - (clamped / 100) * circumference;
 
@@ -827,7 +827,7 @@ export default function DonorFeed() {
                 >
                     <Loader2 size={18} className="animate-spin text-sky-300" />
                     <div>
-                        <div className="text-sm font-medium text-[var(--text-primary)]">Pulling data from Charity source...</div>
+                        <div className="text-sm font-medium text-[var(--text-primary)]">Pulling data from Charidy source...</div>
                         <div className="text-xs text-[var(--text-secondary)] mt-0.5">Refreshing curated opportunities and funding context</div>
                     </div>
                 </motion.div>

@@ -55,11 +55,11 @@ export async function POST(
   } else if (action === 'launch_campaign') {
     nextStatus = 'in_campaign';
     eventType = 'leverage_campaign_started';
-    note = 'Challenge campaign launched on Charity platform (demo sync).';
+    note = 'Challenge campaign launched on Charidy platform (demo sync).';
   } else if (action === 'mark_goal_reached') {
     nextStatus = 'goal_reached';
     eventType = 'leverage_goal_reached';
-    note = 'Charity campaign reached target (demo sync). Donor can proceed to fund.';
+    note = 'Charidy campaign reached target (demo sync). Donor can proceed to fund.';
   } else if (action === 'release_funds') {
     nextStatus = 'released';
     eventType = 'leverage_released';

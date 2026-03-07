@@ -263,7 +263,7 @@ function humanizeLeverageStatus(value: unknown) {
         created: 'Pending organization response',
         sent: 'Pending organization response',
         accepted: 'Accepted by organization',
-        in_campaign: 'Campaign live on Charity',
+        in_campaign: 'Campaign live on Charidy',
         goal_reached: 'Goal reached - ready for donor funding',
         released: 'Completed',
         canceled: 'Declined or canceled',
@@ -315,6 +315,24 @@ function taskIcon(task: TaskItem) {
     if (task.id === 'challenge-pending') return <Sparkles size={16} className="text-amber-400" />;
     return <Clock3 size={16} className="text-amber-400" />;
 }
+
+const CHARIDY_SETUP_STAGES = [
+    {
+        id: 'stage-1',
+        title: 'Create Campaign',
+        description: 'Start by creating your campaign shell in Charidy with your challenge goal, campaign title, and short story.',
+    },
+    {
+        id: 'stage-2',
+        title: 'Configure Matching Logic',
+        description: 'Set your challenge structure: donor anchor, target, campaign timeline, and matching trigger conditions.',
+    },
+    {
+        id: 'stage-3',
+        title: 'Launch and Share',
+        description: 'Publish the campaign, track progress to goal, and coordinate updates so donors know when it is ready for funding handoff.',
+    },
+] as const;
 
 /* ─── More-info inline form ─── */
 type UploadedFile = { name: string; url: string; size: number; type: string };
@@ -570,7 +588,8 @@ export default function RequestDetailPage() {
     const [challengeModalOpen, setChallengeModalOpen] = useState(false);
     const [challengeSubmitting, setChallengeSubmitting] = useState(false);
     const [challengeError, setChallengeError] = useState('');
-    const [challengeSyncing, setChallengeSyncing] = useState(false);
+    const [charidyGuideOpen, setCharidyGuideOpen] = useState(false);
+    const [charidyStageIndex, setCharidyStageIndex] = useState(0);
 
     const load = useCallback(async () => {
         try {
@@ -853,13 +872,12 @@ export default function RequestDetailPage() {
         }
     };
 
-    const runCharitySync = async () => {
-        if (challengeSubmitting || challengeSyncing) return;
-        setChallengeSyncing(true);
-        setChallengeError('');
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+    const continueToCharidy = async () => {
+        if (challengeSubmitting) return;
         await submitChallengeAction('launch_campaign');
-        setChallengeSyncing(false);
+        setCharidyGuideOpen(false);
+        setChallengeModalOpen(false);
+        window.open('https://www.charidy.com/', '_blank', 'noopener,noreferrer');
     };
 
     /* Documents check */
@@ -1185,42 +1203,37 @@ export default function RequestDetailPage() {
                                     <Button
                                         variant="gold"
                                         size="sm"
-                                        isLoading={challengeSubmitting && !challengeSyncing}
+                                        isLoading={challengeSubmitting}
                                         onClick={() => submitChallengeAction('accept')}
-                                        disabled={challengeSyncing || ['accepted', 'in_campaign', 'goal_reached', 'released'].includes(String(latestLeverage.status || '').toLowerCase())}
+                                        disabled={['accepted', 'in_campaign', 'goal_reached', 'released'].includes(String(latestLeverage.status || '').toLowerCase())}
                                     >
                                         Accept Challenge
                                     </Button>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        isLoading={challengeSubmitting && challengeSyncing}
-                                        onClick={runCharitySync}
-                                        disabled={!['accepted', 'in_campaign'].includes(String(latestLeverage.status || '').toLowerCase()) || challengeSubmitting || challengeSyncing}
-                                    >
-                                        {challengeSyncing ? 'Syncing Charity (2s)...' : 'Open Charity Campaign Setup'}
-                                    </Button>
-                                    <a
-                                        href="https://charitywater.org"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
-                                    >
-                                        <ExternalLink size={12} />
-                                        Jump to campaign execution
-                                    </a>
+                                    {['accepted', 'in_campaign', 'goal_reached', 'released'].includes(String(latestLeverage.status || '').toLowerCase()) && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setCharidyStageIndex(0);
+                                                setCharidyGuideOpen(true);
+                                            }}
+                                            disabled={challengeSubmitting}
+                                        >
+                                            Open Charidy Campaign Setup
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="outline"
                                         size="sm"
                                         onClick={() => submitChallengeAction('decline')}
-                                        disabled={challengeSubmitting || challengeSyncing || ['goal_reached', 'released', 'canceled', 'cancelled', 'expired'].includes(String(latestLeverage.status || '').toLowerCase())}
+                                        disabled={challengeSubmitting || ['goal_reached', 'released', 'canceled', 'cancelled', 'expired'].includes(String(latestLeverage.status || '').toLowerCase())}
                                     >
                                         Decline
                                     </Button>
                                 </div>
 
                                 <div className="rounded-lg border border-[rgba(212,175,55,0.2)] bg-[rgba(212,175,55,0.06)] p-3">
-                                    <div className="text-xs uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Charity Sync Panel (Demo)</div>
+                                    <div className="text-xs uppercase tracking-wider text-[var(--text-tertiary)] mb-1">Charidy Sync Panel (Demo)</div>
                                     <div className="text-sm text-[var(--text-secondary)]">
                                         Stages: campaign created {'->'} in campaign {'->'} goal reached.
                                     </div>
@@ -1230,12 +1243,96 @@ export default function RequestDetailPage() {
                                     type="button"
                                     onClick={() => submitChallengeAction('mark_goal_reached')}
                                     className="text-[11px] text-[var(--text-tertiary)] hover:text-[var(--color-gold)] transition-colors"
-                                    disabled={challengeSubmitting || challengeSyncing}
+                                    disabled={challengeSubmitting}
                                 >
                                     Jump to next phase (demo): mark as goal reached
                                 </button>
 
                                 {challengeError && <div className="text-sm text-red-300">{challengeError}</div>}
+                            </Card>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Charidy setup carousel modal ── */}
+            <AnimatePresence>
+                {charidyGuideOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[60] flex items-start justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-6"
+                        onClick={(e) => { if (e.target === e.currentTarget) setCharidyGuideOpen(false); }}
+                    >
+                        <motion.div
+                            initial={{ opacity: 0, y: 18, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 18, scale: 0.98 }}
+                            className="w-full max-w-2xl my-8"
+                        >
+                            <Card className="p-6 md:p-8 space-y-5">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-xl font-medium text-[var(--text-primary)]">Charidy Campaign Setup</h3>
+                                    <button
+                                        type="button"
+                                        onClick={() => setCharidyGuideOpen(false)}
+                                        className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                                    >
+                                        <XIcon size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="rounded-xl border border-[rgba(212,175,55,0.25)] bg-[rgba(212,175,55,0.06)] p-6 min-h-[220px] flex flex-col justify-between">
+                                    <div>
+                                        <div className="text-xs uppercase tracking-widest text-[var(--text-tertiary)] mb-2">
+                                            Stage {charidyStageIndex + 1} of {CHARIDY_SETUP_STAGES.length}
+                                        </div>
+                                        <h4 className="text-2xl font-light text-[var(--text-primary)] mb-3">
+                                            {CHARIDY_SETUP_STAGES[charidyStageIndex].title}
+                                        </h4>
+                                        <p className="text-[15px] leading-relaxed text-[var(--text-secondary)]">
+                                            {CHARIDY_SETUP_STAGES[charidyStageIndex].description}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-5">
+                                        {CHARIDY_SETUP_STAGES.map((stage, idx) => (
+                                            <span
+                                                key={stage.id}
+                                                className={`h-2 rounded-full transition-all ${idx === charidyStageIndex ? 'w-8 bg-[var(--color-gold)]' : 'w-2 bg-[rgba(255,255,255,0.25)]'}`}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between gap-3">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setCharidyStageIndex((i) => Math.max(0, i - 1))}
+                                        disabled={charidyStageIndex === 0}
+                                    >
+                                        Previous
+                                    </Button>
+                                    {charidyStageIndex < CHARIDY_SETUP_STAGES.length - 1 ? (
+                                        <Button
+                                            variant="gold"
+                                            size="sm"
+                                            onClick={() => setCharidyStageIndex((i) => Math.min(CHARIDY_SETUP_STAGES.length - 1, i + 1))}
+                                        >
+                                            Next Stage
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant="gold"
+                                            size="sm"
+                                            isLoading={challengeSubmitting}
+                                            onClick={continueToCharidy}
+                                        >
+                                            Continue to Charidy
+                                        </Button>
+                                    )}
+                                </div>
                             </Card>
                         </motion.div>
                     </motion.div>
@@ -1410,7 +1507,15 @@ export default function RequestDetailPage() {
                                         >
                                             <div className="min-w-0">
                                                 <div className="text-sm font-medium text-[var(--text-primary)]">{task.label}</div>
-                                                <div className="text-xs text-[var(--text-tertiary)] mt-0.5">{task.description}</div>
+                                                <div
+                                                    className={`text-xs mt-0.5 ${
+                                                        task.id === 'challenge-pending'
+                                                            ? 'text-[rgba(255,255,255,0.82)]'
+                                                            : 'text-[var(--text-tertiary)]'
+                                                    }`}
+                                                >
+                                                    {task.description}
+                                                </div>
                                             </div>
                                             <ChevronRight size={18} className="text-[var(--text-tertiary)] shrink-0 ml-3" />
                                         </button>

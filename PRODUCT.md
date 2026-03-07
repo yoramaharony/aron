@@ -441,6 +441,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Fixed `/api/leverage-offers` timestamp serialization to use `toIsoTime` (instead of raw `new Date(...).toISOString()`), preventing `RangeError: Invalid time value` for legacy/demo timestamp formats and restoring challenge-state fetch reliability
 - [x] Added org-side challenge action flow: new `POST /api/requestor/requests/[id]/challenge` route supports `accept`, `decline`, `launch_campaign`, and `mark_goal_reached`, persisting leverage status transitions and donor event logs
 - [x] Requestor Tasks now has actionable challenge modal with summary, accept/decline controls, "Jump to campaign execution" link, a demo Charity sync panel, and hidden "Jump to next phase" control for rapid walkthroughs
+- [x] Refined challenge UX polish: thinner donor concierge score ring, brighter challenge subtitle text in org tasks, and copy normalization from "Charity" to "Charidy"
+- [x] Requestor challenge flow now gates `Open Charidy Campaign Setup` until after acceptance and opens a staged Charidy setup carousel with `Continue to Charidy` handoff
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`
