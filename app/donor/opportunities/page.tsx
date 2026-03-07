@@ -300,13 +300,15 @@ export default function DonorFeed() {
     const router = useRouter();
     const { lastOpportunityUpdate, openLeverageDrawer } = useLeverage();
 
-    const stateToTab = (s: string): 'discover' | 'passed' => {
-        if (s === 'passed') return 'passed';
+    const rowToTab = (row: OpportunityRow): 'discover' | 'passed' => {
+        // Challenge flow should stay visible in Discover even if historical state was "passed".
+        if (row.progressBadge === 'challenge_pending') return 'discover';
+        if (row.state === 'passed') return 'passed';
         return 'discover';
     };
 
     const filterRows = (all: OpportunityRow[], tab: 'discover' | 'passed') =>
-        all.filter((r) => stateToTab(r.state) === tab);
+        all.filter((r) => rowToTab(r) === tab);
 
     const nextKeyAfter = (list: OpportunityRow[], currentKey: string) => {
         if (!list.length) return null;

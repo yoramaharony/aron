@@ -446,6 +446,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Updated Jewish-theme curated seed item `charidy_11` funding gap from `$5K` to `$55K` to avoid low-amount edge-case ambiguity in demos
 - [x] Converted donor leverage structuring experience from right-side drawer to centered modal container (including confirm step), improving readability for multi-step challenge setup
 - [x] Added leverage multiplier controls for match mode (`1x`, `2x`, `3x`) so donors can set terms like “raise $100K, release $200K” while preserving existing cover-remainder path
+- [x] Discovery visibility fix: opportunities with active `challenge_pending` status now stay in Discover (even if a legacy state row is `passed`) so donors can track challenge progress with the dedicated challenge chip
+- [x] Added persistent Cursor project bible rule at `.cursor/rules/project-bible.mdc` to enforce workflow expectations (read/update `PRODUCT.md`, then commit completed changes)
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`

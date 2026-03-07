@@ -1,0 +1,14 @@
+---
+description: Project bible workflow rules
+alwaysApply: true
+---
+
+# Aron Project Bible
+
+Follow these rules on every task in this repository:
+
+1. Read `PRODUCT.md` before making changes.
+2. Update `PRODUCT.md` after completing changes.
+3. Commit every completed change set before handoff.
+
+When possible, keep commit messages clear and tied to user-visible outcomes.

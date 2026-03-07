@@ -33,7 +33,7 @@ export function LeverageDrawer() {
                         className="fixed inset-0 z-[101] p-4 sm:p-6 flex items-center justify-center"
                     >
                         <div
-                            className="w-full max-w-[760px] max-h-[92vh] rounded-2xl shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-hidden border border-[rgba(255,255,255,0.12)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb),0.10),transparent_55%),linear-gradient(180deg,rgba(8,8,14,0.98),rgba(6,6,10,0.96))]"
+                            className="w-full max-w-[760px] max-h-[92vh] rounded-2xl shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border border-[rgba(255,255,255,0.12)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb),0.10),transparent_55%),linear-gradient(180deg,rgba(8,8,14,0.98),rgba(6,6,10,0.96))]"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <LeverageForm onClose={closeLeverageDrawer} opportunity={activeOpportunity} onCreate={createOffer} />
@@ -202,15 +202,15 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     }
 
     return (
-            <div className="flex flex-col h-full min-h-[660px]">
+        <div className="min-h-[660px]">
             {/* Header */}
-            <div className="p-6 border-b border-[rgba(255,255,255,0.10)] flex justify-between items-center sticky top-0 bg-[rgba(10,10,16,0.88)] backdrop-blur z-10">
+            <div className="p-6 border-b border-[rgba(255,255,255,0.10)] flex justify-between items-center">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Structure Leverage</h2>
                 <button onClick={onClose} className="p-2 hover:bg-[rgba(255,255,255,0.06)] rounded-full"><X size={20} /></button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-6 space-y-8 overflow-y-auto">
+            <div className="p-6 space-y-8">
 
                 {/* Section A: Brief */}
                 <div className="space-y-3">
@@ -259,7 +259,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                 onClick={() => setMatchMode('match')}
                                 className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'match' ? 'bg-[rgba(var(--accent-rgb), 0.12)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
                             >
-                                Match Me (1:1)
+                                Match Me
                             </button>
                             <button
                                 onClick={() => setMatchMode('remainder')}
@@ -279,10 +279,10 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                             key={ratio}
                                             type="button"
                                             onClick={() => setMatchMultiplier(ratio as 1 | 2 | 3)}
-                                            className={`py-2 text-xs font-bold rounded-md border transition-all ${
+                                            className={`px-3 py-2.5 rounded-lg text-sm font-semibold transition-all border focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb),0.22)] ${
                                                 matchMultiplier === ratio
-                                                    ? 'bg-[rgba(var(--accent-rgb),0.16)] border-[rgba(var(--accent-rgb),0.35)] text-[var(--text-primary)]'
-                                                    : 'border-[rgba(255,255,255,0.12)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                                                    ? 'bg-[rgba(var(--accent-rgb),0.20)] text-[var(--text-primary)] border-[rgba(var(--accent-rgb),0.35)] shadow-[0_18px_50px_-34px_rgba(var(--accent-rgb),0.9)]'
+                                                    : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:text-[var(--text-primary)]'
                                             }`}
                                         >
                                             {ratio}x
@@ -294,8 +294,13 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                 </div>
                             </div>
                         )}
-                        <div className="mt-3 text-sm text-[var(--text-secondary)] bg-[rgba(var(--accent-rgb), 0.08)] p-3 rounded border border-[rgba(var(--accent-rgb), 0.18)]">
-                            Required to raise: <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span>
+                        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                            <div className="bg-[rgba(var(--accent-rgb), 0.08)] p-3 rounded border border-[rgba(var(--accent-rgb), 0.18)]">
+                                Required to raise: <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span>
+                            </div>
+                            <div className="bg-[rgba(255,255,255,0.04)] p-3 rounded border border-[rgba(255,255,255,0.14)]">
+                                You release: <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>{matchMode === 'match' ? ` (${matchMultiplier}x)` : ''}
+                            </div>
                         </div>
                     </div>
 
@@ -389,7 +394,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t bg-[var(--bg-surface)] sticky bottom-0">
+            <div className="p-6 border-t bg-[var(--bg-surface)]">
                 {/* Live Summary */}
                 <div className="mb-4 text-sm leading-relaxed text-[var(--text-secondary)] bg-[rgba(255,255,255,0.03)] p-3 rounded border border-[rgba(255,255,255,0.10)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)]">
                     Commit <span className="font-bold text-[var(--text-primary)]">${anchor.toLocaleString()}</span> now.
