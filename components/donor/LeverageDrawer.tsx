@@ -24,15 +24,20 @@ export function LeverageDrawer() {
                         className="fixed inset-0 bg-black/85 z-[100] backdrop-blur-[6px]"
                     />
 
-                    {/* Drawer */}
+                    {/* Modal */}
                     <motion.div
-                        initial={{ x: '100%' }}
-                        animate={{ x: 0 }}
-                        exit={{ x: '100%' }}
-                        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                        className="fixed right-0 top-0 bottom-0 w-full max-w-[500px] z-[101] shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-y-auto border-l border-[rgba(255,255,255,0.12)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb), 0.10),transparent_55%),linear-gradient(180deg,rgba(8,8,14,0.98),rgba(6,6,10,0.96))]"
+                        initial={{ opacity: 0, y: 24, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 24, scale: 0.98 }}
+                        transition={{ type: 'spring', damping: 24, stiffness: 220 }}
+                        className="fixed inset-0 z-[101] p-4 sm:p-6 flex items-center justify-center"
                     >
-                        <LeverageForm onClose={closeLeverageDrawer} opportunity={activeOpportunity} onCreate={createOffer} />
+                        <div
+                            className="w-full max-w-[760px] max-h-[92vh] rounded-2xl shadow-[0_40px_120px_-70px_rgba(0,0,0,0.9)] overflow-hidden border border-[rgba(255,255,255,0.12)] bg-[radial-gradient(900px_500px_at_20%_0%,rgba(var(--accent-rgb),0.10),transparent_55%),linear-gradient(180deg,rgba(8,8,14,0.98),rgba(6,6,10,0.96))]"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <LeverageForm onClose={closeLeverageDrawer} opportunity={activeOpportunity} onCreate={createOffer} />
+                        </div>
                     </motion.div>
                 </>
             )}
@@ -43,6 +48,7 @@ export function LeverageDrawer() {
 function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void, opportunity: any, onCreate: (o: LeverageOffer) => void }) {
     const [anchor, setAnchor] = useState<number>(100000);
     const [matchMode, setMatchMode] = useState<'match' | 'remainder'>('match');
+    const [matchMultiplier, setMatchMultiplier] = useState<1 | 2 | 3>(1);
     const deadlineRef = useRef<HTMLInputElement | null>(null);
     const [deadline, setDeadline] = useState<string>(() => {
         const d = new Date();
@@ -62,10 +68,10 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
         ? anchor
         : Math.max(0, opportunity.fundingGap - anchor);
 
-    const topUpAmount = matchMode === 'match' ? anchor : challengeGoal; // Simplified 1:1 logic
+    const topUpAmount = matchMode === 'match' ? anchor * matchMultiplier : challengeGoal;
     const totalDeployed = anchor + topUpAmount;
 
-    const matchModeLabel = matchMode === 'match' ? 'Match Me (1:1)' : 'Cover Remainder';
+    const matchModeLabel = matchMode === 'match' ? `Match Me (${matchMultiplier}:1)` : 'Cover Remainder';
     const deadlineLabel = (() => {
         try {
             if (!deadline) return '—';
@@ -95,7 +101,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
             anchorAmount: anchor,
             challengeGoal: challengeGoal,
             topUpCap: topUpAmount,
-            matchRatio: 1,
+            matchRatio: matchMode === 'match' ? matchMultiplier : 1,
             deadline: deadline,
             terms: {
                 proofRequired,
@@ -120,7 +126,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     challengeGoal: offer.challengeGoal,
                     topUpCap: offer.topUpCap,
                     deadline: offer.deadline,
-                    terms: offer.terms,
+                    terms: { ...offer.terms, matchMultiplier },
                 }),
             });
             const data = await res.json().catch(() => ({}));
@@ -137,7 +143,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
 
     if (showConfirm) {
         return (
-            <div className="h-full flex flex-col p-8">
+            <div className="h-full min-h-[660px] flex flex-col p-8">
                 <Button variant="ghost" className="self-start -ml-4 mb-4" onClick={() => setShowConfirm(false)}>Back</Button>
                 <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6">
                     <div className="w-16 h-16 rounded-full bg-[var(--color-gold)]/20 text-[var(--color-gold)] flex items-center justify-center">
@@ -172,7 +178,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Terms</span>
                             <span className="font-bold text-right">
-                                {proofRequired ? 'Verification required' : 'No verification'}{milestones ? ' • Milestones 50/50' : ''}
+                                {proofRequired ? 'Verification required' : 'No verification'}{milestones ? ' • Milestones 50/50' : ''}{matchMode === 'match' ? ` • ${matchMultiplier}:1 multiplier` : ''}
                             </span>
                         </div>
                         <div className="border-t pt-2 mt-2 flex justify-between text-lg">
@@ -196,7 +202,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     }
 
     return (
-        <div className="flex flex-col h-full">
+            <div className="flex flex-col h-full min-h-[660px]">
             {/* Header */}
             <div className="p-6 border-b border-[rgba(255,255,255,0.10)] flex justify-between items-center sticky top-0 bg-[rgba(10,10,16,0.88)] backdrop-blur z-10">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)]">Structure Leverage</h2>
@@ -262,6 +268,32 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                 Cover Remainder
                             </button>
                         </div>
+                        {matchMode === 'match' && (
+                            <div className="mt-3">
+                                <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">
+                                    Multiplier (your released amount)
+                                </label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {[1, 2, 3].map((ratio) => (
+                                        <button
+                                            key={ratio}
+                                            type="button"
+                                            onClick={() => setMatchMultiplier(ratio as 1 | 2 | 3)}
+                                            className={`py-2 text-xs font-bold rounded-md border transition-all ${
+                                                matchMultiplier === ratio
+                                                    ? 'bg-[rgba(var(--accent-rgb),0.16)] border-[rgba(var(--accent-rgb),0.35)] text-[var(--text-primary)]'
+                                                    : 'border-[rgba(255,255,255,0.12)] text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'
+                                            }`}
+                                        >
+                                            {ratio}x
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="mt-2 text-xs text-[var(--text-tertiary)]">
+                                    Example: 2x means if they raise ${challengeGoal.toLocaleString()}, you release ${topUpAmount.toLocaleString()}.
+                                </div>
+                            </div>
+                        )}
                         <div className="mt-3 text-sm text-[var(--text-secondary)] bg-[rgba(var(--accent-rgb), 0.08)] p-3 rounded border border-[rgba(var(--accent-rgb), 0.18)]">
                             Required to raise: <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span>
                         </div>
@@ -362,7 +394,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                 <div className="mb-4 text-sm leading-relaxed text-[var(--text-secondary)] bg-[rgba(255,255,255,0.03)] p-3 rounded border border-[rgba(255,255,255,0.10)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)]">
                     Commit <span className="font-bold text-[var(--text-primary)]">${anchor.toLocaleString()}</span> now.
                     If they raise <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span> by {deadline},
-                    we release <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>.
+                    we release <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>{matchMode === 'match' ? ` (${matchMultiplier}x)` : ''}.
                 </div>
 
                 <div className="flex gap-3">

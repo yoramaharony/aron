@@ -443,6 +443,9 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Requestor Tasks now has actionable challenge modal with summary, accept/decline controls, "Jump to campaign execution" link, a demo Charity sync panel, and hidden "Jump to next phase" control for rapid walkthroughs
 - [x] Refined challenge UX polish: thinner donor concierge score ring, brighter challenge subtitle text in org tasks, and copy normalization from "Charity" to "Charidy"
 - [x] Requestor challenge flow now gates `Open Charidy Campaign Setup` until after acceptance and opens a staged Charidy setup carousel with `Continue to Charidy` handoff
+- [x] Updated Jewish-theme curated seed item `charidy_11` funding gap from `$5K` to `$55K` to avoid low-amount edge-case ambiguity in demos
+- [x] Converted donor leverage structuring experience from right-side drawer to centered modal container (including confirm step), improving readability for multi-step challenge setup
+- [x] Added leverage multiplier controls for match mode (`1x`, `2x`, `3x`) so donors can set terms like “raise $100K, release $200K” while preserving existing cover-remainder path
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`

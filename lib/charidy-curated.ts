@@ -124,7 +124,7 @@ export const CHARIDY_CURATED: CuratedOpportunity[] = [
     outcomes: ['400 families receive Yom Tov essentials', 'Rabbinic verification for every family', 'Zero-waste distribution'],
     whyNow: 'Pesach is 10 weeks away; procurement commitments need to be locked in now.',
   },
-  // ── Chesed · Brooklyn (low-budget $5K item) ──
+  // ── Chesed · Brooklyn (raised from $5K for demo clarity) ──
   {
     key: 'charidy_11',
     title: 'After-school snack program (Crown Heights)',
@@ -132,7 +132,7 @@ export const CHARIDY_CURATED: CuratedOpportunity[] = [
     category: 'Chesed / Community support',
     location: 'Brooklyn, NY',
     summary: 'Provide daily after-school snacks and drinks for 60 children at a community learning center run by local volunteers.',
-    fundingGap: 5000,
+    fundingGap: 55000,
     outcomes: ['60 children served daily', '180 school days covered', 'Volunteer coordination support'],
     whyNow: 'Program starts next month; grocery supplier needs a purchase commitment by end of week.',
   },
