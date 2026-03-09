@@ -452,6 +452,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Charidy setup carousel now includes explicit threshold/excess communication before redirect: crossing threshold triggers donor release, and excess raised beyond threshold goes to the organization
 - [x] Refined challenge builder terminology and math for donor clarity: threshold is now `required to raise`, Aron release equals remaining need at threshold, multiplier is treated as Charidy campaign-target guidance, and zero-threshold challenge creation is blocked with inline guidance
 - [x] Anchor is now auto-calculated from organization request (balanced 50% split by default), with dynamic presets (`25/50/75%`) and slider max constrained to preserve a non-zero challenge threshold
+- [x] Simplified donor challenge form to a plain two-option model (donor pays `1/2` or `1/3` now; organization raises the rest), removing slider/preset/multiplier complexity and non-essential sections for faster demo comprehension
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`

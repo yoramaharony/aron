@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState } from 'react';
 import { useLeverage, LeverageOffer } from '@/components/providers/LeverageContext';
 import { Button } from '@/components/ui/Button';
-import { X, Calendar, ChevronRight, CheckCircle2, Check } from 'lucide-react';
+import { X, Calendar, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function LeverageDrawer() {
@@ -52,16 +52,8 @@ function roundToStep(value: number, step = 5000) {
 
 function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void, opportunity: any, onCreate: (o: LeverageOffer) => void }) {
     const fundingGap = Math.max(0, Number(opportunity?.fundingGap || 0));
-    const sliderMin = Math.min(10000, Math.max(1000, fundingGap));
-    const minimumThreshold = Math.min(5000, Math.max(1000, fundingGap));
-    const maxAnchorForChallenge = Math.max(sliderMin, fundingGap - minimumThreshold);
-    const recommendedAnchor = Math.min(
-        maxAnchorForChallenge,
-        Math.max(sliderMin, roundToStep(fundingGap * 0.5)),
-    );
-    const [anchor, setAnchor] = useState<number>(recommendedAnchor);
-    const [matchMode, setMatchMode] = useState<'match' | 'remainder'>('match');
-    const [matchMultiplier, setMatchMultiplier] = useState<1 | 2 | 3>(1);
+    const [plan, setPlan] = useState<'half' | 'third'>('half');
+    const matchMode: 'match' = 'match';
     const deadlineRef = useRef<HTMLInputElement | null>(null);
     const [deadline, setDeadline] = useState<string>(() => {
         const d = new Date();
@@ -69,39 +61,17 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
         return d.toISOString().split('T')[0];
     });
 
-    // Terms
-    const [proofRequired, setProofRequired] = useState(true);
-    const [milestones, setMilestones] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [submitErr, setSubmitErr] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (fundingGap <= 0) return;
-        setAnchor((prev) => Math.min(Math.max(prev, sliderMin), maxAnchorForChallenge));
-    }, [fundingGap, sliderMin, maxAnchorForChallenge]);
-
-    const anchorPresets = (() => {
-        if (fundingGap <= 0) return [sliderMin];
-        const p1 = Math.min(maxAnchorForChallenge, roundToStep(fundingGap * 0.25));
-        const p2 = Math.min(maxAnchorForChallenge, roundToStep(fundingGap * 0.5));
-        const p3 = Math.min(maxAnchorForChallenge, roundToStep(fundingGap * 0.75));
-        return Array.from(new Set([p1, p2, p3])).sort((a, b) => a - b);
-    })();
-
-    // Derived Logic
-    const safeAnchor = Math.min(Math.max(anchor, 0), fundingGap);
-    const remainingNeed = Math.max(0, fundingGap - safeAnchor);
-    // Aron release math is always capped by the org funding gap.
-    // Donor sets an anchor now, then release equals remaining need at threshold.
-    const challengeGoal = remainingNeed;
-    const topUpAmount = remainingNeed;
-    // Multiplier is now campaign ambition guidance for Charidy, not Aron release math.
-    const suggestedCampaignTarget = matchMode === 'match' ? challengeGoal * matchMultiplier : challengeGoal;
-    const totalDeployed = safeAnchor + topUpAmount;
-    const outcomeTotal = totalDeployed;
-
-    const matchModeLabel = matchMode === 'match' ? 'Match Me' : 'Cover Remainder';
+    // Simple model: donor pays now (1/2 or 1/3), organization raises the rest on Charidy.
+    const donorFraction = plan === 'half' ? 0.5 : 1 / 3;
+    const safeAnchor = Math.min(fundingGap, roundToStep(fundingGap * donorFraction, 500));
+    const challengeGoal = Math.max(0, fundingGap - safeAnchor);
+    const topUpAmount = 0;
+    const totalDeployed = safeAnchor;
+    const outcomeTotal = safeAnchor + challengeGoal;
     const deadlineLabel = (() => {
         try {
             if (!deadline) return '—';
@@ -116,11 +86,6 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     const handleCreate = async () => {
         setSubmitting(true);
         setSubmitErr(null);
-        if (challengeGoal <= 0) {
-            setSubmitErr('Set an anchor below the full request amount so a challenge threshold remains.');
-            setSubmitting(false);
-            return;
-        }
         const opportunityKey = String(opportunity.id || opportunity.key || '').trim();
         if (!opportunityKey) {
             setSubmitErr('Missing opportunity key. Please close and reopen this challenge flow.');
@@ -136,11 +101,11 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
             anchorAmount: safeAnchor,
             challengeGoal: challengeGoal,
             topUpCap: topUpAmount,
-            matchRatio: matchMode === 'match' ? matchMultiplier : 1,
+            matchRatio: 1,
             deadline: deadline,
             terms: {
-                proofRequired,
-                milestoneRelease: milestones,
+                proofRequired: true,
+                milestoneRelease: false,
                 quarterlyUpdates: true,
                 namingRights: false,
                 revokeOnMisrep: true
@@ -161,7 +126,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     challengeGoal: offer.challengeGoal,
                     topUpCap: offer.topUpCap,
                     deadline: offer.deadline,
-                    terms: { ...offer.terms, matchMultiplier },
+                    terms: offer.terms,
                 }),
             });
             const data = await res.json().catch(() => ({}));
@@ -200,34 +165,22 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         </div>
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Challenge type</span>
-                            <span className="font-bold">{matchModeLabel}</span>
+                            <span className="font-bold">Organization Raise Challenge</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Condition</span>
                             <span className="font-bold">Raises ${challengeGoal.toLocaleString()}</span>
                         </div>
-                        {matchMode === 'match' && (
-                            <div className="flex justify-between">
-                                <span className="text-[var(--text-secondary)]">Charidy target (guidance)</span>
-                                <span className="font-bold">${suggestedCampaignTarget.toLocaleString()} ({matchMultiplier}x)</span>
-                            </div>
-                        )}
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Deadline</span>
                             <span className="font-bold">{deadlineLabel}</span>
                         </div>
-                        <div className="flex justify-between">
-                            <span className="text-[var(--text-secondary)]">Terms</span>
-                            <span className="font-bold text-right">
-                                {proofRequired ? 'Verification required' : 'No verification'}{milestones ? ' • Milestones 50/50' : ''}{matchMode === 'match' ? ` • ${matchMultiplier}x Charidy target` : ''}
-                            </span>
-                        </div>
                         <div className="border-t pt-2 mt-2 flex justify-between text-lg">
-                            <span className="font-bold">Total Max</span>
-                            <span className="font-bold text-[var(--color-gold)]">${totalDeployed.toLocaleString()}</span>
+                            <span className="font-bold">Total Request Target</span>
+                            <span className="font-bold text-[var(--color-gold)]">${fundingGap.toLocaleString()}</span>
                         </div>
                         <div className="text-xs text-[var(--text-tertiary)] mt-1">
-                            Aron outcome is capped at ${fundingGap.toLocaleString()} (organization request amount).
+                            Donor contributes now; organization is challenged to raise the remaining amount.
                         </div>
                     </div>
 
@@ -270,92 +223,40 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                 <div className="space-y-6">
                     <h3 className="text-sm font-bold uppercase tracking-widest text-[var(--text-secondary)] border-b pb-2">Offer Terms</h3>
 
-                    {/* B1: Anchor */}
+                    {/* Simple contribution plan */}
                     <div>
-                        <label className="block text-sm font-medium mb-3">Anchor Commitment (Now)</label>
-                        <div className="mb-2 text-xs text-[var(--text-tertiary)]">
-                            Recommended anchor: <span className="text-[var(--text-primary)] font-semibold">${recommendedAnchor.toLocaleString()}</span> (balanced split)
-                        </div>
-                        <div className="flex gap-2 mb-3">
-                            {anchorPresets.map(amt => (
-                                <button
-                                    key={amt}
-                                    onClick={() => setAnchor(amt)}
-                                    className={`flex-1 px-3 py-2.5 rounded-lg text-sm font-semibold transition-all border focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22)] ${anchor === amt
-                                        ? 'bg-[rgba(var(--accent-rgb), 0.20)] text-[var(--text-primary)] border-[rgba(var(--accent-rgb), 0.35)] shadow-[0_18px_50px_-34px_rgba(var(--accent-rgb), 0.9)]'
+                        <label className="block text-sm font-medium mb-3">Choose donor contribution plan</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3">
+                            <button
+                                type="button"
+                                onClick={() => setPlan('half')}
+                                className={`px-3 py-3 rounded-lg text-sm font-semibold transition-all border focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb),0.22)] ${
+                                    plan === 'half'
+                                        ? 'bg-[rgba(var(--accent-rgb),0.20)] text-[var(--text-primary)] border-[rgba(var(--accent-rgb),0.35)] shadow-[0_18px_50px_-34px_rgba(var(--accent-rgb),0.9)]'
                                         : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:text-[var(--text-primary)]'
-                                        }`}
-                                >
-                                    ${(amt / 1000).toFixed(0)}k
-                                </button>
-                            ))}
-                        </div>
-                        <input
-                            type="range" min={sliderMin} max={Math.max(sliderMin, maxAnchorForChallenge)} step="5000"
-                            value={anchor} onChange={(e) => setAnchor(Number(e.target.value))}
-                            className="w-full accent-[var(--color-gold)] mb-2"
-                        />
-                        <div className="text-right font-mono font-bold text-lg">${anchor.toLocaleString()}</div>
-                    </div>
-
-                    {/* B2: Goal */}
-                    <div>
-                        <label className="block text-sm font-medium mb-3">Challenge Goal</label>
-                        <div className="grid grid-cols-2 gap-2 p-1 bg-[rgba(255,255,255,0.04)] rounded-lg border border-[rgba(255,255,255,0.10)]">
-                            <button
-                                onClick={() => setMatchMode('match')}
-                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'match' ? 'bg-[rgba(var(--accent-rgb), 0.12)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
+                                }`}
                             >
-                                Match Me
+                                Donor pays half (50%)
                             </button>
                             <button
-                                onClick={() => setMatchMode('remainder')}
-                                className={`py-2 text-xs font-bold rounded-md transition-all ${matchMode === 'remainder' ? 'bg-[rgba(var(--accent-rgb), 0.12)] shadow-[0_0_0_1px_rgba(var(--accent-rgb), 0.25)] text-[var(--text-primary)]' : 'text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]'}`}
+                                type="button"
+                                onClick={() => setPlan('third')}
+                                className={`px-3 py-3 rounded-lg text-sm font-semibold transition-all border focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb),0.22)] ${
+                                    plan === 'third'
+                                        ? 'bg-[rgba(var(--accent-rgb),0.20)] text-[var(--text-primary)] border-[rgba(var(--accent-rgb),0.35)] shadow-[0_18px_50px_-34px_rgba(var(--accent-rgb),0.9)]'
+                                        : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:text-[var(--text-primary)]'
+                                }`}
                             >
-                                Cover Remainder
+                                Donor pays one-third (33%)
                             </button>
                         </div>
-                        {matchMode === 'match' && (
-                            <div className="mt-3">
-                                <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">
-                                    Multiplier (Charidy target guidance)
-                                </label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[1, 2, 3].map((ratio) => (
-                                        <button
-                                            key={ratio}
-                                            type="button"
-                                            onClick={() => setMatchMultiplier(ratio as 1 | 2 | 3)}
-                                            className={`px-3 py-2.5 rounded-lg text-sm font-semibold transition-all border focus:outline-none focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb),0.22)] ${
-                                                matchMultiplier === ratio
-                                                    ? 'bg-[rgba(var(--accent-rgb),0.20)] text-[var(--text-primary)] border-[rgba(var(--accent-rgb),0.35)] shadow-[0_18px_50px_-34px_rgba(var(--accent-rgb),0.9)]'
-                                                    : 'bg-[rgba(255,255,255,0.04)] text-[var(--text-secondary)] border-[rgba(255,255,255,0.10)] hover:bg-[rgba(255,255,255,0.07)] hover:text-[var(--text-primary)]'
-                                            }`}
-                                        >
-                                            {ratio}x
-                                        </button>
-                                    ))}
-                                </div>
-                                <div className="mt-2 text-xs text-[var(--text-tertiary)]">
-                                    Example: 2x suggests a higher Charidy campaign target, while Aron release stays capped to remaining need.
-                                </div>
-                            </div>
-                        )}
                         <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                             <div className="bg-[rgba(var(--accent-rgb), 0.08)] p-3 rounded border border-[rgba(var(--accent-rgb), 0.18)]">
-                                Required to raise: <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span>
+                                Donor pays now: <span className="font-bold text-[var(--text-primary)]">${safeAnchor.toLocaleString()}</span>
                             </div>
                             <div className="bg-[rgba(255,255,255,0.04)] p-3 rounded border border-[rgba(255,255,255,0.14)]">
-                                You release: <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>
+                                Required to raise: <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span>
                             </div>
-                        </div>
-                        {matchMode === 'match' && (
-                            <div className="mt-2 text-xs text-[var(--text-tertiary)]">
-                                Suggested Charidy campaign target: ${suggestedCampaignTarget.toLocaleString()} ({matchMultiplier}x of threshold)
-                            </div>
-                        )}
-                        <div className="mt-2 text-xs text-[var(--text-tertiary)]">
-                            Total Aron outcome at threshold: ${outcomeTotal.toLocaleString()} / ${fundingGap.toLocaleString()} cap
                         </div>
                     </div>
 
@@ -409,40 +310,8 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         </div>
                     </div>
 
-                    {/* Terms */}
-                    <div className="space-y-2 pt-2">
-                        <label className="group flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                checked={proofRequired}
-                                onChange={e => setProofRequired(e.target.checked)}
-                                className="peer sr-only"
-                            />
-                            <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] flex items-center justify-center transition-all group-hover:bg-[rgba(255,255,255,0.06)] peer-checked:bg-[rgba(var(--accent-rgb), 0.22)] peer-checked:border-[rgba(var(--accent-rgb), 0.45)] peer-focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22)] peer-checked:[&>span]:opacity-100 peer-checked:[&>span]:scale-100">
-                                <span className="text-[var(--text-primary)] opacity-0 scale-75 transition-all">
-                                    <Check size={14} strokeWidth={3} />
-                                </span>
-                            </span>
-                            <span className="group-hover:text-[var(--text-primary)] transition-colors">
-                                Require 3rd party verification
-                            </span>
-                        </label>
-                        <label className="group flex items-center gap-3 text-sm text-[var(--text-secondary)] cursor-pointer select-none">
-                            <input
-                                type="checkbox"
-                                checked={milestones}
-                                onChange={e => setMilestones(e.target.checked)}
-                                className="peer sr-only"
-                            />
-                            <span className="h-5 w-5 rounded-md border border-[rgba(255,255,255,0.14)] bg-[rgba(255,255,255,0.04)] flex items-center justify-center transition-all group-hover:bg-[rgba(255,255,255,0.06)] peer-checked:bg-[rgba(var(--accent-rgb), 0.22)] peer-checked:border-[rgba(var(--accent-rgb), 0.45)] peer-focus-visible:shadow-[0_0_0_3px_rgba(var(--accent-rgb), 0.22)] peer-checked:[&>span]:opacity-100 peer-checked:[&>span]:scale-100">
-                                <span className="text-[var(--text-primary)] opacity-0 scale-75 transition-all">
-                                    <Check size={14} strokeWidth={3} />
-                                </span>
-                            </span>
-                            <span className="group-hover:text-[var(--text-primary)] transition-colors">
-                                Release in milestones (50/50)
-                            </span>
-                        </label>
+                    <div className="rounded-lg border border-[rgba(212,175,55,0.2)] bg-[rgba(212,175,55,0.06)] p-3 text-xs text-[var(--text-secondary)]">
+                        Total target remains ${fundingGap.toLocaleString()}. If the organization raises the required amount by the deadline, the request is considered fulfilled.
                     </div>
 
                 </div>
@@ -454,20 +323,15 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                 <div className="mb-4 text-sm leading-relaxed text-[var(--text-secondary)] bg-[rgba(255,255,255,0.03)] p-3 rounded border border-[rgba(255,255,255,0.10)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)]">
                     Commit <span className="font-bold text-[var(--text-primary)]">${safeAnchor.toLocaleString()}</span> now.
                     If they raise <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span> by {deadline},
-                    we release <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>.
+                    the organization reaches the full ${outcomeTotal.toLocaleString()} request target.
                 </div>
 
                 <div className="flex gap-3">
                     <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
-                    <Button variant="gold" className="flex-[2]" onClick={() => setShowConfirm(true)} disabled={challengeGoal <= 0}>
+                    <Button variant="gold" className="flex-[2]" onClick={() => setShowConfirm(true)}>
                         Create Offer
                     </Button>
                 </div>
-                {challengeGoal <= 0 ? (
-                    <div className="mt-2 text-xs text-amber-300">
-                        Reduce your anchor amount to create a challenge threshold.
-                    </div>
-                ) : null}
             </div>
         </div>
     );
