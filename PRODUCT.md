@@ -448,6 +448,8 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Added leverage multiplier controls for match mode (`1x`, `2x`, `3x`) so donors can set terms like “raise $100K, release $200K” while preserving existing cover-remainder path
 - [x] Discovery visibility fix: opportunities with active `challenge_pending` status now stay in Discover (even if a legacy state row is `passed`) so donors can track challenge progress with the dedicated challenge chip
 - [x] Added persistent Cursor project bible rule at `.cursor/rules/project-bible.mdc` to enforce workflow expectations (read/update `PRODUCT.md`, then commit completed changes)
+- [x] Challenge form now enforces strict cap math against organization funding gap: anchor is clamped to gap, dynamic presets are derived from gap, and computed challenge outcome/release cannot exceed requested amount
+- [x] Charidy setup carousel now includes explicit threshold/excess communication before redirect: crossing threshold triggers donor release, and excess raised beyond threshold goes to the organization
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`

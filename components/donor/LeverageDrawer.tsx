@@ -45,8 +45,15 @@ export function LeverageDrawer() {
     );
 }
 
+function roundToStep(value: number, step = 5000) {
+    if (!Number.isFinite(value)) return step;
+    return Math.max(step, Math.round(value / step) * step);
+}
+
 function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void, opportunity: any, onCreate: (o: LeverageOffer) => void }) {
-    const [anchor, setAnchor] = useState<number>(100000);
+    const fundingGap = Math.max(0, Number(opportunity?.fundingGap || 0));
+    const sliderMin = Math.min(10000, Math.max(1000, fundingGap));
+    const [anchor, setAnchor] = useState<number>(Math.min(100000, Math.max(sliderMin, fundingGap || 100000)));
     const [matchMode, setMatchMode] = useState<'match' | 'remainder'>('match');
     const [matchMultiplier, setMatchMultiplier] = useState<1 | 2 | 3>(1);
     const deadlineRef = useRef<HTMLInputElement | null>(null);
@@ -63,13 +70,30 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     const [submitting, setSubmitting] = useState(false);
     const [submitErr, setSubmitErr] = useState<string | null>(null);
 
-    // Derived Logic
-    const challengeGoal = matchMode === 'match'
-        ? anchor
-        : Math.max(0, opportunity.fundingGap - anchor);
+    useEffect(() => {
+        if (fundingGap <= 0) return;
+        setAnchor((prev) => Math.min(Math.max(prev, sliderMin), fundingGap));
+    }, [fundingGap, sliderMin]);
 
-    const topUpAmount = matchMode === 'match' ? anchor * matchMultiplier : challengeGoal;
-    const totalDeployed = anchor + topUpAmount;
+    const anchorPresets = (() => {
+        if (fundingGap <= 0) return [sliderMin];
+        const p1 = Math.min(fundingGap, roundToStep(fundingGap * 0.33));
+        const p2 = Math.min(fundingGap, roundToStep(fundingGap * 0.66));
+        const p3 = fundingGap;
+        return Array.from(new Set([p1, p2, p3])).sort((a, b) => a - b);
+    })();
+
+    // Derived Logic
+    const safeAnchor = Math.min(Math.max(anchor, 0), fundingGap);
+    const remainingNeed = Math.max(0, fundingGap - safeAnchor);
+    const challengeGoal = matchMode === 'match'
+        ? safeAnchor
+        : remainingNeed;
+    const rawTopUpAmount = matchMode === 'match' ? challengeGoal * matchMultiplier : challengeGoal;
+    const maxTopUpAllowed = Math.max(0, fundingGap - challengeGoal);
+    const topUpAmount = Math.min(rawTopUpAmount, maxTopUpAllowed);
+    const totalDeployed = safeAnchor + topUpAmount;
+    const outcomeTotal = challengeGoal + topUpAmount;
 
     const matchModeLabel = matchMode === 'match' ? `Match Me (${matchMultiplier}:1)` : 'Cover Remainder';
     const deadlineLabel = (() => {
@@ -98,7 +122,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
             opportunityTitle: opportunity.title,
             opportunityOrg: opportunity.orgName,
             askAmount: opportunity.fundingGap,
-            anchorAmount: anchor,
+            anchorAmount: safeAnchor,
             challengeGoal: challengeGoal,
             topUpCap: topUpAmount,
             matchRatio: matchMode === 'match' ? matchMultiplier : 1,
@@ -161,7 +185,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         <div className="border-t border-[rgba(255,255,255,0.10)] pt-3 mt-3" />
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Anchor (Pay Now)</span>
-                            <span className="font-bold">${anchor.toLocaleString()}</span>
+                            <span className="font-bold">${safeAnchor.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Challenge type</span>
@@ -184,6 +208,9 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         <div className="border-t pt-2 mt-2 flex justify-between text-lg">
                             <span className="font-bold">Total Max</span>
                             <span className="font-bold text-[var(--color-gold)]">${totalDeployed.toLocaleString()}</span>
+                        </div>
+                        <div className="text-xs text-[var(--text-tertiary)] mt-1">
+                            Campaign outcome is capped at ${fundingGap.toLocaleString()} (organization request amount).
                         </div>
                     </div>
 
@@ -230,7 +257,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     <div>
                         <label className="block text-sm font-medium mb-3">Anchor Commitment (Now)</label>
                         <div className="flex gap-2 mb-3">
-                            {[50000, 100000, 250000].map(amt => (
+                            {anchorPresets.map(amt => (
                                 <button
                                     key={amt}
                                     onClick={() => setAnchor(amt)}
@@ -244,7 +271,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                             ))}
                         </div>
                         <input
-                            type="range" min="10000" max={opportunity.fundingGap} step="5000"
+                            type="range" min={sliderMin} max={Math.max(sliderMin, fundingGap)} step="5000"
                             value={anchor} onChange={(e) => setAnchor(Number(e.target.value))}
                             className="w-full accent-[var(--color-gold)] mb-2"
                         />
@@ -290,7 +317,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                     ))}
                                 </div>
                                 <div className="mt-2 text-xs text-[var(--text-tertiary)]">
-                                    Example: 2x means if they raise ${challengeGoal.toLocaleString()}, you release ${topUpAmount.toLocaleString()}.
+                                    Example: 2x means release is capped so total outcome never exceeds ${fundingGap.toLocaleString()}.
                                 </div>
                             </div>
                         )}
@@ -301,6 +328,9 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                             <div className="bg-[rgba(255,255,255,0.04)] p-3 rounded border border-[rgba(255,255,255,0.14)]">
                                 You release: <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>{matchMode === 'match' ? ` (${matchMultiplier}x)` : ''}
                             </div>
+                        </div>
+                        <div className="mt-2 text-xs text-[var(--text-tertiary)]">
+                            Total campaign outcome at threshold: ${outcomeTotal.toLocaleString()} / ${fundingGap.toLocaleString()} cap
                         </div>
                     </div>
 
@@ -397,7 +427,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
             <div className="p-6 border-t bg-[var(--bg-surface)]">
                 {/* Live Summary */}
                 <div className="mb-4 text-sm leading-relaxed text-[var(--text-secondary)] bg-[rgba(255,255,255,0.03)] p-3 rounded border border-[rgba(255,255,255,0.10)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)]">
-                    Commit <span className="font-bold text-[var(--text-primary)]">${anchor.toLocaleString()}</span> now.
+                    Commit <span className="font-bold text-[var(--text-primary)]">${safeAnchor.toLocaleString()}</span> now.
                     If they raise <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span> by {deadline},
                     we release <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>{matchMode === 'match' ? ` (${matchMultiplier}x)` : ''}.
                 </div>

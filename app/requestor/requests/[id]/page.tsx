@@ -330,7 +330,7 @@ const CHARIDY_SETUP_STAGES = [
     {
         id: 'stage-3',
         title: 'Launch and Share',
-        description: 'Publish the campaign, track progress to goal, and coordinate updates so donors know when it is ready for funding handoff.',
+        description: 'Publish the campaign, track progress to threshold, and coordinate updates so donor release is triggered when threshold is reached.',
     },
 ] as const;
 
@@ -1323,14 +1323,21 @@ export default function RequestDetailPage() {
                                             Next Stage
                                         </Button>
                                     ) : (
-                                        <Button
-                                            variant="gold"
-                                            size="sm"
-                                            isLoading={challengeSubmitting}
-                                            onClick={continueToCharidy}
-                                        >
-                                            Continue to Charidy
-                                        </Button>
+                                        <div className="w-full space-y-3">
+                                            <div className="rounded-lg border border-[rgba(212,175,55,0.25)] bg-[rgba(212,175,55,0.08)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+                                                Communication note: once the campaign crosses the agreed threshold, donor challenge funds are released automatically. Any excess raised above threshold goes to the organization.
+                                            </div>
+                                            <div className="flex justify-end">
+                                                <Button
+                                                    variant="gold"
+                                                    size="sm"
+                                                    isLoading={challengeSubmitting}
+                                                    onClick={continueToCharidy}
+                                                >
+                                                    Continue to Charidy
+                                                </Button>
+                                            </div>
+                                        </div>
                                     )}
                                 </div>
                             </Card>
