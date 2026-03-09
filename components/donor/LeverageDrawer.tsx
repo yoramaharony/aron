@@ -53,7 +53,13 @@ function roundToStep(value: number, step = 5000) {
 function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void, opportunity: any, onCreate: (o: LeverageOffer) => void }) {
     const fundingGap = Math.max(0, Number(opportunity?.fundingGap || 0));
     const sliderMin = Math.min(10000, Math.max(1000, fundingGap));
-    const [anchor, setAnchor] = useState<number>(Math.min(100000, Math.max(sliderMin, fundingGap || 100000)));
+    const minimumThreshold = Math.min(5000, Math.max(1000, fundingGap));
+    const maxAnchorForChallenge = Math.max(sliderMin, fundingGap - minimumThreshold);
+    const recommendedAnchor = Math.min(
+        maxAnchorForChallenge,
+        Math.max(sliderMin, roundToStep(fundingGap * 0.5)),
+    );
+    const [anchor, setAnchor] = useState<number>(recommendedAnchor);
     const [matchMode, setMatchMode] = useState<'match' | 'remainder'>('match');
     const [matchMultiplier, setMatchMultiplier] = useState<1 | 2 | 3>(1);
     const deadlineRef = useRef<HTMLInputElement | null>(null);
@@ -72,14 +78,14 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
 
     useEffect(() => {
         if (fundingGap <= 0) return;
-        setAnchor((prev) => Math.min(Math.max(prev, sliderMin), fundingGap));
-    }, [fundingGap, sliderMin]);
+        setAnchor((prev) => Math.min(Math.max(prev, sliderMin), maxAnchorForChallenge));
+    }, [fundingGap, sliderMin, maxAnchorForChallenge]);
 
     const anchorPresets = (() => {
         if (fundingGap <= 0) return [sliderMin];
-        const p1 = Math.min(fundingGap, roundToStep(fundingGap * 0.33));
-        const p2 = Math.min(fundingGap, roundToStep(fundingGap * 0.66));
-        const p3 = fundingGap;
+        const p1 = Math.min(maxAnchorForChallenge, roundToStep(fundingGap * 0.25));
+        const p2 = Math.min(maxAnchorForChallenge, roundToStep(fundingGap * 0.5));
+        const p3 = Math.min(maxAnchorForChallenge, roundToStep(fundingGap * 0.75));
         return Array.from(new Set([p1, p2, p3])).sort((a, b) => a - b);
     })();
 
@@ -267,6 +273,9 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                     {/* B1: Anchor */}
                     <div>
                         <label className="block text-sm font-medium mb-3">Anchor Commitment (Now)</label>
+                        <div className="mb-2 text-xs text-[var(--text-tertiary)]">
+                            Recommended anchor: <span className="text-[var(--text-primary)] font-semibold">${recommendedAnchor.toLocaleString()}</span> (balanced split)
+                        </div>
                         <div className="flex gap-2 mb-3">
                             {anchorPresets.map(amt => (
                                 <button
@@ -282,7 +291,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                             ))}
                         </div>
                         <input
-                            type="range" min={sliderMin} max={Math.max(sliderMin, fundingGap)} step="5000"
+                            type="range" min={sliderMin} max={Math.max(sliderMin, maxAnchorForChallenge)} step="5000"
                             value={anchor} onChange={(e) => setAnchor(Number(e.target.value))}
                             className="w-full accent-[var(--color-gold)] mb-2"
                         />
