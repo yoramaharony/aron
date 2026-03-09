@@ -86,16 +86,16 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     // Derived Logic
     const safeAnchor = Math.min(Math.max(anchor, 0), fundingGap);
     const remainingNeed = Math.max(0, fundingGap - safeAnchor);
-    const challengeGoal = matchMode === 'match'
-        ? safeAnchor
-        : remainingNeed;
-    const rawTopUpAmount = matchMode === 'match' ? challengeGoal * matchMultiplier : challengeGoal;
-    const maxTopUpAllowed = Math.max(0, fundingGap - challengeGoal);
-    const topUpAmount = Math.min(rawTopUpAmount, maxTopUpAllowed);
+    // Aron release math is always capped by the org funding gap.
+    // Donor sets an anchor now, then release equals remaining need at threshold.
+    const challengeGoal = remainingNeed;
+    const topUpAmount = remainingNeed;
+    // Multiplier is now campaign ambition guidance for Charidy, not Aron release math.
+    const suggestedCampaignTarget = matchMode === 'match' ? challengeGoal * matchMultiplier : challengeGoal;
     const totalDeployed = safeAnchor + topUpAmount;
-    const outcomeTotal = challengeGoal + topUpAmount;
+    const outcomeTotal = totalDeployed;
 
-    const matchModeLabel = matchMode === 'match' ? `Match Me (${matchMultiplier}:1)` : 'Cover Remainder';
+    const matchModeLabel = matchMode === 'match' ? 'Match Me' : 'Cover Remainder';
     const deadlineLabel = (() => {
         try {
             if (!deadline) return '—';
@@ -110,6 +110,11 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
     const handleCreate = async () => {
         setSubmitting(true);
         setSubmitErr(null);
+        if (challengeGoal <= 0) {
+            setSubmitErr('Set an anchor below the full request amount so a challenge threshold remains.');
+            setSubmitting(false);
+            return;
+        }
         const opportunityKey = String(opportunity.id || opportunity.key || '').trim();
         if (!opportunityKey) {
             setSubmitErr('Missing opportunity key. Please close and reopen this challenge flow.');
@@ -195,6 +200,12 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                             <span className="text-[var(--text-secondary)]">Condition</span>
                             <span className="font-bold">Raises ${challengeGoal.toLocaleString()}</span>
                         </div>
+                        {matchMode === 'match' && (
+                            <div className="flex justify-between">
+                                <span className="text-[var(--text-secondary)]">Charidy target (guidance)</span>
+                                <span className="font-bold">${suggestedCampaignTarget.toLocaleString()} ({matchMultiplier}x)</span>
+                            </div>
+                        )}
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Deadline</span>
                             <span className="font-bold">{deadlineLabel}</span>
@@ -202,7 +213,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         <div className="flex justify-between">
                             <span className="text-[var(--text-secondary)]">Terms</span>
                             <span className="font-bold text-right">
-                                {proofRequired ? 'Verification required' : 'No verification'}{milestones ? ' • Milestones 50/50' : ''}{matchMode === 'match' ? ` • ${matchMultiplier}:1 multiplier` : ''}
+                                {proofRequired ? 'Verification required' : 'No verification'}{milestones ? ' • Milestones 50/50' : ''}{matchMode === 'match' ? ` • ${matchMultiplier}x Charidy target` : ''}
                             </span>
                         </div>
                         <div className="border-t pt-2 mt-2 flex justify-between text-lg">
@@ -210,7 +221,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                             <span className="font-bold text-[var(--color-gold)]">${totalDeployed.toLocaleString()}</span>
                         </div>
                         <div className="text-xs text-[var(--text-tertiary)] mt-1">
-                            Campaign outcome is capped at ${fundingGap.toLocaleString()} (organization request amount).
+                            Aron outcome is capped at ${fundingGap.toLocaleString()} (organization request amount).
                         </div>
                     </div>
 
@@ -298,7 +309,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                         {matchMode === 'match' && (
                             <div className="mt-3">
                                 <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">
-                                    Multiplier (your released amount)
+                                    Multiplier (Charidy target guidance)
                                 </label>
                                 <div className="grid grid-cols-3 gap-2">
                                     {[1, 2, 3].map((ratio) => (
@@ -317,7 +328,7 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                     ))}
                                 </div>
                                 <div className="mt-2 text-xs text-[var(--text-tertiary)]">
-                                    Example: 2x means release is capped so total outcome never exceeds ${fundingGap.toLocaleString()}.
+                                    Example: 2x suggests a higher Charidy campaign target, while Aron release stays capped to remaining need.
                                 </div>
                             </div>
                         )}
@@ -326,11 +337,16 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                                 Required to raise: <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span>
                             </div>
                             <div className="bg-[rgba(255,255,255,0.04)] p-3 rounded border border-[rgba(255,255,255,0.14)]">
-                                You release: <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>{matchMode === 'match' ? ` (${matchMultiplier}x)` : ''}
+                                You release: <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>
                             </div>
                         </div>
+                        {matchMode === 'match' && (
+                            <div className="mt-2 text-xs text-[var(--text-tertiary)]">
+                                Suggested Charidy campaign target: ${suggestedCampaignTarget.toLocaleString()} ({matchMultiplier}x of threshold)
+                            </div>
+                        )}
                         <div className="mt-2 text-xs text-[var(--text-tertiary)]">
-                            Total campaign outcome at threshold: ${outcomeTotal.toLocaleString()} / ${fundingGap.toLocaleString()} cap
+                            Total Aron outcome at threshold: ${outcomeTotal.toLocaleString()} / ${fundingGap.toLocaleString()} cap
                         </div>
                     </div>
 
@@ -429,13 +445,20 @@ function LeverageForm({ onClose, opportunity, onCreate }: { onClose: () => void,
                 <div className="mb-4 text-sm leading-relaxed text-[var(--text-secondary)] bg-[rgba(255,255,255,0.03)] p-3 rounded border border-[rgba(255,255,255,0.10)] shadow-[0_12px_40px_-28px_rgba(0,0,0,0.9)]">
                     Commit <span className="font-bold text-[var(--text-primary)]">${safeAnchor.toLocaleString()}</span> now.
                     If they raise <span className="font-bold text-[var(--text-primary)]">${challengeGoal.toLocaleString()}</span> by {deadline},
-                    we release <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>{matchMode === 'match' ? ` (${matchMultiplier}x)` : ''}.
+                    we release <span className="font-bold text-[var(--text-primary)]">${topUpAmount.toLocaleString()}</span>.
                 </div>
 
                 <div className="flex gap-3">
                     <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
-                    <Button variant="gold" className="flex-[2]" onClick={() => setShowConfirm(true)}>Create Offer</Button>
+                    <Button variant="gold" className="flex-[2]" onClick={() => setShowConfirm(true)} disabled={challengeGoal <= 0}>
+                        Create Offer
+                    </Button>
                 </div>
+                {challengeGoal <= 0 ? (
+                    <div className="mt-2 text-xs text-amber-300">
+                        Reduce your anchor amount to create a challenge threshold.
+                    </div>
+                ) : null}
             </div>
         </div>
     );

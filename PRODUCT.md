@@ -450,6 +450,7 @@ Key decisions from the stakeholder review (Yehuda Gurwitz, Mendel, Shay Chervins
 - [x] Added persistent Cursor project bible rule at `.cursor/rules/project-bible.mdc` to enforce workflow expectations (read/update `PRODUCT.md`, then commit completed changes)
 - [x] Challenge form now enforces strict cap math against organization funding gap: anchor is clamped to gap, dynamic presets are derived from gap, and computed challenge outcome/release cannot exceed requested amount
 - [x] Charidy setup carousel now includes explicit threshold/excess communication before redirect: crossing threshold triggers donor release, and excess raised beyond threshold goes to the organization
+- [x] Refined challenge builder terminology and math for donor clarity: threshold is now `required to raise`, Aron release equals remaining need at threshold, multiplier is treated as Charidy campaign-target guidance, and zero-threshold challenge creation is blocked with inline guidance
 
 **Source:** `docs/2026-02-16_to_2026-02-23-weekly-plan.md`
 **Next Weekly Plan:** `docs/2026-03-01_to_2026-03-09-weekly-plan.md`
